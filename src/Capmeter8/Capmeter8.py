@@ -5,6 +5,7 @@ import sys
 import pyqtgraph as pg
 from pathlib import Path
 from random import randint
+from daqx.util import createDevice
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -29,7 +30,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                    slider1range = 120,
                                    slider2range = 50)
         
-        self.gh = self.kwarg2var(notePad = None) #TODO
+        self.gh = self.kwarg2var(notePad = None) #TODO - Cap7_gh has not been implemented
 
         self.current_folder = Path.cwd()
         self.changed = False #if the note etc. have been changed;
