@@ -175,9 +175,9 @@
    <widget class="QFrame" name="panel_axislim">
     <property name="geometry">
      <rect>
-      <x>390</x>
-      <y>670</y>
-      <width>291</width>
+      <x>350</x>
+      <y>660</y>
+      <width>331</width>
       <height>111</height>
      </rect>
     </property>
@@ -187,12 +187,12 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>271</width>
+       <width>311</width>
        <height>91</height>
       </rect>
      </property>
@@ -230,6 +230,9 @@
         </property>
         <property name="editable">
          <bool>false</bool>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
         </property>
         <property name="placeholderText">
          <string/>
