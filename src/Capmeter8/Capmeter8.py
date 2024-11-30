@@ -160,15 +160,16 @@ class MainWindow(QtWidgets.QMainWindow):
             print('AI error in OpeningFcn')
             self.reader = True
         finally:
-            self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            self.daq.ai.samplesPerTrig = int(((1/self.rSR)*0.9)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            #TODO - handle if samplesPerTrig < 1 e.g. rSR = 1000Hz
         
         self.slider1v2p = round(self.slider1.value()*self.disp.slider1range*self.rSR) #for @update_plot, @slider1_Callback
         self.slider2v2p = round(self.slider2.value()*self.disp.slider2range*self.rSR) #for @update_plot, @slider2_Callback
         #TODO - handles.filterv2p = round((str2double(get(handles.filterset,'String'))/1000)*Cap7_state.daq.aiSR); %points to be averaged
         
         self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
-        self.databuffer = np.zeros((2,self.SpmCount)) # pre-allocate memory, for @process_data
-        self.timebuffer = np.zeros(self.SpmCount) # pre-allocate memory, for @process_data
+        self.databuffer = [] # for @process_data
+        self.timebuffer = [] # for @process_data
         #TODO AI/AO callbacks
 
 
@@ -181,6 +182,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Start_Stop.clicked.connect(self.Start_Stop_Callback)
         self.uplimdown2.clicked.connect(self.push_ylimAdj)
         self.uplimdown025.clicked.connect(self.push_ylimAdj)
+        self.uplimup2.clicked.connect(self.push_ylimAdj)
+        self.uplimup025.clicked.connect(self.push_ylimAdj)
+        self.lowlimdown2.clicked.connect(self.push_ylimAdj)
+        self.lowlimdown025.clicked.connect(self.push_ylimAdj)
+        self.lowlimup2.clicked.connect(self.push_ylimAdj)
+        self.lowlimup025.clicked.connect(self.push_ylimAdj)
+        self.Set_ylim.clicked.connect(self.Set_ylim_Callback)
         #TODO - other GUI components
     
     '''
@@ -223,6 +231,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot2.setData(XData,YData2)
     
     #%% Callbacks -------------------------------------------------------
+    def Set_ylim_Callback(self):
+        if self.Auto_axes.isChecked():
+            self.Auto_axes.setChecked(False)
+            self.limsetindex[self.limsetindex[0]+1] = False
+        #TODO - get lim values from the text boxes
+
     def Start_Stop_Callback(self):
         #TODO
         if self.Start_Stop.isChecked(): #start
