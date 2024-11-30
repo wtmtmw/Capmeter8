@@ -4,6 +4,7 @@ from PyQt6 import QtWidgets, uic, QtCore
 import sys
 import pyqtgraph as pg
 from pathlib import Path
+import numpy as np
 from random import randint
 from daqx.util import createDevice
 import traceback
@@ -150,7 +151,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # setup AI
         try:
-            self.daq.config_ai(0,2)
+            self.daq.config_ai(0,1)
             self.daq.ai.trigType = 'digital-positive-edge'
             self.daq.ai.iscontinuous = True
             self.daq.ai.grounding = 'single-ended'
@@ -161,7 +162,13 @@ class MainWindow(QtWidgets.QMainWindow):
         finally:
             self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
         
-        #TODO sliderv2p etc
+        self.slider1v2p = round(self.slider1.value()*self.disp.slider1range*self.rSR) #for @update_plot, @slider1_Callback
+        self.slider2v2p = round(self.slider2.value()*self.disp.slider2range*self.rSR) #for @update_plot, @slider2_Callback
+        #TODO - handles.filterv2p = round((str2double(get(handles.filterset,'String'))/1000)*Cap7_state.daq.aiSR); %points to be averaged
+        
+        self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
+        self.databuffer = np.zeros((2,self.SpmCount)) # pre-allocate memory, for @process_data
+        self.timebuffer = np.zeros(self.SpmCount) # pre-allocate memory, for @process_data
         #TODO AI/AO callbacks
 
 
@@ -172,6 +179,8 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         self.disptimer.timeout.connect(self.update_plot)
         self.Start_Stop.clicked.connect(self.Start_Stop_Callback)
+        self.uplimdown2.clicked.connect(self.push_ylimAdj)
+        self.uplimdown025.clicked.connect(self.push_ylimAdj)
         #TODO - other GUI components
     
     '''
@@ -224,6 +233,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.Start_Stop.setText('Stopped')
             self.Start_Stop.setStyleSheet('color:red')
             self.disptimer.stop()
+
+    def push_ylimAdj(self):
+        pass
     
 
 #%% -------------------------------------------------------
