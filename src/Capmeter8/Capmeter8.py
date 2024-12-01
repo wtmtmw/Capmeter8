@@ -54,15 +54,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.limsetindex = [self.AxesSwitch.currentIndex(),True,True,True]; #[axis #,Auto,Auto,Auto]
         self.Auto_axes.setChecked(self.limsetindex[self.limsetindex[0]+1])
 
-        self.plot0 = self.iniAxes(self.axes1,'r')
-        self.plot1 = self.iniAxes(self.axes2,'b')
-        self.plot2 = self.iniAxes(self.axes3,'r')
+        self.plot1 = self.iniAxes(self.axes1,'r')
+        self.plot2 = self.iniAxes(self.axes2,'b')
+        self.plot3 = self.iniAxes(self.axes3,'r')
 
         self.labelindex = [] #[dispindex,time,data,'string']
         self.slider1.setMaximum(self.disp.slider1range)
-        self.text_slider1.setText(str(self.slider1.value()))
+        self.text_slider1.setText(f'{self.slider1.value():.1f}')
         self.slider2.setMaximum(self.disp.slider2range)
-        self.text_slider2.setText(str(self.slider2.value()))
+        self.text_slider2.setText(f'{self.slider2.value():.1f}')
         #TODO - implement the followings
         # handles.fswitch = get(handles.FilterSwitch,'Value')-1;
         # handles.shiftvalue = str2double(get(handles.Phase_Shift,'String')); %offline phase-shift value, in degree
@@ -180,6 +180,9 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         self.disptimer.timeout.connect(self.update_plot)
         self.Start_Stop.clicked.connect(self.Start_Stop_Callback)
+
+        self.AxesSwitch.currentIndexChanged.connect(self.AxesSwitch_Callback)
+        self.Auto_axes.clicked.connect(self.Auto_axes_Callback)
         self.uplimdown2.clicked.connect(self.push_ylimAdj)
         self.uplimdown025.clicked.connect(self.push_ylimAdj)
         self.uplimup2.clicked.connect(self.push_ylimAdj)
@@ -213,11 +216,18 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def xlim(self,axes,lim):
         # lim: tuple
-        axes.setRange(xRange=lim)
+        axes.setRange(xRange=lim,padding=0)
 
     def ylim(self,axes,lim):
         # lim: tuple
-        axes.setRange(yRange=lim)
+        if lim == 'auto':
+            axes.getViewBox().enableAutoRange(axis='y')
+        elif lim == 'manual':
+            axes.getViewBox().disableAutoRange(axis='y')
+        elif lim == 'range': #get current range
+            return axes.getViewBox().viewRange()[1] # [[x0,x1],[y0,y1]]
+        else:
+            axes.setRange(yRange=lim,padding=0)
     
     def pseudoDataGenerator(self,Nsp):
         return [randint(20, 40) for _ in range(Nsp)]
@@ -231,12 +241,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot2.setData(XData,YData2)
     
     #%% Callbacks -------------------------------------------------------
-    def Set_ylim_Callback(self):
-        if self.Auto_axes.isChecked():
-            self.Auto_axes.setChecked(False)
-            self.limsetindex[self.limsetindex[0]+1] = False
-        #TODO - get lim values from the text boxes
-
     def Start_Stop_Callback(self):
         #TODO
         if self.Start_Stop.isChecked(): #start
@@ -248,8 +252,82 @@ class MainWindow(QtWidgets.QMainWindow):
             self.Start_Stop.setStyleSheet('color:red')
             self.disptimer.stop()
 
+    def AxesSwitch_Callback(self):
+        self.limsetindex[0] = self.AxesSwitch.currentIndex()
+        self.Auto_axes.setChecked(self.limsetindex[0]+1)
+        
+    def Set_ylim_Callback(self):
+        if self.limsetindex[0] == 0:
+            axes = self.axes1
+        elif self.limsetindex[0] == 1:
+            axes = self.axes2
+        else:
+            axes = self.axes3
+        #print(axes.getViewBox().viewRange())
+        if self.Auto_axes.isChecked():
+            self.Auto_axes.setChecked(False)
+            self.limsetindex[self.limsetindex[0]+1] = False
+
+        lim1 = float(self.ylim1.text())
+        lim2 = float(self.ylim2.text())
+        if lim1 < lim2:
+            self.ylim(axes,(lim1,lim2))
+        elif lim1 > lim2:
+            self.ylim(axes,(lim2,lim1))
+            self.ylim1.setText(str(lim2))
+            self.ylim2.setText(str(lim1))
+        else:
+            self.ylim(axes,'auto')
+            self.Auto_axes.setChecked(True)
+            self.limsetindex[self.limsetindex[0]+1] = True
+
+    def Auto_axes_Callback(self):
+        if self.limsetindex[0] == 0:
+            axes = self.axes1
+        elif self.limsetindex[0] == 1:
+            axes = self.axes2
+        else:
+            axes = self.axes3
+        
+        if self.Auto_axes.isChecked():
+            self.ylim(axes,'auto') # auto is on
+            self.limsetindex[self.limsetindex[0]+1] = True
+        else:
+            self.ylim(axes,'manual') # auto is off
+            self.limsetindex[self.limsetindex[0]+1] = False
+            #TODO - translate the following code
+            # if (handles.limsetindex(1,1) == 2) && get(handles.Lock,'Value')
+            #     set(handles.Lock,'Value',0);
+            # end
+
     def push_ylimAdj(self):
-        pass
+        if self.limsetindex[0] == 0:
+            axes = self.axes1
+        elif self.limsetindex[0] == 1:
+            axes = self.axes2
+        else:
+            axes = self.axes3
+        
+        sender = self.sender()
+        uplow = sender.objectName()[0] #'u' for upper lim, 'l' for lower lim
+        value = float(sender.text())
+        #print(f'{uplow}: {value}')
+        if self.Auto_axes.isChecked(): #if Auto is on
+            self.Auto_axes.setChecked(False)
+            #TODO - translate the following code
+            # if handles.limsetindex(1,1) == 2
+            #     set(handles.Lock,'Value',0);
+            # end
+            self.limsetindex[self.limsetindex[0]+1] = False
+        lim = self.ylim(axes,'range')
+        if (uplow == 'u') and (lim[1]+value > lim[0]): # adjust upper lim
+            self.ylim(axes,(lim[0],lim[1]+value))
+            self.ylim2.setText(f'{lim[1]+value:.2f}')
+        elif (uplow == 'l') and (lim[0]+value < lim[1]): # adjust lower lim
+            self.ylim(axes,(lim[0]+value,lim[1]))
+            self.ylim1.setText(f'{lim[0]+value:.2f}')
+           
+
     
 
 #%% -------------------------------------------------------
