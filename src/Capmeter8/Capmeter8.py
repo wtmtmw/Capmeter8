@@ -322,11 +322,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.limsetindex[self.limsetindex[0]+1] = False
         lim = self.ylim(axes,'range')
         if (uplow == 'u') and (lim[1]+value > lim[0]): # adjust upper lim
-            self.ylim(axes,(lim[0],lim[1]+value)) #TODO - set this in Set_ylim_Callback?
             self.ylim2.setText(f'{lim[1]+value:.2f}')
         elif (uplow == 'l') and (lim[0]+value < lim[1]): # adjust lower lim
-            self.ylim(axes,(lim[0]+value,lim[1])) #TODO - set this in Set_ylim_Callback?
             self.ylim1.setText(f'{lim[0]+value:.2f}')
+        else:
+            return
+        self.Set_ylim_Callback()
+            
            
 
     
