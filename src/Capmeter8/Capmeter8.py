@@ -74,7 +74,7 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         List of DAQ-related variables
         '''
-        self.disptimer = QtCore.QTimer() #replacing disptimer Fcn for updateing plots
+        self.disptimer = QtCore.QTimer() #connected to update_plot()
         self.disptimer.setInterval(1000) #in ms
         #TODO - self.rSR = str2double(get(handles.RecordSampleRate,'String'));
         self.rSR = 100
@@ -156,11 +156,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.daq.ai.iscontinuous = True
             self.daq.ai.grounding = 'single-ended'
             self.daq.ai.sampleRate = self.daqdefault.aiSR
+            self.daq.ai.samplesPerTrig = int(((1/self.rSR)*0.9)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
         except:
             print('AI error in OpeningFcn')
             self.reader = True
         finally:
-            self.daq.ai.samplesPerTrig = int(((1/self.rSR)*0.9)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            pass
             #TODO - handle if samplesPerTrig < 1 e.g. rSR = 1000Hz
         
         self.slider1v2p = round(self.slider1.value()*self.disp.slider1range*self.rSR) #for @update_plot, @slider1_Callback
@@ -170,8 +171,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
         self.databuffer = [] # for @process_data
         self.timebuffer = [] # for @process_data
-        #TODO AI/AO callbacks
+        
+        # setup Callbacks
+        self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
+        self.daq.ai.samplesAcquiredFcn = (self.process_data,) # ',' makes it a tuple
+        self.daq.ai.trigFcn = (self.AIwaiting,)
 
+        #TODO - setup KeyPressFcn etc.
 
 
         #%% 
@@ -191,6 +197,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lowlimdown025.clicked.connect(self.push_ylimAdj)
         self.lowlimup2.clicked.connect(self.push_ylimAdj)
         self.lowlimup025.clicked.connect(self.push_ylimAdj)
+        self.Lock.clicked.connect(self.Lock_Callback)
         self.Set_ylim.clicked.connect(self.Set_ylim_Callback)
         #TODO - other GUI components
     
@@ -239,6 +246,12 @@ class MainWindow(QtWidgets.QMainWindow):
         YData2 = self.pseudoDataGenerator(len(XData))
         self.plot1.setData(XData,YData1)
         self.plot2.setData(XData,YData2)
+
+    def process_data(self):
+        pass #TODO
+
+    def AIwaiting(self):
+        pass #TODO
     
     #%% Callbacks -------------------------------------------------------
     def Start_Stop_Callback(self):
@@ -296,10 +309,8 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.ylim(axes,'manual') # auto is off
             self.limsetindex[self.limsetindex[0]+1] = False
-            #TODO - translate the following code
-            # if (handles.limsetindex(1,1) == 2) && get(handles.Lock,'Value')
-            #     set(handles.Lock,'Value',0);
-            # end
+            if (self.limsetindex[0] == 1):
+                self.Lock.setChecked(False)
 
     def push_ylimAdj(self):
         if self.limsetindex[0] == 0:
@@ -315,10 +326,9 @@ class MainWindow(QtWidgets.QMainWindow):
         #print(f'{uplow}: {value}')
         if self.Auto_axes.isChecked(): #if Auto is on
             self.Auto_axes.setChecked(False)
-            #TODO - translate the following code
-            # if handles.limsetindex(1,1) == 2
-            #     set(handles.Lock,'Value',0);
-            # end
+            if (self.limsetindex[0] == 1):
+                self.Lock.setChecked(False)
+
             self.limsetindex[self.limsetindex[0]+1] = False
         lim = self.ylim(axes,'range')
         if (uplow == 'u') and (lim[1]+value > lim[0]): # adjust upper lim
@@ -328,6 +338,14 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             return
         self.Set_ylim_Callback()
+
+    def Lock_Callback(self):
+        if self.Lock.isChecked(): #Lock is on
+            if (self.limsetindex[0] == 1) and (self.limsetindex[2] == False): #Mark auto-axis if it's axes2
+                self.Auto_axes.setChecked(True)
+            self.limsetindex[2] = True
+        else:
+            self.ylim(self.axes2,'auto')
             
            
 
