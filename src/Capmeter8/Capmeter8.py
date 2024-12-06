@@ -76,8 +76,7 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         self.disptimer = QtCore.QTimer() #connected to update_plot()
         self.disptimer.setInterval(1000) #in ms
-        #TODO - self.rSR = str2double(get(handles.RecordSampleRate,'String'));
-        self.rSR = 100
+        self.rSR = abs(float(self.RecordSampleRate.text()))
         self.aidata = []
         self.aidata2 = [] # Kseal adjusted data
         self.aodata = []
@@ -201,6 +200,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Set_ylim.clicked.connect(self.Set_ylim_Callback)
         #TODO - other GUI components
     
+    # End of __init__() -------------------------------------------------------
     '''
     Function and class definition
     '''
@@ -257,6 +257,29 @@ class MainWindow(QtWidgets.QMainWindow):
     def Start_Stop_Callback(self):
         #TODO
         if self.Start_Stop.isChecked(): #start
+            #TODO - translate below
+            # if Cap7_state.changed
+            #     if ~dlg_SaveData(handles.figure1) %canceled or no selection
+            #         set(hObject,'Value',0);
+            #         return
+            #     end
+            # end
+            self.rSR = abs(float(self.RecordSampleRate.text()))
+            if self.rSR > 500:
+                self.rSR = 500
+                self.RecordSampleRate.setText(str(self.rSR))
+            elif self.rSR < 5:
+                self.rSR = 5
+                self.RecordSampleRate.setText(str(self.rSR))
+            self.PSDamp = [] #make it empty in order to enter the 'if' codes in @Set_PSD_Callback
+            #TODO - translate below
+            # handles.PSDfreq = str2double(get(handles.PSD_freq,'String')); %kHz
+            # handles.PSDphase = str2double(get(handles.PSD_phase,'String')); %degree
+
+            # adjust AI properties
+            #TODO - 12/5/2024
+
+
             self.Start_Stop.setText('Started')
             self.Start_Stop.setStyleSheet('color:green')
             self.disptimer.start()
