@@ -163,6 +163,7 @@ class MainWindow(QtWidgets.QMainWindow):
             pass
             #TODO - handle if samplesPerTrig < 1 e.g. rSR = 1000Hz
         
+        #TODO correct the calculation of sliderv2p as it behaves differently in MATLAB and PyQt
         self.slider1v2p = round(self.slider1.value()*self.disp.slider1range*self.rSR) #for @update_plot, @slider1_Callback
         self.slider2v2p = round(self.slider2.value()*self.disp.slider2range*self.rSR) #for @update_plot, @slider2_Callback
         #TODO - handles.filterv2p = round((str2double(get(handles.filterset,'String'))/1000)*Cap7_state.daq.aiSR); %points to be averaged
@@ -277,7 +278,55 @@ class MainWindow(QtWidgets.QMainWindow):
             # handles.PSDphase = str2double(get(handles.PSD_phase,'String')); %degree
 
             # adjust AI properties
-            #TODO - 12/5/2024
+            self.daq.ai.samplesPerTrig = int(((1/self.rSR)*0.9)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
+            self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
+            self.daq.ai.trigFcn = (self.AIwaiting,)
+            #TODO - translate below
+            # self.filterv2p = round(abs((str2double(get(self.filterset,'String'))/1000)*Cap7_state.daq.aiSR));
+            # self.fwindow = abs(round(str2double(get(self.filterset2,'String')))); %running average samples, for Ch1 and Ch2
+            # filtermaxp = handles.aiSamplesPerTrigger; %calculate maximal averaging points
+            # if handles.filterv2p > filtermaxp;
+            #     handles.filterv2p = filtermaxp;
+            #     set(handles.filterset,'String',num2str(1000*filtermaxp/Cap7_state.daq.aiSR));
+            # elseif handles.filterv2p < 1
+            #     handles.filterv2p = 1;
+            #     set(handles.filterset,'String',num2str(1/Cap7_state.daq.aiSR));
+            # end
+            # if handles.fwindow == 0
+            #     handles.fwindow = 1;
+            #     set(handles.filterset2,'String','1');
+            # end
+            # if strcmpi(get(hObject,'HitTest'),'off') %return if data processing is in progress
+            #     set(hObject,'Value',0);
+            #     return
+            # end
+            # set(handles.Start_Stop,'HitTest','off');
+            self.aidata = []
+            self.aitime = []
+            self.PSDofSQA = []
+            self.Pulselog = []
+            self.Stdfactor = [] # convert volt to fF
+            self.labelindex = []
+            #TODO - translate below
+            # set(handles.text_slider1,'String','0');
+            # set(handles.slider1,'Value',0);
+            # set(handles.slider1,'SliderStep',[0.01,0.1]);
+            # set(handles.slider2,'SliderStep',[0.01,0.1]);
+            # handles.slider1v2p = round(get(handles.slider1,'Value')*Cap7_state.disp.slider1range*handles.rSR);
+            # handles.slider2v2p = round(get(handles.slider2,'Value')*Cap7_state.disp.slider2range*handles.rSR);
+            # set(handles.xlim1,'String','0');
+            # set(handles.xlim2,'String','0');
+            # set(handles.figure1,'Name',handles.version.Shell);
+            # set(Cap7_gh.NotePad.figure1,'Name',handles.version.Shell);
+            # delete(findobj('parent',handles.axes1,'Type','text'));
+            # delete(findobj('parent',handles.axes2,'Type','text'));
+            # set(handles.group_stop(1,:),'Enable','off');
+            # set(handles.group_start(1,:),'Enable','on');
+            # set(hObject,'String','Waiting');
+            # set(hObject,'ForegroundColor',[1 0.6 0]);
+    
+            #TODO - 12/6/2024
 
 
             self.Start_Stop.setText('Started')
