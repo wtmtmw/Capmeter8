@@ -60,9 +60,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.labelindex = [] #[dispindex,time,data,'string']
         self.slider1.setMaximum(self.disp.slider1range)
-        self.text_slider1.setText(f'{self.slider1.value():.1f}')
+        self.text_slider1.setText(f'{self.slider1.value():.0f}')
         self.slider2.setMaximum(self.disp.slider2range)
-        self.text_slider2.setText(f'{self.slider2.value():.1f}')
+        self.text_slider2.setText(f'{self.slider2.value():.0f}')
         #TODO - implement the followings
         # handles.fswitch = get(handles.FilterSwitch,'Value')-1;
         # handles.shiftvalue = str2double(get(handles.Phase_Shift,'String')); %offline phase-shift value, in degree
@@ -163,9 +163,10 @@ class MainWindow(QtWidgets.QMainWindow):
             pass
             #TODO - handle if samplesPerTrig < 1 e.g. rSR = 1000Hz
         
-        #TODO correct the calculation of sliderv2p as it behaves differently in MATLAB and PyQt
-        self.slider1v2p = round(self.slider1.value()*self.disp.slider1range*self.rSR) #for @update_plot, @slider1_Callback
-        self.slider2v2p = round(self.slider2.value()*self.disp.slider2range*self.rSR) #for @update_plot, @slider2_Callback
+        # the calculation of sliderv2p as it behaves differently in MATLAB and PyQt
+        #TODO - remove sliderv2p in the future release
+        self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
+        self.slider2v2p = round(self.slider2.value()*self.rSR) #for @update_plot, @slider2_Callback
         #TODO - handles.filterv2p = round((str2double(get(handles.filterset,'String'))/1000)*Cap7_state.daq.aiSR); %points to be averaged
         
         self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
@@ -199,6 +200,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lowlimup025.clicked.connect(self.push_ylimAdj)
         self.Lock.clicked.connect(self.Lock_Callback)
         self.Set_ylim.clicked.connect(self.Set_ylim_Callback)
+
+        self.slider1.valueChanged.connect(self.slider_Callback)
+        self.slider2.valueChanged.connect(self.slider_Callback)
         #TODO - other GUI components
     
     # End of __init__() -------------------------------------------------------
@@ -418,6 +422,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.limsetindex[2] = True
         else:
             self.ylim(self.axes2,'auto')
+
+    def slider_Callback(self):
+        value = self.sender().value() #int
+        if self.sender().objectName() == 'slider1': #slider1 or slider2
+            self.slider1v2p = round(value*self.rSR)
+            self.text_slider1.setText(str(value))
+        else: #slider2
+            self.slider2v2p = round(value*self.rSR)
+            self.text_slider2.setText(str(value))
+        #TODO - remaining display control code
+        #TODO - also consider to update disp setting after the slider is released. i.e. connect to sliderReleased() signal
+        
             
            
 
