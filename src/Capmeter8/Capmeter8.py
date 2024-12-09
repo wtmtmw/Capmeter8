@@ -432,8 +432,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.slider2v2p = round(value*self.rSR)
             self.text_slider2.setText(str(value))
         #TODO - remaining display control code
-        #TODO - also consider to update disp setting after the slider is released. i.e. connect to sliderReleased() signal
-        
+        #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback        
             
            
 
