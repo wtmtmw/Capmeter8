@@ -164,7 +164,7 @@ class MainWindow(QtWidgets.QMainWindow):
             #TODO - handle if samplesPerTrig < 1 e.g. rSR = 1000Hz
         
         # the calculation of sliderv2p as it behaves differently in MATLAB and PyQt
-        #TODO - remove sliderv2p in the future release
+        #TODO - remove sliderv2p in future release
         self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
         self.slider2v2p = round(self.slider2.value()*self.rSR) #for @update_plot, @slider2_Callback
         #TODO - handles.filterv2p = round((str2double(get(handles.filterset,'String'))/1000)*Cap7_state.daq.aiSR); %points to be averaged
@@ -312,13 +312,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.Pulselog = []
             self.Stdfactor = [] # convert volt to fF
             self.labelindex = []
+            self.slider1.setValue(0)
+            self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
+            self.slider2v2p = round(self.slider2.value()*self.rSR) #for @update_plot, @slider2_Callback
             #TODO - translate below
-            # set(handles.text_slider1,'String','0');
-            # set(handles.slider1,'Value',0);
-            # set(handles.slider1,'SliderStep',[0.01,0.1]);
-            # set(handles.slider2,'SliderStep',[0.01,0.1]);
-            # handles.slider1v2p = round(get(handles.slider1,'Value')*Cap7_state.disp.slider1range*handles.rSR);
-            # handles.slider2v2p = round(get(handles.slider2,'Value')*Cap7_state.disp.slider2range*handles.rSR);
             # set(handles.xlim1,'String','0');
             # set(handles.xlim2,'String','0');
             # set(handles.figure1,'Name',handles.version.Shell);
@@ -330,9 +327,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # set(hObject,'String','Waiting');
             # set(hObject,'ForegroundColor',[1 0.6 0]);
     
-            #TODO - 12/6/2024
-
-
+            #TODO - 12/9/2024
             self.Start_Stop.setText('Started')
             self.Start_Stop.setStyleSheet('color:green')
             self.disptimer.start()
