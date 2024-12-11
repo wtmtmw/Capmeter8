@@ -252,8 +252,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot1.setData(XData,YData1)
         self.plot2.setData(XData,YData2)
 
-    def process_data(self):
-        pass #TODO
+    def process_data(self,*arg):
+        '''
+        process data every ~0.5sec.
+        AICh0: current, for direct recording and PSD; AICh1:current, e.g. from Ampero
+        Ch1:Capacitance; Ch2:Conductance; Ch3:Current; Ch4:Ampero current
+        '''
+        if len(arg) == 0:
+            getAll = False
+        else:
+            getAll = arg[0]
+        #TODO - 12/11/2024
 
     def AIwaiting(self):
         pass #TODO
