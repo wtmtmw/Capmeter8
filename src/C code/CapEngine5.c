@@ -1,114 +1,43 @@
-///////////////////////////////////////////////////////////////////////////////////
-//     This program is free software: you can redistribute it and/or modify
-//     it under the terms of the GNU General Public License (GPLv3) as published by
-//     the Free Software Foundation.
-//
-//     This program is distributed in the hope that it will be useful,
-//     but WITHOUT ANY WARRANTY; without even the implied warranty of
-//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//     GNU General Public License for more details (http://www.gnu.org/licenses/).
-///////////////////////////////////////////////////////////////////////////////////
-
-#include "mex.h"
-#include "matrix.h"
-#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
-double Cabs(double data)
-{
-    double a;
-    if(data<0) a = -1*data;
-    else a = data;
-    return a;
-}
-
-void Cdiff(double *data,int size,double *(*A))
-{
-    //double *A;
+void Cdiff(double *data, int size, double **A) {
     int i;
-    //A = mxCalloc(size-1,sizeof(double));
-    *A = (double *)mxRealloc(*A,(size-1)*sizeof(double));
-    for(i=0;i<size-1;i++)
-    {
-        *(*A+i) = data[i+1]-data[i];
+    *A = (double *)realloc(*A, (size - 1) * sizeof(double));
+    for (i = 0; i < size - 1; i++) {
+        (*A)[i] = data[i + 1] - data[i];
     }
-    //return A;  
 }
 
-void Cfind(double *data,int relation,double num,int size,int *(*A),int *fc)
-//pass &(double *A) and &(int fc) to Cfind. return indexes(*A) and size(fc) of the index array
-{
-    int i,count = 0;
-    for(i=0;i<size;i++)
-    {
-        switch(relation)
-        {
-            case 1:
-                if(data[i]>num){count++;}
-                break;
-            case 10:
-                if(data[i]>=num){count++;}
-                break;
-            case 0:
-                if(data[i]==num){count++;}
-                break;
-            case -1:
-                if(data[i]<num){count++;}
-                break;
-            case -10:
-                if(data[i]<=num){count++;}
-                break;
-            default:
-                break;
+void Cfind(double *data, int relation, double num, int size, int **A, int *fc) {
+    int i, count = 0;
+    for (i = 0; i < size; i++) {
+        switch (relation) {
+            case 1: if (data[i] > num) count++; break;
+            case 10: if (data[i] >= num) count++; break;
+            case 0: if (data[i] == num) count++; break;
+            case -1: if (data[i] < num) count++; break;
+            case -10: if (data[i] <= num) count++; break;
+            default: break;
         }
     }
-    *A = (int *)mxRealloc(*A,(count)*sizeof(int));
+    *A = (int *)realloc(*A, count * sizeof(int));
     *fc = count;
-    count = 0; //reset the count
-    for(i=0;i<size;i++)
-    {
-        switch(relation)
-        {
-            case 1:
-                if(data[i]>num)
-                {
-                    *(*A+count) = i;
-                    count++;
-                }
-                break;
-            case 10:
-                if(data[i]>=num)
-                {
-                    *(*A+count) = i;
-                    count++;
-                }
-                break;
-            case 0:
-                if(data[i]==num)
-                {
-                    *(*A+count) = i;
-                    count++;
-                }
-                break;
-            case -1:
-                if(data[i]<num)
-                {
-                    *(*A+count) = i;
-                    count++;
-                }
-                break;
-            case -10:
-                if(data[i]<=num)
-                {
-                    *(*A+count) = i;
-                    count++;
-                }
-                break;
-            default:
-            break;
+    count = 0;
+    for (i = 0; i < size; i++) {
+        switch (relation) {
+            case 1: if (data[i] > num) (*A)[count++] = i; break;
+            case 10: if (data[i] >= num) (*A)[count++] = i; break;
+            case 0: if (data[i] == num) (*A)[count++] = i; break;
+            case -1: if (data[i] < num) (*A)[count++] = i; break;
+            case -10: if (data[i] <= num) (*A)[count++] = i; break;
+            default: break;
         }
     }
 }
+
+//TODO
 
 double Cmean(double *data,const int size)
 {
@@ -297,7 +226,7 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
             dataTime[i] = time[n*(L+1)+i];
         }
         Cdiff(dataTrig,L,&diffabs);
-        for(i=0;i<(L-1);i++) {diffabs[i] = Cabs(diffabs[i]);}
+        for(i=0;i<(L-1);i++) {diffabs[i] = fabs(diffabs[i]);}
         Cfind(diffabs,1,threshold1,(L-1),&indexpeak,&fc);
         if(fc!=0)
         {
@@ -523,7 +452,7 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
             dataTime[i] = time[n*(L+1)+i];
         }
         Cdiff(dataTrig,L,&diffabs);
-        for(i=0;i<(L-1);i++) {diffabs[i] = Cabs(diffabs[i]);}
+        for(i=0;i<(L-1);i++) {diffabs[i] = fabs(diffabs[i]);}
         Cfind(diffabs,1,threshold1,(L-1),&indexpeak,&fc);
         if(fc!=0)
         {
