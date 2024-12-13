@@ -112,7 +112,6 @@ void PSD(double *data, double *ref, int Mref, int L, int ppch, double *output) {
 void SqCF(double *trigger, double *data, double *time, int L, double taufactor, int endadj, int ppch, double *ASYMP, double *PEAK, double *TAU) {
     const double threshold1 = 0.15;
     const int W = 25;
-    double NaN = NAN;
     double *dataA = (double *)malloc(L * sizeof(double));
     double *dataTrig = (double *)malloc(L * sizeof(double));
     double *dataTime = (double *)malloc(L * sizeof(double));
@@ -142,9 +141,9 @@ void SqCF(double *trigger, double *data, double *time, int L, double taufactor, 
         }
         int Sp = fc - 1;
         if (Sp < 1) {
-            ASYMP[n] = NaN;
-            PEAK[n] = NaN;
-            TAU[n] = NaN;
+            ASYMP[n] = NAN;
+            PEAK[n] = NAN;
+            TAU[n] = NAN;
             continue;
         }
         double zerosum = 0;
@@ -230,9 +229,9 @@ void SqCF(double *trigger, double *data, double *time, int L, double taufactor, 
         }
 
         if (validdata == 0) {
-            ASYMP[n] = NaN;
-            PEAK[n] = NaN;
-            TAU[n] = NaN;
+            ASYMP[n] = NAN;
+            PEAK[n] = NAN;
+            TAU[n] = NAN;
         } else {
             ASYMP[n] = asympaccu / validdata;
             PEAK[n] = peakaccu / validdata;
@@ -254,7 +253,6 @@ void SqCF(double *trigger, double *data, double *time, int L, double taufactor, 
 void SqQ(double *trigger, double *data, double *time, int L, double taufactor, int endadj, int ppch, double interval, double *ASYMP, double *PEAK, double *TAU) {
     const double threshold1 = 0.15;
     const int W = 25;
-    double NaN = NAN;
     double *dataA = (double *)malloc(L * sizeof(double));
     double *dataTrig = (double *)malloc(L * sizeof(double));
     double *dataTime = (double *)malloc(L * sizeof(double));
@@ -284,9 +282,9 @@ void SqQ(double *trigger, double *data, double *time, int L, double taufactor, i
         }
         int Sp = fc - 1;
         if (Sp < 1) {
-            ASYMP[n] = NaN;
-            PEAK[n] = NaN;
-            TAU[n] = NaN;
+            ASYMP[n] = NAN;
+            PEAK[n] = NAN;
+            TAU[n] = NAN;
             continue;
         }
         double zerosum = 0;
@@ -391,9 +389,9 @@ void SqQ(double *trigger, double *data, double *time, int L, double taufactor, i
         }
 
         if (validdata == 0) {
-            ASYMP[n] = NaN;
-            PEAK[n] = NaN;
-            TAU[n] = NaN;
+            ASYMP[n] = NAN;
+            PEAK[n] = NAN;
+            TAU[n] = NAN;
         } else {
             ASYMP[n] = asympaccu / validdata;
             PEAK[n] = peakaccu / validdata;
