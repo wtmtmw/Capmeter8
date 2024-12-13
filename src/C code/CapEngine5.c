@@ -37,135 +37,109 @@ void Cfind(double *data, int relation, double num, int size, int **A, int *fc) {
     }
 }
 
-//TODO
-
-double Cmean(double *data,const int size)
-{
-    double sum=0;
-    int i;
-    for(i=0;i<size;i++)
-    {
+double Cmean(double *data, const int size) {
+    double sum = 0;
+    for (int i = 0; i < size; i++) {
         sum += data[i];
     }
-    return sum/(double)size;  
+    return sum / (double)size;  
 }
 
-double Cmax(double *data,int size)
-{
-    int i;
+double Cmax(double *data, int size) {
     double max = data[0];
-    for(i=1;i<size;i++)
-    {
-        if(data[i]>max) max = data[i];
+    for (int i = 1; i < size; i++) {
+        if (data[i] > max) max = data[i];
     }
     return max;
 }
 
-double Cmin(double *data,int size)
-{
-    int i;
+double Cmin(double *data, int size) {
     double min = data[0];
-    for(i=1;i<size;i++)
-    {
-        if(data[i]<min) min = data[i];
+    for (int i = 1; i < size; i++) {
+        if (data[i] < min) min = data[i];
     }
     return min;
 }
 
-// int Cpickend(double *data,int size,int consecpt)
-// {
-//     int i,relation,index = 0;
-//     for(i=size-1;i>0;i--)
-//     {
-//         //check relationship
-//         if(data[i-1]>data[i]) relation = 1;
-//         else relation = 0;
-//         //count consecutive increasing
-//         if(relation) index++;
-//         else index = 0;
-//         //return if there are 'consecpt' consecutive increasing points
-//         if(index == consecpt) return (i+consecpt-1);
-//     }
-//     return (size-1); //can't find enough consecutive increasing points
-// }
-
-int Cpickend2(double *data,int size,int lastmax,double taufactor)
-{
-    int i;
-    double target; //target value
-
-    target = data[lastmax]*taufactor; //use peak to estimate dataB at tau*factor
-    i = lastmax+1;
-    size = size-1; //index of the last pt of the curve
-    while((data[i]-target) > 0) //scan the curve
-    {
+int Cpickend2(double *data, int size, int lastmax, double taufactor) {
+    int i = lastmax + 1;
+    double target = data[lastmax] * taufactor; //target value, use peak to estimate dataB at tau*factor
+    size = size - 1;
+    while ((data[i] - target) > 0) {
         i++;
-        if(i==(size)) {break;}
+        if (i == size) break;
     }
     return i;
 }
 
-double Csign(double data)
-{
-    double a;
-    if(data<0) a = -1;
-    else a = 1;
-    return a;
+double Csign(double data) {
+    return (data < 0) ? -1 : 1;
 }
 
 ///////////////////////////////////////////
 //Digital Filter///////////////////////////
 ///////////////////////////////////////////
 
-void Dfilter(double fcheck,double *data,int L,int filtered,int ppch,int M,double *output)
-{
-    int i=0,j,k;
-    double *A;
-    L +=1; //+1 is the NaN
-    A = (double *)mxMalloc(filtered*sizeof(double));
-//     for(i=0;i<N;i++) //channel index
-//     {
-        for(j=0;j<ppch;j++) //data point index
-        {
-            if(fcheck)
-            {
-                
-                for(k=0;k<filtered;k++) //collect data to be averaged
-                {
-                    A[k] = data[(i*M)+(j*L)+k];
-                }
-                output[i*ppch+j] = Cmean(A,k);
+void Dfilter(double fcheck, double *data, int L, int filtered, int ppch, double *output) {
+    /*
+    This is a rolling average filter.
+    Input - data from one channel with size (samplesPerTrig)x(number of triggers)
+    Output - filtered or downsampled data
+    fcheck:     filter or not
+    L:          aiSamplesPerTrigger
+    filtered:   number of points to be filtered
+    ppch:       points per channel after filter/downsampling
+    output:     pre-allocated memory for storing the result
+    */
+    double *A = (double *)malloc(filtered * sizeof(double));
+    for (int j = 0; j < ppch; j++) {
+        //j: data point index
+        if (fcheck) {
+            for (int k = 0; k < filtered; k++) {
+                //k: collect data to be averaged
+                A[k] = data[j * L + k];
             }
-            else output[i*ppch+j] = data[(i*M)+(j*L)];
+            output[j] = Cmean(A, filtered);
         }
-//     }
-    mxFree(A);
+        else {
+            output[j] = data[j * L];
+        }
+    }
+    free(A);
+    //TODO - consider allocating the memory within the fcn instead of outside
 }
 
 ///////////////////////////////////////////
 //Phase Sensitive Detector/////////////////
 ///////////////////////////////////////////
 
-void PSD(double *data,double *ref,int Mref,int L,int ppch,double *output)
-{
-    int i,j;
-    double *A;
-    L +=1; //+1 is the NaN
-    A = (double *)mxMalloc(Mref*sizeof(double));
-    for(i=0;i<ppch;i++) //data point index
-    {
-        for(j=0;j<Mref;j++) //data*ref
-        {
-            A[j] = data[(i*L)+j]*ref[j];
+void PSD(double *data, double *ref, int Lref, int L, int ppch, double *output) {
+    /*
+    Input - current data with size (samplesPerTrig)x(number of triggers)
+    Output - result based on the input reference wave
+    ref:    reference wave
+    Lref:   length of the reference wave
+    L:      aiSamplesPerTrigger
+    ppch:   points per channel after filter/downsampling
+    output: pre-allocated memory for storing the result
+    */
+    double *A = (double *)malloc(Lref * sizeof(double));
+    for (int i = 0; i < ppch; i++) {
+        //i: data point index
+        for (int j = 0; j < Lref; j++) {
+            //for data*ref
+            A[j] = data[(i * L) + j] * ref[j];
         }
-        output[i] = 2*Cmean(A,Mref);
+        output[i] = 2 * Cmean(A, Lref);
     }
-    mxFree(A);
+    free(A);
 }
 
 ///////////////////////////////////////////
 //real curve-fitting function starts here//
 ///////////////////////////////////////////
+
+//todo
 
 void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double *ASYMP,double *PEAK,double *TAU)
 {
@@ -689,9 +663,9 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
         AICH2 = mxGetPr(plhs[2]);
         CAP = mxGetPr(plhs[3]);
         COND = mxGetPr(plhs[4]);
-        Dfilter(0,time,aiSamplesPerTrigger,filtered,ppch,M,TIME);
-        Dfilter(fck3,curr,aiSamplesPerTrigger,filtered,ppch,M,CURR);
-        Dfilter(fck4,aich2,aiSamplesPerTrigger,filtered,ppch,M,AICH2);
+        Dfilter(0,time,aiSamplesPerTrigger,filtered,ppch,TIME);
+        Dfilter(fck3,curr,aiSamplesPerTrigger,filtered,ppch,CURR);
+        Dfilter(fck4,aich2,aiSamplesPerTrigger,filtered,ppch,AICH2);
     }
     if(algorism == 1) {
         if((nrhs != 10) || (nlhs != 5)) {mexErrMsgTxt("[time current AICH2 Cap Cond]=CapEngine4(1,time,current,AICH2,fck3,fck4,filtered,aiSamplesPerTrigger,PSDref,PSD90)");}
