@@ -150,7 +150,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # setup AI
         try:
-            self.daq.config_ai(0,1)
+            self.daq.config_ai(0,2) #Ch0: trigger, used in CapEngine; Ch1: current; Ch2: e.g. Ampero signal
             self.daq.ai.trigType = 'digital-positive-edge'
             self.daq.ai.iscontinuous = True
             self.daq.ai.grounding = 'single-ended'
