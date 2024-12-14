@@ -110,36 +110,37 @@ void PSD(double *data, double *ref, int Mref, int L, int ppch, double *output) {
 }
 
 void SqCF(double *trigger, double *data, double *time, int L, double taufactor, int endadj, int ppch, double *ASYMP, double *PEAK, double *TAU) {
-    const double threshold1 = 0.15;
+    const double threshold = 0.15;
     const int W = 25;
-    double *dataA = (double *)malloc(L * sizeof(double));
+    double *dataA = (double *)malloc(L * sizeof(double)); //for each trigger
     double *dataTrig = (double *)malloc(L * sizeof(double));
     double *dataTime = (double *)malloc(L * sizeof(double));
     double *diffabs = (double *)malloc((L - 1) * sizeof(double));
     int *indexpeak = (int *)malloc(20 * sizeof(int));
-    double *dataB = (double *)malloc(100 * sizeof(double));
+    double *dataB = (double *)malloc(100 * sizeof(double)); //for each curve
     double *dataBtime = (double *)malloc(100 * sizeof(double));
     double *temp = (double *)malloc(L * sizeof(double));
     int *ftemp = (int *)malloc(L * sizeof(int));
+    int n,i,fc,Sp;
 
-    for (int n = 0; n < ppch; n++) {
-        for (int i = 0; i < L; i++) {
-            dataA[i] = data[n * (L + 1) + i];
-            dataTrig[i] = trigger[n * (L + 1) + i];
-            dataTime[i] = time[n * (L + 1) + i];
+    for (n = 0; n < ppch; n++) {
+        //begin of the trigger loop(process every trigger)
+        for (i = 0; i < L; i++) {
+            dataA[i] = data[(n * L) + i];
+            dataTrig[i] = trigger[(n * L) + i]; //trigger signal is from AI0
+            dataTime[i] = time[(n * L) + i];
         }
-        Cdiff(dataTrig, L, &diffabs);
+        Cdiff(dataTrig, L, &diffabs); //TODO - consider removing the need of AI0 triger signal
         for (int i = 0; i < (L - 1); i++) {
-            diffabs[i] = Cabs(diffabs[i]);
+            diffabs[i] = fabs(diffabs[i]);
         }
-        int fc;
-        Cfind(diffabs, 1, threshold1, (L - 1), &indexpeak, &fc);
+        Cfind(diffabs, 1, threshold, (L - 1), &indexpeak, &fc);
         if (fc != 0) {
             for (int i = 0; i < fc; i++) {
-                indexpeak[i] += 1;
+                indexpeak[i] += 1; //adjust the index
             }
         }
-        int Sp = fc - 1;
+        Sp = fc - 1; //remove the last curve, bcz it's usually incomplete
         if (Sp < 1) {
             ASYMP[n] = NAN;
             PEAK[n] = NAN;
@@ -251,7 +252,7 @@ void SqCF(double *trigger, double *data, double *time, int L, double taufactor, 
 }
 
 void SqQ(double *trigger, double *data, double *time, int L, double taufactor, int endadj, int ppch, double interval, double *ASYMP, double *PEAK, double *TAU) {
-    const double threshold1 = 0.15;
+    const double threshold = 0.15;
     const int W = 25;
     double *dataA = (double *)malloc(L * sizeof(double));
     double *dataTrig = (double *)malloc(L * sizeof(double));
@@ -274,7 +275,7 @@ void SqQ(double *trigger, double *data, double *time, int L, double taufactor, i
             diffabs[i] = Cabs(diffabs[i]);
         }
         int fc;
-        Cfind(diffabs, 1, threshold1, (L - 1), &indexpeak, &fc);
+        Cfind(diffabs, 1, threshold, (L - 1), &indexpeak, &fc);
         if (fc != 0) {
             for (int i = 0; i < fc; i++) {
                 indexpeak[i] += 1;

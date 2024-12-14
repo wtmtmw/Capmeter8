@@ -11,6 +11,12 @@ void Cdiff(double *data, int size, double **A) {
 }
 
 void Cfind(double *data, int relation, double num, int size, int **A, int *fc) {
+    /*
+    pass &(double *A) and &(int fc) to Cfind. return indexes(*A) and size(fc) of the index array
+    After execution, *A points to an array containing the indices of all elements in data that 
+    satisfy the specified relational condition.
+    *fc contains the total number of such elements
+    */
     int i, count = 0;
     for (i = 0; i < size; i++) {
         switch (relation) {
@@ -139,8 +145,6 @@ void PSD(double *data, double *ref, int Lref, int L, int ppch, double *output) {
 //real curve-fitting function starts here//
 ///////////////////////////////////////////
 
-//todo
-
 void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double *ASYMP,double *PEAK,double *TAU)
 {
     int i; //for the 'for' loop temporarily
@@ -148,8 +152,7 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
     int Sp; //number of peaks
     int np; //used with Sp
     int SPC; //samples per curve
-    const double threshold1 = 0.15; //for indexpeak
-    //was (handles.PSDamp/handles.aoCh1convert-0.1) in Capmeter4
+    const double threshold = 0.15; //for indexpeak
     
     //for asymptote calculation
     int sp1,sp2,sp3,D,firstmin,lastmax;
@@ -180,17 +183,18 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
     //1st used in Cdiff(dataB,SPC,&temp);
     //2nd used in (double *)mxRealloc(temp,fladd1*sizeof(double));
     
-    NaN = mxGetNaN();
-    dataA = (double *)mxMalloc(L*sizeof(double)); //for each trigger
-    dataTrig = (double *)mxMalloc(L*sizeof(double));
-    dataTime = (double *)mxMalloc(L*sizeof(double));
-    diffabs = (double *)mxMalloc((L-1)*sizeof(double));
-    indexpeak = (int *)mxMalloc(20*sizeof(int));
-    dataB = (double *)mxMalloc(100*sizeof(double)); //for each curve
-    dataBtime = (double *)mxMalloc(100*sizeof(double));
-    temp = (double *)mxMalloc(L*sizeof(double));
-    ftemp = (int *)mxMalloc(L*sizeof(int));
+    dataA = (double *)malloc(L * sizeof(double)); //for each trigger
+    dataTrig = (double *)malloc(L * sizeof(double));
+    dataTime = (double *)malloc(L * sizeof(double));
+    diffabs = (double *)malloc((L - 1) * sizeof(double));
+    indexpeak = (int *)malloc(20 * sizeof(int));
+    dataB = (double *)malloc(100 * sizeof(double)); //for each curve
+    dataBtime = (double *)malloc(100 * sizeof(double));
+    temp = (double *)malloc(L * sizeof(double));
+    ftemp = (int *)malloc(L * sizeof(int));
     
+    //todo
+
     for(n=0;n<ppch;n++) //begin of the trigger loop(process every trigger)
     {
         for(i=0;i<L;i++)
@@ -201,7 +205,7 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
         }
         Cdiff(dataTrig,L,&diffabs);
         for(i=0;i<(L-1);i++) {diffabs[i] = fabs(diffabs[i]);}
-        Cfind(diffabs,1,threshold1,(L-1),&indexpeak,&fc);
+        Cfind(diffabs,1,threshold,(L-1),&indexpeak,&fc);
         if(fc!=0)
         {
             for(i=0;i<fc;i++) {indexpeak[i] = indexpeak[i]+1;} //adjust the index
@@ -374,7 +378,7 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
     int np; //used with Sp
     int SPC; //samples per curve
     double PeakTau; //peak*tau (asymp-subtracted peak)
-    const double threshold1 = 0.15; //for indexpeak
+    const double threshold = 0.15; //for indexpeak
     //was (handles.PSDamp/handles.aoCh1convert-0.1) in Capmeter4
     
     //for asymptote calculation
@@ -427,7 +431,7 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
         }
         Cdiff(dataTrig,L,&diffabs);
         for(i=0;i<(L-1);i++) {diffabs[i] = fabs(diffabs[i]);}
-        Cfind(diffabs,1,threshold1,(L-1),&indexpeak,&fc);
+        Cfind(diffabs,1,threshold,(L-1),&indexpeak,&fc);
         if(fc!=0)
         {
             for(i=0;i<fc;i++) {indexpeak[i] = indexpeak[i]+1;} //adjust the index
