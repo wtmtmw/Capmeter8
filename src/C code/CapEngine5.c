@@ -145,13 +145,12 @@ void PSD(double *data, double *ref, int Lref, int L, int ppch, double *output) {
 //real curve-fitting function starts here//
 ///////////////////////////////////////////
 
-void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double *ASYMP,double *PEAK,double *TAU)
-{
-    int i; //for the 'for' loop temporarily
-    int n; //the n-th of triggers
-    int Sp; //number of peaks
-    int np; //used with Sp
-    int SPC; //samples per curve
+void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double *ASYMP,double *PEAK,double *TAU) {
+    int i;      //for the 'for' loop temporarily
+    int n;      //the n-th of triggers
+    int Sp;     //number of peaks
+    int np;     //used with Sp
+    int SPC;    //samples per curve
     const double threshold = 0.15; //for indexpeak
     
     //for asymptote calculation
@@ -166,10 +165,9 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
     
     //colletcing data etc
     int validdata = 0; //count valid data
-    int quality = 1; //0 if there is NaN
+    int quality = 1; //0 if there is NAN
     //const double taufactor = 3;
     double tau,peak,asymp,tauaccu=0,peakaccu=0,asympaccu=0;
-    double NaN;
     
     //dynamic varibles
     int fc; //counts of data found
@@ -181,7 +179,7 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
     double *diffabs,*dataBtime;
     double *temp;
     //1st used in Cdiff(dataB,SPC,&temp);
-    //2nd used in (double *)mxRealloc(temp,fladd1*sizeof(double));
+    //2nd used in (double *)realloc(temp,fladd1*sizeof(double));
     
     dataA = (double *)malloc(L * sizeof(double)); //for each trigger
     dataTrig = (double *)malloc(L * sizeof(double));
@@ -192,58 +190,55 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
     dataBtime = (double *)malloc(100 * sizeof(double));
     temp = (double *)malloc(L * sizeof(double));
     ftemp = (int *)malloc(L * sizeof(int));
-    
-    //todo
 
-    for(n=0;n<ppch;n++) //begin of the trigger loop(process every trigger)
-    {
-        for(i=0;i<L;i++)
-        {
-            dataA[i] = data[n*(L+1)+i];
-            dataTrig[i] = trigger[n*(L+1)+i];
-            dataTime[i] = time[n*(L+1)+i];
+    for (n = 0; n < ppch; n++) {
+        //begin of the trigger loop(process every trigger)
+        for (i = 0; i < L; i++) {
+            dataA[i] = data[(n * L) + i];
+            dataTrig[i] = trigger[(n * L) + i]; //trigger signal is from AI0
+            dataTime[i] = time[(n * L) + i];
         }
-        Cdiff(dataTrig,L,&diffabs);
-        for(i=0;i<(L-1);i++) {diffabs[i] = fabs(diffabs[i]);}
-        Cfind(diffabs,1,threshold,(L-1),&indexpeak,&fc);
-        if(fc!=0)
-        {
-            for(i=0;i<fc;i++) {indexpeak[i] = indexpeak[i]+1;} //adjust the index
+        Cdiff(dataTrig, L, &diffabs);
+        for (i = 0; i < (L - 1); i++) {
+            diffabs[i] = fabs(diffabs[i]);
+        }
+        Cfind(diffabs, 1, threshold, (L - 1), &indexpeak, &fc);
+        if (fc != 0) {
+            for (int i = 0; i < fc; i++) {
+                indexpeak[i] += 1; //adjust the index
+            }
         }
         
         Sp = fc-1; //remove the last curve, bcz it's usually incomplete
-        if(Sp < 1) {quality = 0;}//poor quality
+        if(Sp < 1) {
+            quality = 0; //poor quality
+        }
         
-        if(quality)
-        {
-            for(i=0;i<(fc-fmod(fc,2));i++)
-            {
-                zerosum += dataA[(indexpeak[i])];
+        if(quality) {
+            for(i = 0; i < (fc - fmod(fc,2)); i++) {
+                zerosum += dataA[(indexpeak[i])]; //sum of even number of peaks
             }
-            zeroline = zerosum/(double)i;
+            zeroline = zerosum/(double)i; //middle/base line between up and down peak current
             
-            //zeroline = (Cmax(dataA,L)+Cmin(dataA,L))/2;
-            for(i=0;i<L;i++) {dataA[i] -= zeroline;}
-            for(np=0;np<Sp;np++) //begin of the Sp loop(process every curve)
-            {
-                SPC = (indexpeak[np+1]-indexpeak[np]);
-                if(SPC < 18) {quality = 0;} //not a valid peak. bcz 100kHz/2.5kHz/2 = 20
-                if(quality)
-                {
-                    dataB = (double *)mxRealloc(dataB,SPC*sizeof(double));
-                    dataBtime = (double *)mxRealloc(dataBtime,SPC*sizeof(double));
-                    //signB = Csign(dataA[(indexpeak[np]+3)]); //pick point close to the peak
+            for(i = 0; i < L; i++) {
+                dataA[i] -= zeroline;
+            }
+            for(np = 0; np < Sp; np++) {
+                //begin of the Sp loop(process every curve); np: n-th peak
+                SPC = (indexpeak[np+1]-indexpeak[np]); //samples per curve
+                if(SPC < 18) {
+                    quality = 0;
+                } //not a valid peak. bcz 100kHz/2.5kHz/2 = 20
+
+                if(quality) {
+                    dataB = (double *)realloc(dataB, SPC * sizeof(double));
+                    dataBtime = (double *)realloc(dataBtime, SPC * sizeof(double));
                     signB = Csign(Cmean(&dataA[indexpeak[np]],SPC));
-                    for(i=0;i<SPC;i++)
-                    {
+                    for(i = 0; i < SPC; i++) {
                         dataB[i] = dataA[(indexpeak[np]+i)]*signB; //assign data and correct the polarity
                         dataBtime[i] = dataTime[(indexpeak[np]+i)]-dataTime[indexpeak[np]]; //set initial time to 0
                     }
                     //get lastmax
-                    //                 Cdiff(dataB,SPC,&temp);
-                    //                 Cfind(temp,0,Cmin(temp,(SPC-1)),(SPC-1),&ftemp,&fc);
-                    //                 if(fc != 0) {lastmax = ftemp[0];}
-                    //the above method is not better than the original one
                     Cfind(dataB,0,Cmax(dataB,SPC),SPC,&ftemp,&fc);
                     if(fc != 0) {lastmax = ftemp[(fc-1)];} //fc-1 is the last one.
                     else {lastmax = 10;}
@@ -252,7 +247,7 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
                     //get firstmin later. use the last point(SPC-1) to estimate asymp
                     //so that Ch2 noise will be much smaller
                     D = (int)floor((double)(SPC-lastmax)/3);
-                    w=D;
+                    w = D;
                     //if(w > D) {w = D;}
                     sp1 = lastmax;
                     sp2 = sp1+D;
@@ -260,8 +255,7 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
                     
                     if((sp3+w) > SPC) {w = SPC-sp3;}
                     
-                    for(i=0;i<w;i++)
-                    {
+                    for(i = 0; i < w; i++) {
                         s1 += dataB[(sp1+i)];
                         s2 += dataB[(sp2+i)];
                         s3 += dataB[(sp3+i)];
@@ -271,35 +265,37 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
                     s3 /= w;
                     
                     //get asymptote
-                    if((2*s2-s3-s1) != 0) {asymp = (((s2*s2)-(s1*s3))/(2*s2-s3-s1));}
-                    else {quality = 0;}
+                    if((2*s2-s3-s1) != 0) {
+                        asymp = (((s2*s2)-(s1*s3))/(2*s2-s3-s1));
+                    }
+                    else {
+                        quality = 0;
+                    }
                 }
                 
-                if(quality) //proceed if asymp is valid
-                {
+                if(quality) {
+                    //proceed if asymp is valid
                     //get firstmin
                     if(taufactor < 0) {firstmin = SPC-1;}
-                    else
-                    {
-                        firstmin = Cpickend2(dataB,SPC,lastmax,taufactor)+endadj; //adj the range
+                    else {
+                        firstmin = Cpickend2(dataB, SPC, lastmax, taufactor) + endadj; //adj the range
                     }
                     if(firstmin <= lastmax) {firstmin = SPC-1;}
                     else if(firstmin < (lastmax+12)) {firstmin = lastmax+12;}
                     if(firstmin > (SPC-1)) {firstmin = SPC-1;}
                     fladd1 = (firstmin-lastmax+1);
                     
-                    for(i=0;i<SPC;i++) {dataB[i] -= asymp;} //It is ln(current data - baseline)
-                    temp = (double *)mxRealloc(temp,fladd1*sizeof(double));
-                    for(i=0;i<fladd1;i++) {temp[i] = dataB[(lastmax+i)];}
-                    Cfind(temp,-10,0,fladd1,&ftemp,&fc);
-                    if(fc != 0) {firstmin = lastmax+ftemp[0];} //so that there won't be negative # in log
+                    for(i = 0; i < SPC; i++) {dataB[i] -= asymp;} //It is ln(current data - baseline)
+                    temp = (double *)realloc(temp,fladd1*sizeof(double));
+                    for(i = 0; i < fladd1; i++) {temp[i] = dataB[(lastmax+i)];}
+                    Cfind(temp, -10, 0, fladd1, &ftemp, &fc);
+                    if(fc != 0) {firstmin = lastmax + ftemp[0];} //so that there won't be negative # in log
                     //                 for(i=0;i<1;i++) {debugr[i] = lastmax;} /////////////////////for debug
                     //                 return; ///////////////////////for debug
                     
                     //linear regression
                     fladd1 = (firstmin-lastmax+1);
-                    for(i=0;i<fladd1;i++)
-                    {
+                    for(i = 0; i < fladd1; i++) {
                         lny = log(dataB[(lastmax+i)]);
                         sx += dataBtime[(lastmax+i)];
                         sx2 += (dataBtime[(lastmax+i)]*dataBtime[(lastmax+i)]);
@@ -308,16 +304,16 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
                     }
                     sxxsx = sx*sx;
                     fenmu = ((double)fladd1)*sx2-sxxsx;
-                    if((fenmu != 0)&&(((fladd1*sxy)-(sx*sy)) != 0)) //get peak and tau
-                    {
+                    if((fenmu != 0)&&(((fladd1*sxy)-(sx*sy)) != 0)) {
+                        //get peak and tau
                         peak = exp((((sy*sx2)-(sx*sxy))/fenmu))+asymp;
                         tau = -1/(((fladd1*sxy)-(sx*sy))/fenmu);
                     }
                     else {quality = 0;}
                     //for(i=0;i<1;i++) {debugr[i] = tau;} /////////////////////for debug
                 }
-                if(quality)
-                {
+
+                if(quality) {
                     asympaccu += asymp;
                     peakaccu += peak;
                     tauaccu += tau;
@@ -335,14 +331,12 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
                 quality = 1;
             } //end of the Sp loop
         }
-        if(validdata == 0)
-        {
-            ASYMP[n] = NaN;
-            PEAK[n] = NaN;
-            TAU[n] = NaN;
+        if(validdata == 0) {
+            ASYMP[n] = NAN;
+            PEAK[n] = NAN;
+            TAU[n] = NAN;
         }
-        else
-        {
+        else {
             ASYMP[n] = asympaccu/validdata;
             PEAK[n] = peakaccu/validdata;
             TAU[n] = tauaccu/validdata;
@@ -353,33 +347,30 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
         validdata = 0;
         zerosum = 0;
     }//end of trigger loop
-    mxFree(dataA);
-    mxFree(dataTrig);
-    mxFree(dataTime);
-    mxFree(diffabs);
-    mxFree(indexpeak);
-    mxFree(dataB);
-    mxFree(dataBtime);
-    mxFree(temp);
-    mxFree(ftemp);
+    free(dataA);
+    free(dataTrig);
+    free(dataTime);
+    free(diffabs);
+    free(indexpeak);
+    free(dataB);
+    free(dataBtime);
+    free(temp);
+    free(ftemp);
 }
 
 ///////////////////////////////////////////
 //charge integration starts here///////////
 ///////////////////////////////////////////
 
-void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double interval,double *ASYMP,double *PEAK,double *TAU)
-{
-    int db; //for debug
+void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double interval,double *ASYMP,double *PEAK,double *TAU) {
+    //int db; //for debug
     int i; //for the 'for' loop temporarily
     int n; //the n-th of triggers
     int Sp; //number of peaks
-    //double interval; //time interval. for current integration
     int np; //used with Sp
     int SPC; //samples per curve
     double PeakTau; //peak*tau (asymp-subtracted peak)
     const double threshold = 0.15; //for indexpeak
-    //was (handles.PSDamp/handles.aoCh1convert-0.1) in Capmeter4
     
     //for asymptote calculation
     int sp1,sp2,sp3,D,firstmin,lastmax;
@@ -393,10 +384,8 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
     
     //colletcing data etc
     int validdata = 0; //count valid data
-    int quality = 1; //0 if there is NaN
-    //const double taufactor = 3;
+    int quality = 1; //0 if there is NAN
     double tau,peak,asymp,tauaccu=0,peakaccu=0,asympaccu=0;
-    double NaN;
     
     //dynamic varibles
     int fc; //counts of data found
@@ -408,58 +397,62 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
     double *diffabs,*dataBtime;
     double *temp;
     //1st used in Cdiff(dataB,SPC,&temp);
-    //2nd used in (double *)mxRealloc(temp,fladd1*sizeof(double));
+    //2nd used in (double *)realloc(temp,fladd1*sizeof(double));
     
-    NaN = mxGetNaN();
-    dataA = (double *)mxMalloc(L*sizeof(double)); //for each trigger
-    dataTrig = (double *)mxMalloc(L*sizeof(double));
-    dataTime = (double *)mxMalloc(L*sizeof(double));
-    diffabs = (double *)mxMalloc((L-1)*sizeof(double));
-    indexpeak = (int *)mxMalloc(20*sizeof(int));
-    dataB = (double *)mxMalloc(100*sizeof(double)); //for each curve's Q
-    dataBtime = (double *)mxMalloc(100*sizeof(double));
-    temp = (double *)mxMalloc(L*sizeof(double));
-    ftemp = (int *)mxMalloc(L*sizeof(int));
+    dataA = (double *)malloc(L * sizeof(double)); //for each trigger
+    dataTrig = (double *)malloc(L * sizeof(double));
+    dataTime = (double *)malloc(L * sizeof(double));
+    diffabs = (double *)malloc((L - 1) * sizeof(double));
+    indexpeak = (int *)malloc(20 * sizeof(int));
+    dataB = (double *)malloc(100 * sizeof(double)); //for each curve's Q
+    dataBtime = (double *)malloc(100 * sizeof(double));
+    temp = (double *)malloc(L * sizeof(double));
+    ftemp = (int *)malloc(L * sizeof(int));
     
-    for(n=0;n<ppch;n++) //begin of the trigger loop(process every trigger)
-    {
-        for(i=0;i<L;i++)
-        {
-            dataA[i] = data[n*(L+1)+i];
-            dataTrig[i] = trigger[n*(L+1)+i];
-            dataTime[i] = time[n*(L+1)+i];
+    for (n = 0; n < ppch; n++) {
+        //begin of the trigger loop(process every trigger)
+        for (i = 0; i < L; i++) {
+            dataA[i] = data[(n * L) + i];
+            dataTrig[i] = trigger[(n * L) + i]; //trigger signal is from AI0
+            dataTime[i] = time[(n * L) + i];
         }
-        Cdiff(dataTrig,L,&diffabs);
-        for(i=0;i<(L-1);i++) {diffabs[i] = fabs(diffabs[i]);}
-        Cfind(diffabs,1,threshold,(L-1),&indexpeak,&fc);
-        if(fc!=0)
-        {
-            for(i=0;i<fc;i++) {indexpeak[i] = indexpeak[i]+1;} //adjust the index
+        Cdiff(dataTrig, L, &diffabs);
+        for (i = 0; i < (L - 1); i++) {
+            diffabs[i] = fabs(diffabs[i]);
+        }
+        Cfind(diffabs, 1, threshold, (L - 1), &indexpeak, &fc);
+        if (fc != 0) {
+            for (int i = 0; i < fc; i++) {
+                indexpeak[i] += 1; //adjust the index
+            }
         }
         
         Sp = fc-1; //remove the last curve, bcz it's usually incomplete
-        if(Sp < 1) {quality = 0;} //poor quality
-        if(quality)
-        {
-            for(i=0;i<(fc-fmod(fc,2));i++)
-            {
-                zerosum += dataA[(indexpeak[i])];
+        if(Sp < 1) {
+            quality = 0; //poor quality
+        }
+
+        if(quality) {
+            for(i = 0; i < (fc - fmod(fc,2)); i++) {
+                zerosum += dataA[(indexpeak[i])]; //sum of even number of peaks
             }
-            zeroline = zerosum/(double)i;
-            for(i=0;i<L;i++) {dataA[i] -= zeroline;}
+            zeroline = zerosum/(double)i; //middle/base line between up and down peak current
             
-            for(np=0;np<Sp;np++) //begin of the Sp loop(process every curve)
-            {
-                SPC = (indexpeak[np+1]-indexpeak[np]);
-                if(SPC < 18) {quality = 0;} //not a valid peak. bcz 100kHz/2.5kHz/2 = 20
-                if(quality)
-                {
-                    dataB = (double *)mxRealloc(dataB,SPC*sizeof(double));
-                    dataBtime = (double *)mxRealloc(dataBtime,SPC*sizeof(double));
-                    //signB = Csign(dataA[(indexpeak[np]+3)]); //pick point close to the peak
+            for(i = 0; i < L; i++) {
+                dataA[i] -= zeroline;
+            }
+            for(np = 0; np < Sp; np++) {
+                //begin of the Sp loop(process every curve); np: n-th peak
+                SPC = (indexpeak[np+1]-indexpeak[np]); //samples per curve
+                if(SPC < 18) {
+                    quality = 0;
+                } //not a valid peak. bcz 100kHz/2.5kHz/2 = 20
+
+                 if(quality) {
+                    dataB = (double *)realloc(dataB, SPC * sizeof(double));
+                    dataBtime = (double *)realloc(dataBtime, SPC * sizeof(double));
                     signB = Csign(Cmean(&dataA[indexpeak[np]],SPC));
-                    for(i=0;i<SPC;i++)
-                    {
+                    for(i = 0; i < SPC; i++) {
                         dataB[i] = dataA[(indexpeak[np]+i)]*signB; //assign data and correct the polarity
                         dataBtime[i] = dataTime[(indexpeak[np]+i)]-dataTime[indexpeak[np]]; //set initial time to 0
                     }
@@ -472,7 +465,7 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
                     //get firstmin later. use the last point(SPC-1) to estimate asymp
                     //so that Ch2 noise will be much smaller
                     D = (int)floor((double)(SPC-lastmax)/3);
-                    w=D;
+                    w = D;
                     //if(w > D) {w = D;}
                     sp1 = lastmax;
                     sp2 = sp1+D;
@@ -490,26 +483,26 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
                     s3 /= w;
                     
                     //get asymptote
-                    if((2*s2-s3-s1) != 0) {asymp = (((s2*s2)-(s1*s3))/(2*s2-s3-s1));}
-                    else {quality = 0;}
-                                        
-                    //get asymptote from Q (dataB)
-                    //getting asymp from Q is worse than getting from I directly
+                    if((2*s2-s3-s1) != 0) {
+                        asymp = (((s2*s2)-(s1*s3))/(2*s2-s3-s1));
+                    }
+                    else {
+                        quality = 0;
+                    }                    
+                    //Note: getting asymp from Q is worse than getting from I directly
                 }
                 
-                if(quality) //proceed if asymp is valid
-                {
+                if(quality) {
+                    //proceed if asymp is valid
                     dataB[0] = 0;
-                    //interval = (dataTime[indexpeak[np+1]-1]-dataTime[indexpeak[np]])/(SPC-1); //average time interval
-                    for(i=1;i<SPC;i++)  //notice that i starts at 1
-                    {
+                    for(i = 1; i < SPC; i++) {
+                        //notice that i starts at 1
                         dataB[i] = dataB[i-1]+((dataA[(indexpeak[np]+i-1)]*signB-asymp)*interval); //Qs=int((I-asymp)*dt)
                     }
                     
                     //estimate peak*tau from Q-subtracted (dataB)
                     s1=0;s2=0;s3=0;
-                    for(i=0;i<w;i++)
-                    {
+                    for(i = 0; i < w; i++) {
                         s1 += dataB[(sp1+i)];
                         s2 += dataB[(sp2+i)];
                         s3 += dataB[(sp3+i)];
@@ -517,23 +510,28 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
                     s1 /= w;
                     s2 /= w;
                     s3 /= w;
-                    if((2*s2-s3-s1) != 0) {PeakTau = (((s2*s2)-(s1*s3))/(2*s2-s3-s1));}
-                    else {quality = 0;}
+                    if((2*s2-s3-s1) != 0) {
+                        PeakTau = (((s2*s2)-(s1*s3))/(2*s2-s3-s1));
+                    }
+                    else {
+                        quality = 0;
+                    }
                     
-                    if(quality)
-                    {
+                    if(quality) {
                         //Reverse the Q-subtracted curve for fitting
-                        for(i=0;i<SPC;i++) {dataB[i] = PeakTau-dataB[i];}
+                        for(i = 0; i < SPC; i++) {dataB[i] = PeakTau-dataB[i];}
                         //for(db=0;db<SPC;db++) {debuger[db] = dataB[db];} /////////////////////for debug
                         //adjust lastmax again
                         Cfind(dataB,0,Cmax(dataB,SPC),SPC,&ftemp,&fc);
                         if(fc != 0) {lastmax = ftemp[(fc-1)];} //fc-1 is the last one.
                         else {lastmax = 2;}
                         if(lastmax > (SPC-12)) {lastmax = SPC-12;}
+
                         //get firstmin
-                        if(taufactor < 0) {firstmin = SPC-1;}
-                        else
-                        {
+                        if(taufactor < 0) {
+                            firstmin = SPC-1;
+                        }
+                        else {
                             firstmin = Cpickend2(dataB,SPC,lastmax,taufactor)+endadj; //adj the range
                             //firstmin = Cpickend(dataB,SPC,SPC)+endadj; //maximal consecutive pt
                         }
@@ -543,15 +541,14 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
                         //for(db=0;db<1;db++) {debuger[0] = lastmax;debuger[1] = firstmin;} /////////////////////for debug
                         fladd1 = (firstmin-lastmax+1);
                         
-                        temp = (double *)mxRealloc(temp,fladd1*sizeof(double));
-                        for(i=0;i<fladd1;i++) {temp[i] = dataB[(lastmax+i)];}
+                        temp = (double *)realloc(temp,fladd1*sizeof(double));
+                        for(i = 0; i < fladd1; i++) {temp[i] = dataB[(lastmax+i)];}
                         Cfind(temp,-10,0,fladd1,&ftemp,&fc);
                         if(fc != 0) {firstmin = lastmax+ftemp[0];} //so that there won't be negative # in log
                         
                         //linear regression
                         fladd1 = (firstmin-lastmax+1);
-                        for(i=0;i<fladd1;i++)
-                        {
+                        for(i = 0; i < fladd1; i++) {
                             lny = log(dataB[(lastmax+i)]);
                             sx += dataBtime[(lastmax+i)];
                             sx2 += (dataBtime[(lastmax+i)]*dataBtime[(lastmax+i)]);
@@ -561,8 +558,8 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
                         sxxsx = sx*sx;
                         fenmu = ((double)fladd1)*sx2-sxxsx;
                         //for(db=0;db<1;db++) {debuger[0] = PeakTau;debuger[1] = -1/(((fladd1*sxy)-(sx*sy))/fenmu);} /////////////////////for debug
-                        if((fenmu != 0)&&(((fladd1*sxy)-(sx*sy)) != 0)) //get peak and tau
-                        {
+                        if((fenmu != 0)&&(((fladd1*sxy)-(sx*sy)) != 0)) {
+                            //get peak and tau
                             tau = -1/(((fladd1*sxy)-(sx*sy))/fenmu);
                             PeakTau *= (tau*(1-exp(-interval/tau))/interval); //correct int(Q)
                             peak = PeakTau/tau+asymp;
@@ -572,8 +569,8 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
 //                         debuger[3] = lastmax;debuger[4] = firstmin;} /////////////////////for debug
                     }
                 }
-                if(quality)
-                {
+
+                if(quality) {
                     asympaccu += asymp;
                     peakaccu += peak;
                     tauaccu += tau;
@@ -591,14 +588,12 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
                 quality = 1;
             } //end of the Sp loop
         }
-        if(validdata == 0)
-        {
-            ASYMP[n] = NaN;
-            PEAK[n] = NaN;
-            TAU[n] = NaN;
+        if(validdata == 0) {
+            ASYMP[n] = NAN;
+            PEAK[n] = NAN;
+            TAU[n] = NAN;
         }
-        else
-        {
+        else {
             ASYMP[n] = asympaccu/validdata;
             PEAK[n] = peakaccu/validdata;
             TAU[n] = tauaccu/validdata;
@@ -609,18 +604,18 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
         validdata = 0;
         zerosum = 0;
     }//end of trigger loop
-    mxFree(dataA);
-    mxFree(dataTrig);
-    mxFree(dataTime);
-    mxFree(diffabs);
-    mxFree(indexpeak);
-    mxFree(dataB);
-    mxFree(dataBtime);
-    mxFree(temp);
-    mxFree(ftemp);
+    free(dataA);
+    free(dataTrig);
+    free(dataTime);
+    free(diffabs);
+    free(indexpeak);
+    free(dataB);
+    free(dataBtime);
+    free(temp);
+    free(ftemp);
 }
     
-
+//todo
 void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
 {
     int M,ppch,Mref;
