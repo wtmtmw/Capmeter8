@@ -88,7 +88,7 @@ double Csign(double data) {
 
 void Dfilter(double fcheck, double *data, int L, int filtered, int ppch, double *output) {
     /*
-    This is a rolling average filter.
+    This is just an (not rolling) average filter.
     Input - data from one channel with size (samplesPerTrig)x(number of triggers)
     Output - filtered or downsampled data
     fcheck:     filter or not
