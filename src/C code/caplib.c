@@ -86,7 +86,7 @@ double Csign(double data) {
 //Digital Filter///////////////////////////
 ///////////////////////////////////////////
 
-void Dfilter(double fcheck, double *data, int L, int filtered, int ppch, double *output) {
+void Dfilter(int fcheck, double *data, int L, int filtered, int ppch, double *output) {
     /*
     This is just an (not rolling) average filter.
     Input - data from one channel with size (samplesPerTrig)x(number of triggers)
@@ -112,7 +112,6 @@ void Dfilter(double fcheck, double *data, int L, int filtered, int ppch, double 
         }
     }
     free(A);
-    //TODO - consider allocating the memory within the fcn instead of outside
 }
 
 ///////////////////////////////////////////
@@ -616,84 +615,84 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
 }
     
 //todo
-void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
-{
-    int M,ppch,Mref;
-    double taufactor,endadj,*time,*trigger,*curr,*aich2,*TIME,*CURR,*AICH2,*ASYMP,*PEAK,*TAU; //for SqCF etc.
-    double *PSDref,*PSD90,*CAP,*COND; //for PSD
-    double fck3,fck4,filtered; //for Dfilter
-    double aiSamplesPerTrigger,algorism;
-    double interval;
+// void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
+// {
+//     int M,ppch,Mref;
+//     double taufactor,endadj,*time,*trigger,*curr,*aich2,*TIME,*CURR,*AICH2,*ASYMP,*PEAK,*TAU; //for SqCF etc.
+//     double *PSDref,*PSD90,*CAP,*COND; //for PSD
+//     double fck3,fck4,filtered; //for Dfilter
+//     double aiSamplesPerTrigger,algorism;
+//     double interval;
     
-    if (nrhs == 0)
-    {
-        mexEvalString("disp('The program is under GNU GPLv3, see http://www.gnu.org/licenses for detail')");
-        plhs[0] = mxCreateString("CapEngine5-1.0");
-        return;
-    }
-    if(nrhs == 1)
-    {
-        mexEvalString("disp('CapEngine4(algo,time,current,AICH2,fck3,fck4,filtered,aiSamplesPerTrigger...)')");
-        algorism = mxGetScalar(prhs[0]);
-    }
-    else if((nrhs >= 10) && (nlhs >= 5))
-    {
-        algorism = mxGetScalar(prhs[0]);
-        M = mxGetM(prhs[1]);
-        //N = mxGetN(prhs[1]);
-        Mref = mxGetM(prhs[8]);
-        time = mxGetPr(prhs[1]);
-        curr = mxGetPr(prhs[2]);
-        aich2 = mxGetPr(prhs[3]);
-        fck3 = mxGetScalar(prhs[4]);
-        fck4 = mxGetScalar(prhs[5]);
-        filtered = mxGetScalar(prhs[6]);
-        aiSamplesPerTrigger = mxGetScalar(prhs[7]);
-        PSDref = mxGetPr(prhs[8]);
-        PSD90 = mxGetPr(prhs[9]);
-        ppch = (M+1)/(aiSamplesPerTrigger+1); //points per channel. +1 is the NaN
-        plhs[0] = mxCreateDoubleMatrix(ppch,1,mxREAL);
-        plhs[1] = mxCreateDoubleMatrix(ppch,1,mxREAL);
-        plhs[2] = mxCreateDoubleMatrix(ppch,1,mxREAL);
-        plhs[3] = mxCreateDoubleMatrix(ppch,1,mxREAL);
-        plhs[4] = mxCreateDoubleMatrix(ppch,1,mxREAL);
-        TIME = mxGetPr(plhs[0]);
-        CURR = mxGetPr(plhs[1]);
-        AICH2 = mxGetPr(plhs[2]);
-        CAP = mxGetPr(plhs[3]);
-        COND = mxGetPr(plhs[4]);
-        Dfilter(0,time,aiSamplesPerTrigger,filtered,ppch,TIME);
-        Dfilter(fck3,curr,aiSamplesPerTrigger,filtered,ppch,CURR);
-        Dfilter(fck4,aich2,aiSamplesPerTrigger,filtered,ppch,AICH2);
-    }
-    if(algorism == 1) {
-        if((nrhs != 10) || (nlhs != 5)) {mexErrMsgTxt("[time current AICH2 Cap Cond]=CapEngine4(1,time,current,AICH2,fck3,fck4,filtered,aiSamplesPerTrigger,PSDref,PSD90)");}
-    }
-    else if((algorism == 2)||(algorism == 3)) {
-        if((nrhs < 11) || (nrhs > 13) || (nlhs != 8)) mexErrMsgTxt("[time current AICH2 PSD90 PSD asymp peak tau]=CapEngine4(2or3,time,current,AICH2,fck3,fck4,filtered,aiSamplesPerTrigger,PSDref,PSD90,trigger,(opt)taufactor,(opt)endadj)");
-        trigger = mxGetPr(prhs[10]);
-        if(nrhs >= 12) {taufactor = 1/exp(mxGetScalar(prhs[11]));} //for firstmin
-        else {taufactor = -1;}
-        if(nrhs == 13) {endadj = mxGetScalar(prhs[12]);} //for firstmin
-        else {endadj = 0;} //default value
-        interval = (time[(int)(aiSamplesPerTrigger-1)]-time[0])/(aiSamplesPerTrigger-1);
-        //for unknown reasons, (int) has to be added here... (double) doesn't work...
+//     if (nrhs == 0)
+//     {
+//         mexEvalString("disp('The program is under GNU GPLv3, see http://www.gnu.org/licenses for detail')");
+//         plhs[0] = mxCreateString("CapEngine5-1.0");
+//         return;
+//     }
+//     if(nrhs == 1)
+//     {
+//         mexEvalString("disp('CapEngine4(algo,time,current,AICH2,fck3,fck4,filtered,aiSamplesPerTrigger...)')");
+//         algorism = mxGetScalar(prhs[0]);
+//     }
+//     else if((nrhs >= 10) && (nlhs >= 5))
+//     {
+//         algorism = mxGetScalar(prhs[0]);
+//         M = mxGetM(prhs[1]);
+//         //N = mxGetN(prhs[1]);
+//         Mref = mxGetM(prhs[8]);
+//         time = mxGetPr(prhs[1]);
+//         curr = mxGetPr(prhs[2]);
+//         aich2 = mxGetPr(prhs[3]);
+//         fck3 = mxGetScalar(prhs[4]);
+//         fck4 = mxGetScalar(prhs[5]);
+//         filtered = mxGetScalar(prhs[6]);
+//         aiSamplesPerTrigger = mxGetScalar(prhs[7]);
+//         PSDref = mxGetPr(prhs[8]);
+//         PSD90 = mxGetPr(prhs[9]);
+//         ppch = (M+1)/(aiSamplesPerTrigger+1); //points per channel. +1 is the NaN
+//         plhs[0] = mxCreateDoubleMatrix(ppch,1,mxREAL);
+//         plhs[1] = mxCreateDoubleMatrix(ppch,1,mxREAL);
+//         plhs[2] = mxCreateDoubleMatrix(ppch,1,mxREAL);
+//         plhs[3] = mxCreateDoubleMatrix(ppch,1,mxREAL);
+//         plhs[4] = mxCreateDoubleMatrix(ppch,1,mxREAL);
+//         TIME = mxGetPr(plhs[0]);
+//         CURR = mxGetPr(plhs[1]);
+//         AICH2 = mxGetPr(plhs[2]);
+//         CAP = mxGetPr(plhs[3]);
+//         COND = mxGetPr(plhs[4]);
+//         Dfilter(0,time,aiSamplesPerTrigger,filtered,ppch,TIME);
+//         Dfilter(fck3,curr,aiSamplesPerTrigger,filtered,ppch,CURR);
+//         Dfilter(fck4,aich2,aiSamplesPerTrigger,filtered,ppch,AICH2);
+//     }
+//     if(algorism == 1) {
+//         if((nrhs != 10) || (nlhs != 5)) {mexErrMsgTxt("[time current AICH2 Cap Cond]=CapEngine4(1,time,current,AICH2,fck3,fck4,filtered,aiSamplesPerTrigger,PSDref,PSD90)");}
+//     }
+//     else if((algorism == 2)||(algorism == 3)) {
+//         if((nrhs < 11) || (nrhs > 13) || (nlhs != 8)) mexErrMsgTxt("[time current AICH2 PSD90 PSD asymp peak tau]=CapEngine4(2or3,time,current,AICH2,fck3,fck4,filtered,aiSamplesPerTrigger,PSDref,PSD90,trigger,(opt)taufactor,(opt)endadj)");
+//         trigger = mxGetPr(prhs[10]);
+//         if(nrhs >= 12) {taufactor = 1/exp(mxGetScalar(prhs[11]));} //for firstmin
+//         else {taufactor = -1;}
+//         if(nrhs == 13) {endadj = mxGetScalar(prhs[12]);} //for firstmin
+//         else {endadj = 0;} //default value
+//         interval = (time[(int)(aiSamplesPerTrigger-1)]-time[0])/(aiSamplesPerTrigger-1);
+//         //for unknown reasons, (int) has to be added here... (double) doesn't work...
         
-        plhs[5] = mxCreateDoubleMatrix(ppch,1,mxREAL);
-        plhs[6] = mxCreateDoubleMatrix(ppch,1,mxREAL);
-        plhs[7] = mxCreateDoubleMatrix(ppch,1,mxREAL);
-        ASYMP = mxGetPr(plhs[5]);
-        PEAK = mxGetPr(plhs[6]);
-        TAU = mxGetPr(plhs[7]);
-    }
-    else {mexErrMsgTxt("1:PSD 2:SQA-I 3:SQA-Q");}
-    if(algorism == 2) {SqCF(trigger,curr,time,aiSamplesPerTrigger,taufactor,endadj,ppch,ASYMP,PEAK,TAU);}
-    else if (algorism == 3) {
-        //SqQ(trigger,curr,time,aiSamplesPerTrigger,taufactor,endadj,ppch,ASYMP,PEAK,TAU);
-        SqQ(trigger,curr,time,aiSamplesPerTrigger,taufactor,endadj,ppch,interval,ASYMP,PEAK,TAU);
-    }
-    //also do PSD even the SQA is selected
-    PSD(curr,PSD90,Mref,aiSamplesPerTrigger,ppch,CAP);
-    PSD(curr,PSDref,Mref,aiSamplesPerTrigger,ppch,COND);
-}
+//         plhs[5] = mxCreateDoubleMatrix(ppch,1,mxREAL);
+//         plhs[6] = mxCreateDoubleMatrix(ppch,1,mxREAL);
+//         plhs[7] = mxCreateDoubleMatrix(ppch,1,mxREAL);
+//         ASYMP = mxGetPr(plhs[5]);
+//         PEAK = mxGetPr(plhs[6]);
+//         TAU = mxGetPr(plhs[7]);
+//     }
+//     else {mexErrMsgTxt("1:PSD 2:SQA-I 3:SQA-Q");}
+//     if(algorism == 2) {SqCF(trigger,curr,time,aiSamplesPerTrigger,taufactor,endadj,ppch,ASYMP,PEAK,TAU);}
+//     else if (algorism == 3) {
+//         //SqQ(trigger,curr,time,aiSamplesPerTrigger,taufactor,endadj,ppch,ASYMP,PEAK,TAU);
+//         SqQ(trigger,curr,time,aiSamplesPerTrigger,taufactor,endadj,ppch,interval,ASYMP,PEAK,TAU);
+//     }
+//     //also do PSD even the SQA is selected
+//     PSD(curr,PSD90,Mref,aiSamplesPerTrigger,ppch,CAP);
+//     PSD(curr,PSDref,Mref,aiSamplesPerTrigger,ppch,COND);
+// }
 
