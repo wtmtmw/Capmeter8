@@ -86,7 +86,7 @@ double Csign(double data) {
 //Digital Filter///////////////////////////
 ///////////////////////////////////////////
 
-void Dfilter(int fcheck, double *data, int L, int filtered, int ppch, double *output) {
+__declspec(dllexport) void Dfilter(int fcheck, double *data, int L, int filtered, int ppch, double *output) {
     /*
     This is just an (not rolling) average filter.
     Input - data from one channel with size (samplesPerTrig)x(number of triggers)
@@ -118,7 +118,7 @@ void Dfilter(int fcheck, double *data, int L, int filtered, int ppch, double *ou
 //Phase Sensitive Detector/////////////////
 ///////////////////////////////////////////
 
-void PSD(double *data, double *ref, int Lref, int L, int ppch, double *output) {
+__declspec(dllexport) void PSD(double *data, double *ref, int Lref, int L, int ppch, double *output) {
     /*
     Input - current data with size (samplesPerTrig)x(number of triggers)
     Output - result based on the input reference wave
@@ -144,7 +144,7 @@ void PSD(double *data, double *ref, int Lref, int L, int ppch, double *output) {
 //real curve-fitting function starts here//
 ///////////////////////////////////////////
 
-void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double *ASYMP,double *PEAK,double *TAU) {
+__declspec(dllexport) void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double *ASYMP,double *PEAK,double *TAU) {
     int i;      //for the 'for' loop temporarily
     int n;      //the n-th of triggers
     int Sp;     //number of peaks
@@ -361,7 +361,7 @@ void SqCF(double *trigger,double *data,double *time,int L,double taufactor,int e
 //charge integration starts here///////////
 ///////////////////////////////////////////
 
-void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double interval,double *ASYMP,double *PEAK,double *TAU) {
+__declspec(dllexport) void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int endadj,int ppch,double interval,double *ASYMP,double *PEAK,double *TAU) {
     //int db; //for debug
     int i; //for the 'for' loop temporarily
     int n; //the n-th of triggers
@@ -613,7 +613,12 @@ void SqQ(double *trigger,double *data,double *time,int L,double taufactor,int en
     free(temp);
     free(ftemp);
 }
-    
+
+// __declspec(dllexport) void test(int num) {
+//     //printf("The number %d was entered", num);
+//     printf("Hello World %d",num);
+// }
+
 //todo
 // void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
 // {
