@@ -1,13 +1,11 @@
 from PyQt6 import QtWidgets, uic, QtCore
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
-# import pyqtgraph as pg
-import sys
+import sys, traceback, ctypes
 import pyqtgraph as pg
 from pathlib import Path
 import numpy as np
 from random import randint
 from daqx.util import createDevice
-import traceback
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -131,6 +129,22 @@ class MainWindow(QtWidgets.QMainWindow):
         #     assignin('base','ME_setting',ME_setting);
         #     gatherDAQinfo(gcf);
         # end
+        
+        #%%
+        '''
+        Set up C functions
+        '''
+        self.lib = ctypes.CDLL('.\caplib.dll')
+        self.lib.Dfilter.restype = None
+        self.lib.Dfilter.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
+        self.lib.PSD.restype = None
+        self.lib.PSD.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
+        self.lib.SqCF.restype = None
+        self.lib.SqCF.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
+        #TODO - SqQ
+
+
+
 
         #%%
         '''
@@ -263,6 +277,9 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             getAll = arg[0]
         #TODO - 12/11/2024
+
+    def CapEngine(self):
+        pass #TODO
 
     def AIwaiting(self):
         pass #TODO
