@@ -141,11 +141,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lib.PSD.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
         self.lib.SqCF.restype = None
         self.lib.SqCF.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
-        #TODO - SqQ
-
-
-
-
+        self.lib.SqQ.restype = None
+        self.lib.SqQ.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
+        
         #%%
         '''
         Set up AO and AI
@@ -226,9 +224,9 @@ class MainWindow(QtWidgets.QMainWindow):
     #%% Utility -------------------------------------------------------
     class kwarg2var:
         #container class; used for mimicing the struct data type
-        def __init__(self, **kwarg):
-            #print(type(kwarg)) #dict
-            for key, value in kwarg.items():
+        def __init__(self, **kwargs):
+            #print(type(kwargs)) #dict
+            for key, value in kwargs.items():
                 setattr(self, key, value)
 
     def iniAxes(self,axes,color):
@@ -266,19 +264,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot1.setData(XData,YData1)
         self.plot2.setData(XData,YData2)
 
-    def process_data(self,*arg):
+    def process_data(self,*args):
         '''
         process data every ~0.5sec.
         AICh0: current, for direct recording and PSD; AICh1:current, e.g. from Ampero
         Ch1:Capacitance; Ch2:Conductance; Ch3:Current; Ch4:Ampero current
         '''
-        if len(arg) == 0:
+        if len(args) == 0:
             getAll = False
         else:
-            getAll = arg[0]
+            getAll = args[0]
         #TODO - 12/11/2024
 
-    def CapEngine(self):
+    def CapEngine(self,*args):
+        '''
+        Time: 
+        PSD: (time,current,AICH2,Cap,Cond) = CapEngine(1,current,PSDref,PSD90)
+        SQCF: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(2,current,PSDref,PSD90,AICH2,trigger,(opt)taufactor,(opt)endadj)
+        SqQ: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(3,current,PSDref,PSD90,AICH2,trigger,(opt)taufactor,(opt)endadj)
+        '''
         pass #TODO
 
     def AIwaiting(self):
