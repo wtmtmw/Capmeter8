@@ -217,6 +217,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.PhaseShift.clicked.connect(self.PhaseShift_Callback)
         self.PSDadd90.clicked.connect(self.PSDadd90_Callback)
         self.AutoPhase.clicked.connect(self.AutoPhase_Callback)
+        self.PSD_slider.clicked.connect(self.PSD_slider_Callback)
 
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.slider2.valueChanged.connect(self.slider_Callback)
@@ -474,6 +475,9 @@ class MainWindow(QtWidgets.QMainWindow):
         pass #TODO
 
     def AutoPhase_Callback(self):
+        pass #TODO
+
+    def PSD_slider_Callback(self):
         pass #TODO
 
 
