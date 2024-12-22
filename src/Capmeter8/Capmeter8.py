@@ -213,6 +213,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Lock.clicked.connect(self.Lock_Callback)
         self.Set_ylim.clicked.connect(self.Set_ylim_Callback)
 
+        self.Set_PSD.clicked.connect(self.Set_PSD_Callback)
+        self.PhaseShift.clicked.connect(self.PhaseShift_Callback)
+        self.PSDadd90.clicked.connect(self.PSDadd90_Callback)
+        self.AutoPhase.clicked.connect(self.AutoPhase_Callback)
+
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.slider2.valueChanged.connect(self.slider_Callback)
         #TODO - other GUI components
@@ -276,12 +281,12 @@ class MainWindow(QtWidgets.QMainWindow):
             getAll = args[0]
         #TODO - 12/11/2024
 
-    def CapEngine(self,*args):
+    def CapEngine(self,algorithm,taufactor = None, endadj = None):
         '''
         Time: 
-        PSD: (time,current,AICH2,Cap,Cond) = CapEngine(1,current,PSDref,PSD90)
-        SQCF: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(2,current,PSDref,PSD90,AICH2,trigger,(opt)taufactor,(opt)endadj)
-        SqQ: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(3,current,PSDref,PSD90,AICH2,trigger,(opt)taufactor,(opt)endadj)
+        PSD: (time,current,AICH2,Cap,Cond) = CapEngine(1)
+        SQCF: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(2,(opt)taufactor,(opt)endadj)
+        SqQ: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(3,(opt)taufactor,(opt)endadj)
         '''
         pass #TODO
 
@@ -457,8 +462,21 @@ class MainWindow(QtWidgets.QMainWindow):
             self.slider2v2p = round(value*self.rSR)
             self.text_slider2.setText(str(value))
         #TODO - remaining display control code
-        #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback        
-            
+        #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback
+    
+    def Set_PSD_Callback(self):
+        pass #TODO
+
+    def PhaseShift_Callback(self):
+        pass #TODO
+    
+    def PSDadd90_Callback(self):
+        pass #TODO
+
+    def AutoPhase_Callback(self):
+        pass #TODO
+
+
            
 
     

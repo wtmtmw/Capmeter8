@@ -105,6 +105,9 @@
       <height>111</height>
      </rect>
     </property>
+    <property name="toolTip">
+     <string>Y-axis adjustment panel</string>
+    </property>
     <property name="frameShape">
      <enum>QFrame::Panel</enum>
     </property>
@@ -356,7 +359,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -394,7 +397,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>700</x>
@@ -431,6 +434,154 @@
       </widget>
      </item>
     </layout>
+   </widget>
+   <widget class="QFrame" name="frame">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>780</y>
+      <width>191</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Lock-in amplifier panel</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Panel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QWidget" name="layoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>171</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="2">
+       <widget class="QLineEdit" name="PSD_phase">
+        <property name="toolTip">
+         <string>phase, in degree</string>
+        </property>
+        <property name="text">
+         <string>0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="Phase_Shift">
+        <property name="toolTip">
+         <string>offline phase shift, in degree</string>
+        </property>
+        <property name="text">
+         <string>0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QPushButton" name="Set_PSD">
+        <property name="toolTip">
+         <string>set phase or amplitude</string>
+        </property>
+        <property name="text">
+         <string>Set</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLineEdit" name="PSD_freq">
+        <property name="toolTip">
+         <string>frequency, in kHz</string>
+        </property>
+        <property name="text">
+         <string>0.5</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QPushButton" name="PhaseShift">
+        <property name="toolTip">
+         <string>adjust phase angle offline</string>
+        </property>
+        <property name="text">
+         <string>Shift</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="4">
+       <widget class="QSlider" name="PSD_slider">
+        <property name="toolTip">
+         <string>adjust PSD phase angle</string>
+        </property>
+        <property name="minimum">
+         <number>-180</number>
+        </property>
+        <property name="maximum">
+         <number>180</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::TicksAbove</enum>
+        </property>
+        <property name="tickInterval">
+         <number>30</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QPushButton" name="PSDadd90">
+        <property name="toolTip">
+         <string>+90 degree</string>
+        </property>
+        <property name="text">
+         <string>+90</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="PSD_amp">
+        <property name="toolTip">
+         <string>pk-pk, will be converted to board output</string>
+        </property>
+        <property name="text">
+         <string>20</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QPushButton" name="AutoPhase">
+        <property name="toolTip">
+         <string>click,change Cap,then click again</string>
+        </property>
+        <property name="text">
+         <string>PAdj</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -473,7 +624,7 @@
  <connections>
   <connection>
    <sender>ylim1</sender>
-   <signal>returnPressed()</signal>
+   <signal>textChanged(QString)</signal>
    <receiver>Set_ylim</receiver>
    <slot>click()</slot>
    <hints>
@@ -482,24 +633,88 @@
      <y>777</y>
     </hint>
     <hint type="destinationlabel">
-     <x>624</x>
-     <y>782</y>
+     <x>649</x>
+     <y>791</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>ylim2</sender>
-   <signal>returnPressed()</signal>
+   <signal>textChanged(QString)</signal>
    <receiver>Set_ylim</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>540</x>
-     <y>773</y>
+     <x>576</x>
+     <y>790</y>
     </hint>
     <hint type="destinationlabel">
-     <x>622</x>
-     <y>778</y>
+     <x>649</x>
+     <y>791</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>PSD_phase</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>Set_PSD</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>486</x>
+     <y>910</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>529</x>
+     <y>911</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>PSD_amp</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>Set_PSD</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>442</x>
+     <y>910</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>529</x>
+     <y>911</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>PSD_freq</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>Set_PSD</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>373</x>
+     <y>910</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>529</x>
+     <y>911</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Phase_Shift</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>PhaseShift</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>387</x>
+     <y>869</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>417</x>
+     <y>869</y>
     </hint>
    </hints>
   </connection>
