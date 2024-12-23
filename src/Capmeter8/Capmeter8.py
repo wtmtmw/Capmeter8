@@ -466,7 +466,9 @@ class MainWindow(QtWidgets.QMainWindow):
         #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback
     
     def Set_PSD_Callback(self):
-        pass #TODO
+        if not self.Start_Stop.isChecked():
+            return #only continue if the program is running
+        #TODO
 
     def PhaseShift_Callback(self):
         pass #TODO
