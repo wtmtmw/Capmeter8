@@ -83,6 +83,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Pulsedata = [] # AO1 output array, has been converted to actual Vcmd
         self.Pulselog = []
         #self.rxr = []; %fragments of real-time raw data
+        # TODO - change hanhdles.Cm to self.algorithm, handles.algorithm to self.algorithm.value()
         #TODO - self.algorism = get(self.Cm,'Value'); %1:PSD;2:I-SQA;3:Q-SQA
         #TODO - self.autofp = get(self.Auto_FP,'Value'); %for @SqAlgo
         self.autofreq = 0 #for @SqAlgo
