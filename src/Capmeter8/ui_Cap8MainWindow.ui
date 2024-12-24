@@ -583,6 +583,45 @@
      </layout>
     </widget>
    </widget>
+   <widget class="QComboBox" name="algorithm">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>780</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>SQA: if Gain=1,C:10pF/1,G:1nS/1,Ra:1MOhm/1; press 't' to show tau on top window</string>
+    </property>
+    <property name="currentIndex">
+     <number>1</number>
+    </property>
+    <property name="frame">
+     <bool>true</bool>
+    </property>
+    <item>
+     <property name="text">
+      <string>HW</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>PSD</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>I-SQA</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Q-SQA</string>
+     </property>
+    </item>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
