@@ -219,6 +219,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.PSDadd90.clicked.connect(self.PSDadd90_Callback)
         self.AutoPhase.clicked.connect(self.AutoPhase_Callback)
         self.PSD_slider.clicked.connect(self.PSD_slider_Callback)
+        self.algorithm.currentIndexChanged.connect(self.algorithm_Callback)
+        self.Auto_FP.stateChenged.connect(self.Auto_FP_Callback)
 
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.slider2.valueChanged.connect(self.slider_Callback)
@@ -481,6 +483,12 @@ class MainWindow(QtWidgets.QMainWindow):
         pass #TODO
 
     def PSD_slider_Callback(self):
+        pass #TODO
+
+    def algorithm_Callback(self,index):
+        pass #TODO
+
+    def Auto_FP_Callback(self,index):
         pass #TODO
 
 
