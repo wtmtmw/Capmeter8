@@ -96,29 +96,137 @@
      </property>
     </widget>
    </widget>
-   <widget class="QFrame" name="panel_axislim">
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>670</y>
+      <width>84</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLineEdit" name="RecordSampleRate">
+       <property name="toolTip">
+        <string>recording sample rate</string>
+       </property>
+       <property name="text">
+        <string>20</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="text_RSR">
+       <property name="text">
+        <string>Hz</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>630</y>
+      <width>441</width>
+      <height>34</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QSlider" name="slider1">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksAbove</enum>
+       </property>
+       <property name="tickInterval">
+        <number>10</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="text_slider1">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>0</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>700</x>
+      <y>920</y>
+      <width>311</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QSlider" name="slider2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksAbove</enum>
+       </property>
+       <property name="tickInterval">
+        <number>10</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="text_slider2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>0</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QGroupBox" name="panel_axislim">
     <property name="geometry">
      <rect>
       <x>350</x>
       <y>660</y>
       <width>311</width>
-      <height>111</height>
+      <height>121</height>
      </rect>
     </property>
     <property name="toolTip">
      <string>Y-axis adjustment panel</string>
     </property>
-    <property name="frameShape">
-     <enum>QFrame::Panel</enum>
+    <property name="title">
+     <string>Y-axes</string>
     </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
+    <property name="checkable">
+     <bool>false</bool>
     </property>
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>10</y>
+       <y>20</y>
        <width>291</width>
        <height>91</height>
       </rect>
@@ -272,19 +380,6 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="2" colspan="2">
-       <widget class="QLineEdit" name="ylim1">
-        <property name="toolTip">
-         <string>desired axis min</string>
-        </property>
-        <property name="text">
-         <string>-1</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="4" colspan="2">
        <widget class="QLineEdit" name="ylim2">
         <property name="toolTip">
@@ -324,140 +419,42 @@
         </property>
        </widget>
       </item>
+      <item row="2" column="2" colspan="2">
+       <widget class="QLineEdit" name="ylim1">
+        <property name="toolTip">
+         <string>desired axis min</string>
+        </property>
+        <property name="text">
+         <string>-1</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>670</y>
-      <width>84</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLineEdit" name="RecordSampleRate">
-       <property name="toolTip">
-        <string>recording sample rate</string>
-       </property>
-       <property name="text">
-        <string>20</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="text_RSR">
-       <property name="text">
-        <string>Hz</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>630</y>
-      <width>441</width>
-      <height>34</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QSlider" name="slider1">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::TicksAbove</enum>
-       </property>
-       <property name="tickInterval">
-        <number>10</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="text_slider1">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>0</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>700</x>
-      <y>920</y>
-      <width>311</width>
-      <height>29</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
-     <item>
-      <widget class="QSlider" name="slider2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::TicksAbove</enum>
-       </property>
-       <property name="tickInterval">
-        <number>10</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="text_slider2">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>0</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QFrame" name="frame">
+   <widget class="QGroupBox" name="panel_PSD">
     <property name="geometry">
      <rect>
       <x>350</x>
       <y>780</y>
       <width>191</width>
-      <height>111</height>
+      <height>121</height>
      </rect>
     </property>
     <property name="toolTip">
      <string>Lock-in amplifier panel</string>
     </property>
-    <property name="frameShape">
-     <enum>QFrame::Panel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
+    <property name="title">
+     <string>Lock-in amplifier</string>
     </property>
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>10</y>
+       <y>20</y>
        <width>171</width>
        <height>91</height>
       </rect>
@@ -583,44 +580,73 @@
      </layout>
     </widget>
    </widget>
-   <widget class="QComboBox" name="algorithm">
+   <widget class="QGroupBox" name="panel_algorithm">
     <property name="geometry">
      <rect>
-      <x>270</x>
+      <x>260</x>
       <y>780</y>
-      <width>61</width>
-      <height>22</height>
+      <width>81</width>
+      <height>71</height>
      </rect>
     </property>
-    <property name="toolTip">
-     <string>SQA: if Gain=1,C:10pF/1,G:1nS/1,Ra:1MOhm/1; press 't' to show tau on top window</string>
+    <property name="title">
+     <string>Algorithm</string>
     </property>
-    <property name="currentIndex">
-     <number>1</number>
-    </property>
-    <property name="frame">
-     <bool>true</bool>
-    </property>
-    <item>
-     <property name="text">
-      <string>HW</string>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>61</width>
+       <height>41</height>
+      </rect>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>PSD</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>I-SQA</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Q-SQA</string>
-     </property>
-    </item>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QComboBox" name="algorithm">
+        <property name="toolTip">
+         <string>SQA: if Gain=1,C:10pF/1,G:1nS/1,Ra:1MOhm/1; press 't' to show tau on top window</string>
+        </property>
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <property name="frame">
+         <bool>true</bool>
+        </property>
+        <item>
+         <property name="text">
+          <string>Hardware</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>PSD</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>I-SQA</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Q-SQA</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="Auto_FP">
+        <property name="toolTip">
+         <string>SQA auto-freq/fitting range</string>
+        </property>
+        <property name="text">
+         <string>Auto Hz</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -668,8 +694,8 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>484</x>
-     <y>777</y>
+     <x>502</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>649</x>
