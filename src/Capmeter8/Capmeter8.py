@@ -63,9 +63,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.text_slider2.setText(f'{self.slider2.value():.0f}')
         #TODO - implement the followings
         # handles.fswitch = get(handles.FilterSwitch,'Value')-1;
-        # handles.shiftvalue = str2double(get(handles.Phase_Shift,'String')); %offline phase-shift value, in degree
-        # handles.shiftswitch = -1; %0:Csqa, 1:Gs qa, -1:G and C for cross correlation
-        # handles.Stdfactor = []; %convert volt to fF
+        self.shiftvalue = float(self.Phase_Shift.text())
+        self.shiftswitch = -1 #0:Csqa, 1:Gs qa, -1:G and C for cross correlation
+        self.Stdfactor = [] #convert volt to fF
 
         #TODO - other display-related settings
 
@@ -83,17 +83,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Pulsedata = [] # AO1 output array, has been converted to actual Vcmd
         self.Pulselog = []
         #self.rxr = []; %fragments of real-time raw data
-        # TODO - change hanhdles.Cm to self.algorithm, handles.algorithm to self.algorithm.value()
-        #TODO - self.algorism = get(self.Cm,'Value'); %1:PSD;2:I-SQA;3:Q-SQA
-        #TODO - self.autofp = get(self.Auto_FP,'Value'); %for @SqAlgo
-        self.autofreq = 0 #for @SqAlgo
-        self.autorange = 0 #for @SqAlgo
-        #TODO - self.PSDfreq = str2double(get(self.PSD_freq,'String')); 
+        # Note - self.Cm.currentIndex() - 0:Hardware; 1:PSD; 2:I-SQA; 3:Q-SQA
+        # Note - self.algorithm = self.Cm.currentIndex()
+
+        self.autofp = self.Auto_FP.isChecked() #for @SqAlgo
+        self.autofreq = False #for @SqAlgo
+        self.autorange = False #for @SqAlgo
+        self.PSDfreq = float(self.PSD_freq.text()) 
         self.PSDamp = [] #make it empty in order to enter the 'if' codes in @Set_PSD_Callback
-        #TODO - self.PSDphase = str2double(get(self.PSD_phase,'String')); %degree
+        self.PSDphase = float(self.PSD_phasetext()) #degree
         self.PSDlog = [] #[time,kHz,mV,degree]
-        #TODO - self.PSDwaveindex = get(self.PSD_waveindex,'Value'); %1 for sine wave, 0 for square/triangular wave
-        #self.triggervalue = 1; %for v2; fixed 1 volt trigger value
+        #Remove - self.PSDwaveindex = get(self.PSD_waveindex,'Value'); %1 for sine wave, 0 for square/triangular wave
         self.P1 = []
         self.P2 = [] #P1 and P2 are used in @AutoPhase
         self.PSDref = []
@@ -135,7 +135,7 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         Set up C functions
         '''
-        self.lib = ctypes.CDLL('.\caplib.dll')
+        self.lib = ctypes.CDLL(str(Path(self.appdir,'caplib.dll')))
         self.lib.Dfilter.restype = None
         self.lib.Dfilter.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
         self.lib.PSD.restype = None
@@ -218,9 +218,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.PhaseShift.clicked.connect(self.PhaseShift_Callback)
         self.PSDadd90.clicked.connect(self.PSDadd90_Callback)
         self.AutoPhase.clicked.connect(self.AutoPhase_Callback)
-        self.PSD_slider.clicked.connect(self.PSD_slider_Callback)
-        self.algorithm.currentIndexChanged.connect(self.algorithm_Callback)
-        self.Auto_FP.stateChenged.connect(self.Auto_FP_Callback)
+        self.PSD_slider.valueChanged.connect(self.PSD_slider_Callback)
+        self.Cm.currentIndexChanged.connect(self.Cm_Callback)
+        self.Auto_FP.stateChanged.connect(self.Auto_FP_Callback)
 
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.slider2.valueChanged.connect(self.slider_Callback)
@@ -283,7 +283,31 @@ class MainWindow(QtWidgets.QMainWindow):
             getAll = False
         else:
             getAll = args[0]
-        #TODO - 12/11/2024
+        
+        # extract data
+        if getAll: #will be used in Pulse_Callback
+            self.timebuffer, self.databuffer = self.daq.ai.getdata() #process all remaining data
+        else:
+            self.timebuffer, self.databuffer = self.daq.ai.getdata(self.SpmCount)
+
+        # process data
+        if self.algorithm >= 2: #SQA
+            if self.autofp and self.autorange: #auto-range
+                if self.algorithm == 2: #I-SQA
+                    pass
+                else: #Q-SQA, different taufactor/consecpt
+                    pass
+            else: #no auto-range
+                pass
+            #TODO
+        elif self.algorithm == 1: #PSD
+            #TODO
+            pass
+        else: #Hardware
+            #TODO
+            pass
+
+        #TODO - stopped 1/1/2025
 
     def CapEngine(self,algorithm,taufactor = None, endadj = None):
         '''
@@ -366,7 +390,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # set(hObject,'String','Waiting');
             # set(hObject,'ForegroundColor',[1 0.6 0]);
     
-            #TODO - 12/9/2024
+            #TODO - stopped 12/9/2024
             self.Start_Stop.setText('Started')
             self.Start_Stop.setStyleSheet('color:green')
             self.disptimer.start()
@@ -485,11 +509,21 @@ class MainWindow(QtWidgets.QMainWindow):
     def PSD_slider_Callback(self):
         pass #TODO
 
-    def algorithm_Callback(self,index):
-        pass #TODO
+    def Cm_Callback(self,index):
+        '''
+        index 0:Hardware, 1:PSD, 2:I-SQA, 3:Q-SQA
+        '''
+        #print(index)
+        self.algorithm = index
+        #TODO - full implementation
 
     def Auto_FP_Callback(self,index):
-        pass #TODO
+        '''
+        index 0:unchecked, 1:partially checked (not allowed here),2:checked
+        '''
+        self.autofp = True if index > 1 else False
+        #print(index)
+        #TODO - full implementation
 
 
            
