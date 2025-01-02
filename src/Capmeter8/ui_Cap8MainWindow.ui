@@ -592,7 +592,7 @@
     <property name="title">
      <string>Algorithm</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -603,7 +603,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QComboBox" name="algorithm">
+       <widget class="QComboBox" name="Cm">
         <property name="toolTip">
          <string>SQA: if Gain=1,C:10pF/1,G:1nS/1,Ra:1MOhm/1; press 't' to show tau on top window</string>
         </property>
