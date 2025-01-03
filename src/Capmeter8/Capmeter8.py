@@ -294,12 +294,14 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.algorithm >= 2: #SQA
             if self.autofp and self.autorange: #auto-range
                 if self.algorithm == 2: #I-SQA
-                    pass
+                    Time,Curr,AICh2,PSD2,PSD1,asymp,peak,tau = self.CapEngine(2,taufactor = 3, endadj = -5)
                 else: #Q-SQA, different taufactor/consecpt
-                    pass
+                    Time,Curr,AICh2,PSD2,PSD1,asymp,peak,tau = self.CapEngine(3,taufactor = 1, endadj = -5)
             else: #no auto-range
-                pass
-            #TODO
+                Time,Curr,AICh2,PSD2,PSD1,asymp,peak,tau = self.CapEngine(self.algorithm)
+            #TODO - translate the following
+            # [Cap Cond Ra] = SqAlgo(asymp,peak,tau,FH);
+            # handles.PSDofSQA = cat(1,handles.PSDofSQA,[PSD2 PSD1])
         elif self.algorithm == 1: #PSD
             #TODO
             pass
@@ -307,11 +309,10 @@ class MainWindow(QtWidgets.QMainWindow):
             #TODO
             pass
 
-        #TODO - stopped 1/1/2025
+        #TODO - stopped 1/2/2025
 
     def CapEngine(self,algorithm,taufactor = None, endadj = None):
         '''
-        Time: 
         PSD: (time,current,AICH2,Cap,Cond) = CapEngine(1)
         SQCF: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(2,(opt)taufactor,(opt)endadj)
         SqQ: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(3,(opt)taufactor,(opt)endadj)
