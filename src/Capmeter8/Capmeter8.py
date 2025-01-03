@@ -303,11 +303,13 @@ class MainWindow(QtWidgets.QMainWindow):
             # [Cap Cond Ra] = SqAlgo(asymp,peak,tau,FH);
             # handles.PSDofSQA = cat(1,handles.PSDofSQA,[PSD2 PSD1])
         elif self.algorithm == 1: #PSD
-            #TODO
-            pass
+            Time,Curr,AICh2,Cap,Cond = self.CapEngine(1)
+            Ra = np.zeros_like(Time)
         else: #Hardware
             #TODO
             pass
+        self.aitime = np.concatenate((self.aitime,Time))
+        self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr,AICh2,Ra)))
 
         #TODO - stopped 1/2/2025
 
