@@ -75,7 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.disptimer = QtCore.QTimer() #connected to update_plot()
         self.disptimer.setInterval(1000) #in ms
         self.rSR = abs(float(self.RecordSampleRate.text()))
-        self.aidata = []
+        self.aidata = [] # M-by-Timepoint matrix, where M is the number of parameters/channels
         self.aidata2 = [] # Kseal adjusted data
         self.aodata = []
         self.aitime = []
@@ -306,18 +306,26 @@ class MainWindow(QtWidgets.QMainWindow):
             Time,Curr,AICh2,Cap,Cond = self.CapEngine(1)
             Ra = np.zeros_like(Time)
         else: #Hardware
-            #TODO
-            pass
+            Time,Cap,Cond,Curr = self.CapEngine(0)
         self.aitime = np.concatenate((self.aitime,Time))
-        self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr,AICh2,Ra)))
+        if self.algorithm == 0:
+            self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr)))
+        else:
+            self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr,AICh2,Ra)))
 
-        #TODO - stopped 1/2/2025
+        #TODO - stopped 1/3/2025
 
-    def CapEngine(self,algorithm,taufactor = None, endadj = None):
+    def CapEngine(self,algorithm,taufactor = -1, endadj = 0):
         '''
-        PSD: (time,current,AICH2,Cap,Cond) = CapEngine(1)
-        SQCF: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(2,(opt)taufactor,(opt)endadj)
-        SqQ: (time,current,AICH2,PSD90,PSD,asymp,peak,tau) = CapEngine(3,(opt)taufactor,(opt)endadj)
+        Hardware: (time,Cap/AICh0,Cond/AICh1,Curr/AICh2) = CapEngine(0)
+        PSD: (time,current,AICh2,Cap,Cond) = CapEngine(1)
+        SQCF: (time,current,AICh2,PSD90,PSD,asymp,peak,tau) = CapEngine(2,(opt)taufactor,(opt)endadj)
+        SqQ: (time,current,AICh2,PSD90,PSD,asymp,peak,tau) = CapEngine(3,(opt)taufactor,(opt)endadj)
+
+        for SQCF and SqQ - 
+        * taufactor and endadj are used for adjusting curve-fitting range (i.e. from lastmax to firstmin in the DLL)
+        * if taufactor < 0 -> no adjustment; else: taufactor = 1/exp(taufactor) and pass to the DLL
+        * firstmin = Cpickend2(dataB, SPC, lastmax, taufactor) + endadj; in the DLL
         '''
         pass #TODO
 
@@ -518,6 +526,7 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         #print(index)
         self.algorithm = index
+        #TODO - prohibit transition from Hardware to any other algorithms or vice versa during acquisition
         #TODO - full implementation
 
     def Auto_FP_Callback(self,index):
