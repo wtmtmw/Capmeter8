@@ -91,21 +91,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.autorange = False #for @SqAlgo
         self.PSDfreq = float(self.PSD_freq.text()) 
         self.PSDamp = [] #make it empty in order to enter the 'if' codes in @Set_PSD_Callback
-        self.PSDphase = float(self.PSD_phasetext()) #degree
+        self.PSDphase = float(self.PSD_phase.text()) #degree
         self.PSDlog = [] #[time,kHz,mV,degree]
         #Remove - self.PSDwaveindex = get(self.PSD_waveindex,'Value'); %1 for sine wave, 0 for square/triangular wave
         self.P1 = []
         self.P2 = [] #P1 and P2 are used in @AutoPhase
         self.PSDref = []
         self.PSD90 = []
-        #TODO - implement the followings
-        # self.fcheck(1,1) = get(self.FilterCheck1,'Value');
-        # self.fcheck(1,2) = get(self.FilterCheck2,'Value');
-        # self.fcheck(1,3) = get(self.FilterCheck3,'Value');
-        # self.fcheck(1,4) = get(self.FilterCheck4,'Value');
-        # self.fcheck(1,5) = 1; %Ch5 is the access conductance
-        # self.fwindow = abs(round(str2double(get(self.filterset2,'String')))); %running average samples, for Ch1 and Ch2
+        # Note - revamp fcheck structure
+        self.fcheck = {'rf0':True, 'rf1':True, 'rf2':True,
+                       'mf0':False,'mf1':False,'mf2':False,'mf3':False,'mf4':False}
+        for key,value in self.fcheck.items():
+            exec(f'self.{key}.setChecked({value})')
+        self.fwindow = abs(int(self.filterset2.text())) #samples for the moving filter
 
+        #TODO - implement the followings
         # self.saveraw = 0; %save raw data or not
         # self.rxrindex = get(self.RXR,'Value'); %export raw data in real time
 
@@ -180,7 +180,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #TODO - remove sliderv2p in future release
         self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
         self.slider2v2p = round(self.slider2.value()*self.rSR) #for @update_plot, @slider2_Callback
-        #TODO - handles.filterv2p = round((str2double(get(handles.filterset,'String'))/1000)*Cap7_state.daq.aiSR); %points to be averaged
+        self.filterv2p = round((float(self.filterset.text())/1000)*self.daq.ai.sampleRate) #points to be averaged
         
         self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
         self.databuffer = [] # for @process_data
@@ -221,6 +221,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.PSD_slider.valueChanged.connect(self.PSD_slider_Callback)
         self.Cm.currentIndexChanged.connect(self.Cm_Callback)
         self.Auto_FP.stateChanged.connect(self.Auto_FP_Callback)
+
+        for key in self.fcheck.keys():
+            exec(f'self.{key}.stateChanged.connect(self.FilterCheck_Callback)')
 
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.slider2.valueChanged.connect(self.slider_Callback)
@@ -351,30 +354,29 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.rSR = 5
                 self.RecordSampleRate.setText(str(self.rSR))
             self.PSDamp = [] #make it empty in order to enter the 'if' codes in @Set_PSD_Callback
-            #TODO - translate below
-            # handles.PSDfreq = str2double(get(handles.PSD_freq,'String')); %kHz
-            # handles.PSDphase = str2double(get(handles.PSD_phase,'String')); %degree
+            self.PSDfreq = float(self.PSD_freq.text()) #kHz
+            self.PSDphase = float(self.PSD_phase.text()) #degree
 
             # adjust AI properties
             self.daq.ai.samplesPerTrig = int(((1/self.rSR)*0.9)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
             self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
             self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
             self.daq.ai.trigFcn = (self.AIwaiting,)
+            
+            self.filterv2p = round((float(self.filterset.text())/1000)*self.daq.ai.sampleRate) #points to be averaged
+            self.fwindow = abs(int(self.filterset2.text())) #samples for the moving filter
+            filtermaxp = self.daq.ai.samplesPerTrig #calculate maximal averaging points
+            if self.filterv2p > filtermaxp:
+                self.filterv2p = filtermaxp
+                self.filterset.setText(str(1000*filtermaxp/self.daq.ai.sampleRate))
+            elif self.filterv2p < 1:
+                self.filterv2p = 1
+                self.filterset.setText(str(1/self.daq.ai.sampleRate))
+            if self.fwindow == 0:
+                self.fwindow = 1
+                self.filterset2.setText('1')
+
             #TODO - translate below
-            # self.filterv2p = round(abs((str2double(get(self.filterset,'String'))/1000)*Cap7_state.daq.aiSR));
-            # self.fwindow = abs(round(str2double(get(self.filterset2,'String')))); %running average samples, for Ch1 and Ch2
-            # filtermaxp = handles.aiSamplesPerTrigger; %calculate maximal averaging points
-            # if handles.filterv2p > filtermaxp;
-            #     handles.filterv2p = filtermaxp;
-            #     set(handles.filterset,'String',num2str(1000*filtermaxp/Cap7_state.daq.aiSR));
-            # elseif handles.filterv2p < 1
-            #     handles.filterv2p = 1;
-            #     set(handles.filterset,'String',num2str(1/Cap7_state.daq.aiSR));
-            # end
-            # if handles.fwindow == 0
-            #     handles.fwindow = 1;
-            #     set(handles.filterset2,'String','1');
-            # end
             # if strcmpi(get(hObject,'HitTest'),'off') %return if data processing is in progress
             #     set(hObject,'Value',0);
             #     return
@@ -536,6 +538,26 @@ class MainWindow(QtWidgets.QMainWindow):
         self.autofp = True if index > 1 else False
         #print(index)
         #TODO - full implementation
+
+    def FilterCheck_Callback(self):
+        '''
+        objectName:
+        prefilter - rf0, 1, 2
+        moving filter - mf0, 1, 2, 3, 4
+        '''
+        self.fcheck[self.sender().objectName()] = self.sender().isChecked()
+
+    def Set_filter_Callback(self):
+        filtermaxp = self.aiSamplesPerTrigger #calculate maximal averaging points
+        filterp = round(abs(float(self.filterset.text())/1000)*self.daq.ai.sampleRate)
+        #TODO - stopped 1/3/2025
+        #TODO - translate the following
+        # handles.filterv2p = FilterCalc(filterp,filtermaxp,Cap7_state.daq.aiSR,handles.PSDfreq);
+        # if (handles.filterv2p == 1)
+        #     set(handles.filterset,'String','0');
+        # else
+        #     set(handles.filterset,'String',num2str(1000*handles.filterv2p/Cap7_state.daq.aiSR));
+        # end
 
 
            
