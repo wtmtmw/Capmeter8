@@ -62,7 +62,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.slider2.setMaximum(self.disp.slider2range)
         self.text_slider2.setText(f'{self.slider2.value():.0f}')
         #TODO - implement the followings
-        # handles.fswitch = get(handles.FilterSwitch,'Value')-1;
+        self.fswitch = self.FilterSwitch.currentIndex()
         self.shiftvalue = float(self.Phase_Shift.text())
         self.shiftswitch = -1 #0:Csqa, 1:Gs qa, -1:G and C for cross correlation
         self.Stdfactor = [] #convert volt to fF
@@ -224,6 +224,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         for key in self.fcheck.keys():
             exec(f'self.{key}.stateChanged.connect(self.FilterCheck_Callback)')
+        self.Set_filter.clicked.connect(self.Set_filter_Callback)
+        self.Set_filter2.clicked.connect(self.Set_filter2_Callback)
+        self.FilterSwitch.currentIndexChanged.connect(self.FilterSwitch_Callback)
 
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.slider2.valueChanged.connect(self.slider_Callback)
@@ -316,7 +319,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr,AICh2,Ra)))
 
-        #TODO - stopped 1/3/2025
+        #TODO - paused 1/3/2025
 
     def CapEngine(self,algorithm,taufactor = -1, endadj = 0):
         '''
@@ -330,10 +333,22 @@ class MainWindow(QtWidgets.QMainWindow):
         * if taufactor < 0 -> no adjustment; else: taufactor = 1/exp(taufactor) and pass to the DLL
         * firstmin = Cpickend2(dataB, SPC, lastmax, taufactor) + endadj; in the DLL
         '''
-        pass #TODO
+        pass #TODO - paused 1/5/2025
 
     def AIwaiting(self):
         pass #TODO
+
+    def FilterCalc(self,filterp,filtermaxp):
+        ppw = self.daq.ai.sampleRate/self.PSDfreq/1000 #points per wave
+        if (ppw > filtermaxp):
+            filterv2p = 1
+        else:
+            filterv2p = round(round(filterp/ppw)*ppw)
+            if filterv2p > filtermaxp:
+                filterv2p = round(int(filtermaxp/ppw)*ppw)
+            elif filterv2p < ppw:
+                filterv2p = round(ppw)
+        return filterv2p
     
     #%% Callbacks -------------------------------------------------------
     def Start_Stop_Callback(self):
@@ -403,7 +418,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # set(hObject,'String','Waiting');
             # set(hObject,'ForegroundColor',[1 0.6 0]);
     
-            #TODO - stopped 12/9/2024
+            #TODO - paused 12/9/2024
             self.Start_Stop.setText('Started')
             self.Start_Stop.setStyleSheet('color:green')
             self.disptimer.start()
@@ -550,18 +565,31 @@ class MainWindow(QtWidgets.QMainWindow):
     def Set_filter_Callback(self):
         filtermaxp = self.aiSamplesPerTrigger #calculate maximal averaging points
         filterp = round(abs(float(self.filterset.text())/1000)*self.daq.ai.sampleRate)
-        #TODO - stopped 1/3/2025
+        self.filterv2p = self.FilterCalc(filterp,filtermaxp)
+        if (self.filterv2p == 1):
+            self.filterset.setText('0')
+        else:
+            self.filterset.setText(str(1000*self.filterv2p/self.daq.ai.sampleRate))
+
+    def Set_filter2_Callback(self):
+        self.fwindow = abs(round(float(self.filterset2.text())))
+        if self.fwindow == 0:
+            self.fwindow = 1
+            self.filterset2.setText('1')
         #TODO - translate the following
-        # handles.filterv2p = FilterCalc(filterp,filtermaxp,Cap7_state.daq.aiSR,handles.PSDfreq);
-        # if (handles.filterv2p == 1)
-        #     set(handles.filterset,'String','0');
-        # else
-        #     set(handles.filterset,'String',num2str(1000*handles.filterv2p/Cap7_state.daq.aiSR));
+        # if strcmpi(handles.ai.running,'off')
+        #     Show_update_Callback(hObject, eventdata, handles);
         # end
-
-
-           
-
+    
+    def FilterSwitch_Callback(self,index):
+        '''
+        0:Bypass; 1:Mean; 2:Median
+        '''
+        self.fswitch = index
+        #TODO - translate the following
+        # if strcmpi(handles.ai.running,'off')
+        #     Show_update_Callback(hObject, eventdata, handles);
+        # end
     
 
 #%% -------------------------------------------------------
