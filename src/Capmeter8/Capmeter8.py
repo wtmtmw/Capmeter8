@@ -4,6 +4,7 @@ import sys, traceback, ctypes
 import pyqtgraph as pg
 from pathlib import Path
 import numpy as np
+from time import sleep
 from random import randint
 from daqx.util import createDevice
 
@@ -333,10 +334,16 @@ class MainWindow(QtWidgets.QMainWindow):
         * if taufactor < 0 -> no adjustment; else: taufactor = 1/exp(taufactor) and pass to the DLL
         * firstmin = Cpickend2(dataB, SPC, lastmax, taufactor) + endadj; in the DLL
         '''
+        #Mref = len(self.PSDref)
         pass #TODO - paused 1/5/2025
 
     def AIwaiting(self):
-        pass #TODO
+        '''
+        aiTriggerFcn for Start_Stop button
+        '''
+        self.daq.ai.trigFcn = None
+        self.Start_Stop.setText('Started')
+        self.Start_Stop.setStyleSheet('color:green')
 
     def FilterCalc(self,filterp,filtermaxp):
         ppw = self.daq.ai.sampleRate/self.PSDfreq/1000 #points per wave
@@ -415,17 +422,71 @@ class MainWindow(QtWidgets.QMainWindow):
             # delete(findobj('parent',handles.axes2,'Type','text'));
             # set(handles.group_stop(1,:),'Enable','off');
             # set(handles.group_start(1,:),'Enable','on');
-            # set(hObject,'String','Waiting');
-            # set(hObject,'ForegroundColor',[1 0.6 0]);
-    
-            #TODO - paused 12/9/2024
-            self.Start_Stop.setText('Started')
-            self.Start_Stop.setStyleSheet('color:green')
-            self.disptimer.start()
+            self.Start_Stop.setText('Waiting')
+            self.Start_Stop.setStyleSheet('color:rgb(225,135,0)')
+
+            #adjust AO property
+            if self.daq.ao.isrunning:
+                self.daq.ao.stop()
+            
+            self.daq.ao.stop() #might be started again @resume
+            sleep(0.003)
+            #TODO - translate below
+            # if strcmpi(get(handles.context_TTL,'Checked'),'off')
+            #     set(handles.ao,'TriggerType','Immediate');
+            # else
+            #     set(handles.ao,'TriggerType','HwDigital');
+            #     set(handles.ao,'HwDigitalTriggerSource','PFI0');
+            #     %set(handles.ao,'TriggerFcn',{@AIwaiting,gcf});
+            # end
+
+            self.daq.ai.start()
+            self.Set_PSD_Callback()
+            #TODO - translate below
+            # if (handles.algorism ~= 1)&&(~handles.menuindex(1,1))
+            #     MenuSwitcher(gcf,1); %for SQA
+            # elseif (handles.algorism == 1)&&(handles.menuindex(1,1))
+            #     MenuSwitcher(gcf,0); %for PSD
+            # end
+            #self.disptimer.start()
         else: #stop
+            self.daq.ai.stop()
+            self.daq.ao.stop()
             self.Start_Stop.setText('Stopped')
             self.Start_Stop.setStyleSheet('color:red')
-            self.disptimer.stop()
+            if self.AutoPhase.isChecked():
+                self.AutoPhase.setText('PAdj')
+                self.AutoPhase.setChecked(False)
+            self.daq.ao.putvalue([0,0])
+            #TODO - translate below
+            # if ~isempty(handles.rxr) %TW150503: added back
+            #     assignin('base','rxr',handles.rxr);
+            # end
+            # if ~isempty(Cap7_state.pulse.data)
+            #     assignin('base','Pulses',Cap7_state.pulse.data);
+            # end
+            # assignin('base','PSDlog',handles.PSDlog); %TW150503: added back
+            # assignin('base','Pulselog',handles.Pulselog); %TW150503: added back
+            # set(handles.group_filter(1,:),'Enable','off');
+            # set(handles.group_filter(1,:),'Enable','on');
+            # set(handles.group_stop(1,:),'Enable','on');
+            # set(handles.group_start(1,:),'Enable','off');
+            # set(handles.Start_Stop,'HitTest','on');
+            self.aodata = [0,0]
+            # handles.aidata2 = handles.aidata; %for Kseal adjusted data; %TW141013
+            # guidata(handles.figure1,handles);
+            # Cap7_state.changed = true;
+            # ChangedOrSaved(handles.figure1);
+            # %assignin('base','aodata',handles.aodata);
+            if not self.aitime:
+                return
+            else:
+                pass
+                #TODO - translate below
+                # edit_Kseal_Callback(handles.edit_Kseal, eventdata, guidata(gcf)); %TW141015
+                # %Show_update_Callback(hObject, eventdata, handles); %will be evoked in
+                # %edit_Kseal_Callback %TW141023
+            #self.disptimer.stop()
 
     def AxesSwitch_Callback(self):
         self.limsetindex[0] = self.AxesSwitch.currentIndex()
@@ -523,7 +584,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def Set_PSD_Callback(self):
         if not self.Start_Stop.isChecked():
             return #only continue if the program is running
-        #TODO
+        #TODO - paused 1/6/2025
 
     def PhaseShift_Callback(self):
         pass #TODO
