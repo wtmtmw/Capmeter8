@@ -345,6 +345,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Start_Stop.setText('Started')
         self.Start_Stop.setStyleSheet('color:green')
 
+    def resume(self):
+        '''
+        aoStopFcn for Pulse
+        '''
+        raise NotImplementedError
+
     def FilterCalc(self,filterp,filtermaxp):
         ppw = self.daq.ai.sampleRate/self.PSDfreq/1000 #points per wave
         if (ppw > filtermaxp):
@@ -356,6 +362,12 @@ class MainWindow(QtWidgets.QMainWindow):
             elif filterv2p < ppw:
                 filterv2p = round(ppw)
         return filterv2p
+
+    def Refcalc(self):
+        raise NotImplementedError
+
+    def Wavecalc(self):
+        raise NotImplementedError
     
     #%% Callbacks -------------------------------------------------------
     def Start_Stop_Callback(self):
@@ -584,7 +596,61 @@ class MainWindow(QtWidgets.QMainWindow):
     def Set_PSD_Callback(self):
         if not self.Start_Stop.isChecked():
             return #only continue if the program is running
+
+        PSDfreq = abs(float(self.PSD_freq.text()))
+        PSDamp = abs(float(self.PSD_amp.text()))
+        if self.algorithm >= 2: #SQA
+            if PSDfreq > 2.5:
+                PSDfreq = 2.5
+            elif PSDfreq < 2*self.rSR/1000:
+                PSDfreq = 2*self.rSR/1000
+
+        if (PSDfreq != self.PSDfreq) or (PSDamp != self.PSDamp):
+            self.aodata, PSDfreq, PSDamp = self.Wavecalc(PSDfreq,PSDamp)
+            self.PSDfreq = PSDfreq
+            self.PSDamp = PSDamp
+            self.PSD_freq.setText(str(self.PSDfreq))
+            self.PSD_amp.setText(str(self.PSDamp))
+            self.Set_filter_Callback() #adjust filter setting accordingly
+            #TODO - translate below
+            # if get(handles.Pulse,'Value')
+            #     stop(handles.ao);
+            # end
+            self.daq.ao.stop() #ao might be started again in @resume
+            #TODO - translate below
+            # if ~strcmpi(handles.ao.TriggerType,'Immediate') && (handles.ai.TriggersExecuted ~= 0)
+            #     set(handles.ao,'TriggerType','Immediate');
+            # end
+            # %assignin('base','aodata',handles.aodata);
+            self.daq.ao.putdata(self.aodata)
+            self.daq.ao.start()
+           
         #TODO - paused 1/6/2025
+        # handles.PSDphase = str2double(get(handles.PSD_phase,'String'));
+        # P = abs(handles.PSDphase);
+        # if P > 360
+        #     handles.PSDphase = sign(handles.PSDphase)*rem(P,360);
+        #     set(handles.PSD_phase,'String',num2str(handles.PSDphase));
+        # end
+        # if handles.PSDphase > 180
+        #     handles.PSDphase = handles.PSDphase-360;
+        #     set(handles.PSD_phase,'String',num2str(handles.PSDphase));
+        # elseif handles.PSDphase < -180
+        #     handles.PSDphase = handles.PSDphase+360;
+        #     set(handles.PSD_phase,'String',num2str(handles.PSDphase));
+        # end
+        # set(handles.PSD_slider,'Value',handles.PSDphase/180);
+        # if (handles.algorism ~= 1)
+        #     if (handles.algorism == 2)
+        #         algorism = 'Square-I';
+        #     else
+        #         algorism = 'Square-Q';
+        #     end
+        # elseif handles.PSDwaveindex
+        #     algorism = 'Sine-PSD';
+        # else
+        #     algorism = 'Triangle-PSD';
+        # end
 
     def PhaseShift_Callback(self):
         pass #TODO
@@ -624,7 +690,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fcheck[self.sender().objectName()] = self.sender().isChecked()
 
     def Set_filter_Callback(self):
-        filtermaxp = self.aiSamplesPerTrigger #calculate maximal averaging points
+        filtermaxp = self.daq.ai.samplesPerTrig #calculate maximal averaging points
         filterp = round(abs(float(self.filterset.text())/1000)*self.daq.ai.sampleRate)
         self.filterv2p = self.FilterCalc(filterp,filtermaxp)
         if (self.filterv2p == 1):
