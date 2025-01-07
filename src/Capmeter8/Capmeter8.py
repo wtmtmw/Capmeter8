@@ -93,7 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.PSDfreq = float(self.PSD_freq.text()) 
         self.PSDamp = [] #make it empty in order to enter the 'if' codes in @Set_PSD_Callback
         self.PSDphase = float(self.PSD_phase.text()) #degree
-        self.PSDlog = [] #[time,kHz,mV,degree]
+        self.PSDlog = [] #[[time,kHz,mV,degree,algorithm],...]
         #Remove - self.PSDwaveindex = get(self.PSD_waveindex,'Value'); %1 for sine wave, 0 for square/triangular wave
         self.P1 = []
         self.P2 = [] #P1 and P2 are used in @AutoPhase
@@ -364,6 +364,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return filterv2p
 
     def Refcalc(self):
+        #TODO - paused 1/7/2025
         raise NotImplementedError
 
     def Wavecalc(self):
@@ -611,7 +612,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.PSDamp = PSDamp
             self.PSD_freq.setText(str(self.PSDfreq))
             self.PSD_amp.setText(str(self.PSDamp))
-            self.Set_filter_Callback() #adjust filter setting accordingly
             #TODO - translate below
             # if get(handles.Pulse,'Value')
             #     stop(handles.ao);
@@ -623,34 +623,30 @@ class MainWindow(QtWidgets.QMainWindow):
             # end
             # %assignin('base','aodata',handles.aodata);
             self.daq.ao.putdata(self.aodata)
+            self.Set_filter_Callback() #adjust filter setting accordingly
             self.daq.ao.start()
            
-        #TODO - paused 1/6/2025
-        # handles.PSDphase = str2double(get(handles.PSD_phase,'String'));
-        # P = abs(handles.PSDphase);
-        # if P > 360
-        #     handles.PSDphase = sign(handles.PSDphase)*rem(P,360);
-        #     set(handles.PSD_phase,'String',num2str(handles.PSDphase));
-        # end
-        # if handles.PSDphase > 180
-        #     handles.PSDphase = handles.PSDphase-360;
-        #     set(handles.PSD_phase,'String',num2str(handles.PSDphase));
-        # elseif handles.PSDphase < -180
-        #     handles.PSDphase = handles.PSDphase+360;
-        #     set(handles.PSD_phase,'String',num2str(handles.PSDphase));
-        # end
-        # set(handles.PSD_slider,'Value',handles.PSDphase/180);
-        # if (handles.algorism ~= 1)
-        #     if (handles.algorism == 2)
-        #         algorism = 'Square-I';
-        #     else
-        #         algorism = 'Square-Q';
-        #     end
-        # elseif handles.PSDwaveindex
-        #     algorism = 'Sine-PSD';
-        # else
-        #     algorism = 'Triangle-PSD';
-        # end
+        self.PSDphase = float(self.PSD_phase.text())
+        P = abs(self.PSDphase)
+        if P > 360:
+            self.PSDphase = np.sign(self.PSDphase)*(P%360)
+        if self.PSDphase > 180:
+            self.PSDphase = self.PSDphase-360
+        elif self.PSDphase < -180:
+            self.PSDphase = self.PSDphase+360
+        self.PSD_phase.setText(str(self.PSDphase))
+        self.PSD_slider.setValue(self.PSDphase/180)
+
+        #PSDlog
+        L = len(self.aitime)
+        if L != 0:
+            if self.daq.ai.isrunning:
+                self.PSDlog.append([self.aitime[-1],self.PSDfreq,
+                                    self.PSDamp,self.PSDphase,self.Cm.currentText()])
+        else:
+            self.PSDlog = [[0,self.PSDfreq,self.PSDamp,self.PSDphase,self.Cm.currentText()]]
+        
+        self.refcalc()
 
     def PhaseShift_Callback(self):
         pass #TODO
