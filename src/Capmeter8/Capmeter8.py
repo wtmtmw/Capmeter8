@@ -146,6 +146,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lib.SqCF.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
         self.lib.SqQ.restype = None
         self.lib.SqQ.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
+        self.lib.SqWaveCalc.restype = None
+        self.lib.SqWaveCalc.argtypes = [ctypes.c_int,ctypes.c_int,ctypes.c_double]
         
         #%%
         '''
@@ -380,50 +382,30 @@ class MainWindow(QtWidgets.QMainWindow):
         triggerpt = ceil(2/self.daq.ai.sampleRate*self.daq.ao.sampleRate)
         if A > 20:
             A = 20
-        if (self.algorithm != 1): #if sine wave is not selected
+        if (self.algorithm >=2): #SQA
             if N%2 != 0: #even samples in a single wave
                 N = N+1
             elif N == 0:
                 N = 2
             L = round(L/N)*N; #re-calculate samples per trigger
             freq = self.daq.ao.sampleRate/N/1000; #in kHz
-            # TODO - paused 1/7/2025
-            # output = SqWaveCalc(L,N,A);
-        # elseif handles.PSDwaveindex %produce sine wave
-        #     T = (L-1)/Cap7_state.daq.aoSR;
-        #     P = pi/2; %pi/2 shifted, in order to put the trigger at the top
-        #     cycles = round(freq*1000*(L/Cap7_state.daq.aoSR));
-        #     N = L/cycles;
-        #     freq = cycles/(L/Cap7_state.daq.aoSR)/1000;
-        #     output = ((A/2)*sin(linspace(P,(P+(2*pi*freq*1000*T)),L)))';
-        # else %produce triangular wave
-        #     if rem(N,2) ~= 0 %even samples in a single wave
-        #         N = N+1;
-        #     end
-        #     L = round(L/N)*N; %re-calculate samples per trigger
-        #     freq = Cap7_state.daq.aoSR/N/1000; %in kHz
-        #     slopept = N/2;
-        #     t = (1:L)';
-        #     r = rem(t-1,slopept);
-        #     output = A/2*(2*r/slopept-1);
-        #     for n = (1:2*slopept:L)
-        #         output(n:n+slopept-1,1) = -output(n:n+slopept-1,1);
-        #     end
-        # end
-
-        # output = [SqWaveCalc(L,N,(handles.triggervalue-0.02)*2),output]; %for v2; [ao0 ao1]
-        # output(1:triggerpt,1) = handles.triggervalue+0.02; %for v2
-
-        # % if Cap7_state.daq.aoCh1convert > 0 %removed in v2
-        # %     output(1:triggerpt,1) = handles.triggervalue+0.02; %used to trigger AI
-        # % else
-        # %     output(1:triggerpt,1) = handles.triggervalue-0.02; %used to trigger AI
-        # % end
-
-        # %assignin('base','waveform',output);
-        # %assignin('base','aoSpmPerWave',N);
-        # %amp = A*abs(Cap7_state.daq.aoCh1convert); %in mV; for v1
-        # amp = A*abs(Cap7_state.daq.aoCh2convert); %in mV; for v2
+            output = np.empty(L,dtype = np.float64)
+            output = self.lib.SqWaveCalc(int(L),int(N),A,output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+        elif self.algorithm ==1: #PSD, produce sine wave
+            T = L/self.daq.ao.sampleRate
+            P = np.pi/2 #pi/2 shifted, in order to put the trigger at the top -> this seems unnecessary since we use digital trigger now
+            cycles = round(freq*1000*(L/self.daq.ao.sampleRate))
+            N = L/cycles
+            freq = cycles/(L/self.daq.ao.sampleRate)/1000
+            output = ((A/2)*np.sin(np.linspace(P,(P+(2*np.pi*freq*1000*T)),L,endpoint=False)))
+        else: #Hardware
+            output = np.zeros(L)
+        
+        trigsig = np.zeros(L) #trigger signal
+        trigsig[0:triggerpt] = 1 #1V trigger signal
+        output = np.vstack((trigsig,output))
+        
+        amp = A*abs(self.daqdefault.aoExtConvert); #in mV
         return output,freq,amp
     
     #%% Callbacks -------------------------------------------------------
