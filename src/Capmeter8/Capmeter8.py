@@ -4,6 +4,7 @@ import sys, traceback, ctypes
 import pyqtgraph as pg
 from pathlib import Path
 import numpy as np
+from math import ceil
 from time import sleep
 from random import randint
 from daqx.util import createDevice
@@ -358,17 +359,72 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             filterv2p = round(round(filterp/ppw)*ppw)
             if filterv2p > filtermaxp:
-                filterv2p = round(int(filtermaxp/ppw)*ppw)
+                filterv2p = round((filtermaxp//ppw)*ppw)
             elif filterv2p < ppw:
                 filterv2p = round(ppw)
         return filterv2p
 
     def Refcalc(self):
-        #TODO - paused 1/7/2025
-        raise NotImplementedError
+        PPS = (self.daq.ai.sampleRate/(self.PSDfreq*1000)) #points per sine wave
+        L = (self.daq.ai.samplesPerTrig//PPS)*PPS #make sure that the DC noise can be cancled
+        T = L/self.daq.ai.sampleRate #Note - set np.linspace(...,endpoint = False)
+        P = self.PSDphase*np.pi/180
+        F = self.PSDfreq*1000
+        self.PSDref = np.sin(np.linspace((P+(np.pi/2)),((P+(np.pi/2))+(2*np.pi*F*T)),L,endpoint=False))
+        self.PSD90 = np.sin(np.linspace((P+np.pi),(P+(np.pi*(1+(2*F*T)))),L,endpoint=False))
 
-    def Wavecalc(self):
-        raise NotImplementedError
+    def Wavecalc(self,freq,amp):
+        L = round(self.daq.ao.sampleRate/self.rSR) #total samples
+        N = self.daq.ao.sampleRate//(freq*1000) #samples per wave
+        A = abs(amp/self.daqdefault.aoExtConvert)
+        triggerpt = ceil(2/self.daq.ai.sampleRate*self.daq.ao.sampleRate)
+        if A > 20:
+            A = 20
+        if (self.algorithm != 1): #if sine wave is not selected
+            if N%2 != 0: #even samples in a single wave
+                N = N+1
+            elif N == 0:
+                N = 2
+            L = round(L/N)*N; #re-calculate samples per trigger
+            freq = self.daq.ao.sampleRate/N/1000; #in kHz
+            # TODO - paused 1/7/2025
+            # output = SqWaveCalc(L,N,A);
+        # elseif handles.PSDwaveindex %produce sine wave
+        #     T = (L-1)/Cap7_state.daq.aoSR;
+        #     P = pi/2; %pi/2 shifted, in order to put the trigger at the top
+        #     cycles = round(freq*1000*(L/Cap7_state.daq.aoSR));
+        #     N = L/cycles;
+        #     freq = cycles/(L/Cap7_state.daq.aoSR)/1000;
+        #     output = ((A/2)*sin(linspace(P,(P+(2*pi*freq*1000*T)),L)))';
+        # else %produce triangular wave
+        #     if rem(N,2) ~= 0 %even samples in a single wave
+        #         N = N+1;
+        #     end
+        #     L = round(L/N)*N; %re-calculate samples per trigger
+        #     freq = Cap7_state.daq.aoSR/N/1000; %in kHz
+        #     slopept = N/2;
+        #     t = (1:L)';
+        #     r = rem(t-1,slopept);
+        #     output = A/2*(2*r/slopept-1);
+        #     for n = (1:2*slopept:L)
+        #         output(n:n+slopept-1,1) = -output(n:n+slopept-1,1);
+        #     end
+        # end
+
+        # output = [SqWaveCalc(L,N,(handles.triggervalue-0.02)*2),output]; %for v2; [ao0 ao1]
+        # output(1:triggerpt,1) = handles.triggervalue+0.02; %for v2
+
+        # % if Cap7_state.daq.aoCh1convert > 0 %removed in v2
+        # %     output(1:triggerpt,1) = handles.triggervalue+0.02; %used to trigger AI
+        # % else
+        # %     output(1:triggerpt,1) = handles.triggervalue-0.02; %used to trigger AI
+        # % end
+
+        # %assignin('base','waveform',output);
+        # %assignin('base','aoSpmPerWave',N);
+        # %amp = A*abs(Cap7_state.daq.aoCh1convert); %in mV; for v1
+        # amp = A*abs(Cap7_state.daq.aoCh2convert); %in mV; for v2
+        return output,freq,amp
     
     #%% Callbacks -------------------------------------------------------
     def Start_Stop_Callback(self):
@@ -646,7 +702,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.PSDlog = [[0,self.PSDfreq,self.PSDamp,self.PSDphase,self.Cm.currentText()]]
         
-        self.refcalc()
+        self.Refcalc()
 
     def PhaseShift_Callback(self):
         pass #TODO
