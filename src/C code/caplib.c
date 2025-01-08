@@ -701,3 +701,15 @@ __declspec(dllexport) void SqQ(double *trigger,double *data,double *time,int L,d
 //     PSD(curr,PSDref,Mref,aiSamplesPerTrigger,ppch,COND);
 // }
 
+///////////////////////////////////////////
+//Square waveform generation///////////////
+///////////////////////////////////////////
+__declspec(dllexport) void SqWaveCalc(int L, int N, double A, double *output) {
+    //SqWaveCalc(total samples,samples per wave,amplitude,pointer to numpy array)
+    int i,j,n;
+    for(i = 0; i < (L/N); i++) {
+        for(j = 0; j < (N/2); j++) output[(i*N)+j] = A/2;
+        for(j = N/2; j < N; j++) output[(i*N)+j] = -A/2;
+    }
+}
+
