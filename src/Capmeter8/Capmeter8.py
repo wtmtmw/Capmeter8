@@ -337,8 +337,9 @@ class MainWindow(QtWidgets.QMainWindow):
         * if taufactor < 0 -> no adjustment; else: taufactor = 1/exp(taufactor) and pass to the DLL
         * firstmin = Cpickend2(dataB, SPC, lastmax, taufactor) + endadj; in the DLL
         '''
-        #Mref = len(self.PSDref)
-        pass #TODO - paused 1/5/2025
+        Nref = len(self.PSDref) #self.PSDref: [] -> np.ndarray
+        ppch = len(self.timebuffer) #self.timebuffer is a list
+        #TODO - paused 1/8/2025
 
     def AIwaiting(self):
         '''
