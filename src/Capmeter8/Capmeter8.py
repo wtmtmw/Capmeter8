@@ -314,7 +314,8 @@ class MainWindow(QtWidgets.QMainWindow):
             # handles.PSDofSQA = cat(1,handles.PSDofSQA,[PSD2 PSD1])
         elif self.algorithm == 1: #PSD
             Time,Curr,AICh2,Cap,Cond = self.CapEngine(1)
-            Ra = np.zeros_like(Time)
+            Ra = np.empty_like(Time)
+            Ra.fill(np.nan)
         else: #Hardware
             Time,Cap,Cond,Curr = self.CapEngine(0)
         self.aitime = np.concatenate((self.aitime,Time))
@@ -327,10 +328,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def CapEngine(self,algorithm,taufactor = -1, endadj = 0):
         '''
-        Hardware: (time,Cap/AICh0,Cond/AICh1,Curr/AICh2) = CapEngine(0)
-        PSD: (time,current,AICh2,Cap,Cond) = CapEngine(1)
-        SQCF: (time,current,AICh2,PSD90,PSD,asymp,peak,tau) = CapEngine(2,(opt)taufactor,(opt)endadj)
-        SqQ: (time,current,AICh2,PSD90,PSD,asymp,peak,tau) = CapEngine(3,(opt)taufactor,(opt)endadj)
+        Hardware: (time,Cap/AICh0,Cond/AICh1,Curr/AICh2) = CapEngine(0) #Note - AICH2 will be disabled in the context menu
+        PSD: (time,Cap,Cond,current,AICh2) = CapEngine(1)
+        SQCF: (time,PSD90,PSD,current,AICh2,asymp,peak,tau) = CapEngine(2,(opt)taufactor,(opt)endadj)
+        SqQ: (time,PSD90,PSD,current,AICh2,asymp,peak,tau) = CapEngine(3,(opt)taufactor,(opt)endadj)
 
         for SQCF and SqQ - 
         * taufactor and endadj are used for adjusting curve-fitting range (i.e. from lastmax to firstmin in the DLL)
@@ -340,18 +341,67 @@ class MainWindow(QtWidgets.QMainWindow):
         Nref = self.PSDref.size #self.PSDref: [] -> np.ndarray
         ppch = int(self.timebuffer.size/self.daq.ai.samplesPerTrig) #points per channel
         TIME = np.empty(ppch,dtype=np.float64)
-        CURR = np.empty(ppch,dtype=np.float64)
-        AICH2 = np.empty(ppch,dtype=np.float64)
         CAP = np.empty(ppch,dtype=np.float64)
         COND = np.empty(ppch,dtype=np.float64)
+        CURR = np.empty(ppch,dtype=np.float64)
+
         self.lib.Dfilter(0,self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-            int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,TIME.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
-        self.lib.Dfilter(int(self.fcheck['rf1']),self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-            int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,CURR.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
-        self.lib.Dfilter(int(self.fcheck['rf2']),self.databuffer[2,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-            int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,AICH2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
-   
-        #TODO - paused 1/9/2025
+            int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+            TIME.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+        
+        if algorithm == 0: #Hardware
+            self.lib.Dfilter(int(self.fcheck['rf0']),self.databuffer[0,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                CAP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+            self.lib.Dfilter(int(self.fcheck['rf1']),self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                COND.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+            self.lib.Dfilter(int(self.fcheck['rf2']),self.databuffer[2,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                CURR.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+
+        else: #PSD, SQA
+            AICH2 = np.empty(ppch,dtype=np.float64)
+            self.lib.Dfilter(int(self.fcheck['rf1']),self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                CURR.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+            self.lib.Dfilter(int(self.fcheck['rf2']),self.databuffer[2,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                AICH2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+
+            if algorithm >= 2: #SQA
+                ASYMP = np.empty(ppch,dtype=np.float64)
+                PEAK = np.empty(ppch,dtype=np.float64)
+                TAU = np.empty(ppch,dtype=np.float64)
+                if taufactor >= 0:
+                    taufactor = 1/np.exp(taufactor)
+                
+                if algorithm == 2: #SQA-I
+                    self.lib.SqCF(self.databuffer[0,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        int(self.daq.ai.samplesPerTrig),float(taufactor),int(endadj),ppch,
+                        ASYMP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        PEAK.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        TAU.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+                else: #SQA-Q
+                    interval = (self.timebuffer[self.daq.ai.samplesPerTrig-1] - self.timebuffer[0]) / (self.daq.ai.samplesPerTrig - 1) #calculate time interval between data points
+                    self.lib.SqQ(self.databuffer[0,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        int(self.daq.ai.samplesPerTrig),float(taufactor),int(endadj),ppch,float(interval),
+                        ASYMP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        PEAK.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                        TAU.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+            #also do PSD even the SQA is selected
+            self.lib.PSD(self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                self.PSD90.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                Nref,int(self.daq.ai.samplesPerTrig),ppch,
+                CAP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+            self.lib.PSD(self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                self.PSDref.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                Nref,int(self.daq.ai.samplesPerTrig),ppch,
+                COND.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
     def AIwaiting(self):
         '''
