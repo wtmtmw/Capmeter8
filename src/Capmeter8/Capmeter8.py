@@ -346,9 +346,9 @@ class MainWindow(QtWidgets.QMainWindow):
         COND = np.empty(ppch,dtype=np.float64)
         self.lib.Dfilter(0,self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,TIME.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
-        self.lib.Dfilter(int(self.fcheck['rf1']),self.aidata[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        self.lib.Dfilter(int(self.fcheck['rf1']),self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,CURR.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
-        self.lib.Dfilter(int(self.fcheck['rf2']),self.aidata[2,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        self.lib.Dfilter(int(self.fcheck['rf2']),self.databuffer[2,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,AICH2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
    
         #TODO - paused 1/9/2025
@@ -415,7 +415,7 @@ class MainWindow(QtWidgets.QMainWindow):
             output = np.zeros(L)
         
         trigsig = np.zeros(L) #trigger signal
-        trigsig[0:triggerpt] = 1 #1V trigger signal
+        trigsig[0:triggerpt] = 5 #1V is not enough to trigger MCC board...
         output = np.vstack((trigsig,output))
         
         amp = A*abs(self.daqdefault.aoExtConvert); #in mV
@@ -505,7 +505,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # end
 
             self.daq.ai.start()
-            self.Set_PSD_Callback()
+            self.Set_PSD_Callback() #this will start the AO
             #TODO - translate below
             # if (handles.algorism ~= 1)&&(~handles.menuindex(1,1))
             #     MenuSwitcher(gcf,1); %for SQA
