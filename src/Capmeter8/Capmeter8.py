@@ -337,9 +337,21 @@ class MainWindow(QtWidgets.QMainWindow):
         * if taufactor < 0 -> no adjustment; else: taufactor = 1/exp(taufactor) and pass to the DLL
         * firstmin = Cpickend2(dataB, SPC, lastmax, taufactor) + endadj; in the DLL
         '''
-        Nref = len(self.PSDref) #self.PSDref: [] -> np.ndarray
-        ppch = len(self.timebuffer) #self.timebuffer is a list
-        #TODO - paused 1/8/2025
+        Nref = self.PSDref.size #self.PSDref: [] -> np.ndarray
+        ppch = int(self.timebuffer.size/self.daq.ai.samplesPerTrig) #points per channel
+        TIME = np.empty(ppch,dtype=np.float64)
+        CURR = np.empty(ppch,dtype=np.float64)
+        AICH2 = np.empty(ppch,dtype=np.float64)
+        CAP = np.empty(ppch,dtype=np.float64)
+        COND = np.empty(ppch,dtype=np.float64)
+        self.lib.Dfilter(0,self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,TIME.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+        self.lib.Dfilter(int(self.fcheck['rf1']),self.aidata[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,CURR.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+        self.lib.Dfilter(int(self.fcheck['rf2']),self.aidata[2,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,AICH2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+   
+        #TODO - paused 1/9/2025
 
     def AIwaiting(self):
         '''
