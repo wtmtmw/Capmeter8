@@ -304,27 +304,62 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.algorithm >= 2: #SQA
             if self.autofp and self.autorange: #auto-range
                 if self.algorithm == 2: #I-SQA
-                    Time,Curr,AICh2,PSD2,PSD1,asymp,peak,tau = self.CapEngine(2,taufactor = 3, endadj = -5)
+                    Time,PSD2,PSD1,Curr,AICh2,asymp,peak,tau = self.CapEngine(2,taufactor = 3, endadj = -5)
                 else: #Q-SQA, different taufactor/consecpt
-                    Time,Curr,AICh2,PSD2,PSD1,asymp,peak,tau = self.CapEngine(3,taufactor = 1, endadj = -5)
+                    Time,PSD2,PSD1,Curr,AICh2,asymp,peak,tau = self.CapEngine(3,taufactor = 1, endadj = -5)
             else: #no auto-range
-                Time,Curr,AICh2,PSD2,PSD1,asymp,peak,tau = self.CapEngine(self.algorithm)
-            #TODO - translate the following
-            # [Cap Cond Ra] = SqAlgo(asymp,peak,tau,FH);
-            # handles.PSDofSQA = cat(1,handles.PSDofSQA,[PSD2 PSD1])
+                Time,PSD2,PSD1,Curr,AICh2,asymp,peak,tau = self.CapEngine(self.algorithm)
+
+            Cap,Cond,Ra = self.SqAlgo(asymp,peak,tau)
+            self.PSDofSQA = np.hstack((self.PSDofSQA,np.vstack(PSD2,PSD1)))
+
         elif self.algorithm == 1: #PSD
-            Time,Curr,AICh2,Cap,Cond = self.CapEngine(1)
+            Time,Cap,Cond,Curr,AICh2 = self.CapEngine(1)
             Ra = np.empty_like(Time)
             Ra.fill(np.nan)
         else: #Hardware
             Time,Cap,Cond,Curr = self.CapEngine(0)
+
         self.aitime = np.concatenate((self.aitime,Time))
         if self.algorithm == 0:
             self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr)))
         else:
             self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr,AICh2,Ra)))
 
-        #TODO - paused 1/3/2025
+        #TODO - translate the following
+        # if Cap7_state.pulse.pulsing
+        #     Cap7_state.pulse.data(end).rawData = cat(1,Cap7_state.pulse.data(end).rawData,...
+        #         [handles.timebuffer(:,1),handles.databuffer(:,2:3)]);
+        # end
+
+        # if Cap7_state.pulse.JustDone
+        #     Cap7_state.pulse.JustDone = 0;
+        #     Cap7_state.pulse.pulsing = false;
+        #     %blank C,G,Ra.
+        #     handles.aidata(handles.Pulselog(end).index(1,1):handles.Pulselog(end).index(1,2),...
+        #         [1,2,5]) = NaN;
+        #     %assign data
+        #     temp = isnan(Cap7_state.pulse.data(end).rawData(:,1));
+        #     Cap7_state.pulse.data(end).rawData(temp,:) = []; %remove NaN
+        #     %Cap7_state.pulse.data(end+1).mV = handles.Pulselog(end).output*Cap7_state.daq.aoCh2convert; %to mV
+        #     Cap7_state.pulse.data(end).mV = handles.Pulselog(end).output*Cap7_state.daq.aoCh2convert; %to mV, TW161217
+        #     Cap7_state.pulse.data(end).Ch34 = handles.aidata(handles.Pulselog(end).index(1,1):...
+        #         handles.Pulselog(end).index(1,2),[3,4]);
+        #     if Cap7_state.pulse.notPartOfPulseTriggers ~= 0
+        #         Cap7_state.pulse.data(end).rawData(1:Cap7_state.pulse.notPartOfPulseTriggers*handles.ai.SamplesPerTrigger,:) = []; %TW161218, delete non-pulse data
+        #     end
+        #     Cap7_state.pulse.data(end).rawData((handles.ai.SamplesPerTrigger*numel(handles.Pulselog(end).output))+1:end,:) = []; %TW161218, delete non-pulse data
+        #     Cap7_state.pulse.data(end).rawData(:,1) = Cap7_state.pulse.data(end).rawData(:,1) - Cap7_state.pulse.data(end).rawData(1,1);
+        # end
+
+        # if handles.rxrindex
+        #     Spm = round(Cap7_state.daq.aiSR*(2/handles.PSDfreq/1000));
+        #     if Spm > handles.aiSamplesPerTrigger
+        #         Spm = handles.aiSamplesPerTrigger;
+        #     end
+        #     handles.rxr = cat(1,handles.rxr,[handles.timebuffer(1:Spm),handles.databuffer(1:Spm,:)]);
+        #     handles.rxr = cat(1,handles.rxr,[NaN NaN NaN NaN]);
+        # end
 
     def CapEngine(self,algorithm,taufactor = -1, endadj = 0):
         '''
@@ -360,6 +395,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
                 CURR.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
+            return TIME,CAP,COND,CURR
+
         else: #PSD, SQA
             AICH2 = np.empty(ppch,dtype=np.float64)
             self.lib.Dfilter(int(self.fcheck['rf1']),self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
@@ -376,7 +413,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 if taufactor >= 0:
                     taufactor = 1/np.exp(taufactor)
                 
-                if algorithm == 2: #SQA-I
+                if algorithm == 2: #I-SQA
                     self.lib.SqCF(self.databuffer[0,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
@@ -384,7 +421,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         ASYMP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         PEAK.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         TAU.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
-                else: #SQA-Q
+                else: #Q-SQA
                     interval = (self.timebuffer[self.daq.ai.samplesPerTrig-1] - self.timebuffer[0]) / (self.daq.ai.samplesPerTrig - 1) #calculate time interval between data points
                     self.lib.SqQ(self.databuffer[0,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
@@ -402,6 +439,48 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.PSDref.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                 Nref,int(self.daq.ai.samplesPerTrig),ppch,
                 COND.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+            if algorithm == 1: #PSD
+                return TIME,CAP,COND,CURR,AICH2
+            else: #SQA
+                return TIME,CAP,COND,CURR,AICH2,ASYMP,PEAK,TAU
+            
+    def SqAlgo(self,asymp,peak,tau):
+        '''
+        Calculate C, G, Ra and adjust the square wave form is so desired
+        If amplifier gain alpha*beta == 1
+            1 unit = 10pF, 1nS, 1MOhms
+        '''
+        taufactor = 2
+        maxA = []
+        meantau = []
+        V = self.PSDamp
+        duration = 1/self.PSDfreq/2000
+        newfreq = self.PSDfreq
+        newamp = V
+        #TODO - translate the following
+        # try
+        #     if (~isequal(get(handles.Cm,'ForegroundColor'),[0 0 0]))&&(~isnan(tau(1,1)))
+        #         set(handles.Cm,'ForegroundColor','black');
+        #     elseif (isequal(get(handles.Cm,'ForegroundColor'),[0 0 0]))&&(isnan(tau(1,1)))
+        #         set(handles.Cm,'ForegroundColor','red');
+        #     end
+        #     if (isequal(get(handles.Cm,'BackgroundColor'),[1 0 0]))&&(max(peak(~isnan(peak))) < 10)
+        #         set(handles.Cm,'BackgroundColor',get(handles.figure1,'Color'));
+        #     elseif (~isequal(get(handles.Cm,'BackgroundColor'),[1 0 0]))&&(max(peak(~isnan(peak))) >= 10)
+        #         set(handles.Cm,'BackgroundColor','red');
+        #     end
+        # end
+
+        F = V/2/(asymp*(1-np.exp(-duration/tau))+peak)
+        Ra = -F*(-2+np.exp(-duration/tau))
+        Cond = asymp/(F*(peak-asymp))
+        Cap = tau*((1/Ra)+Cond)*100000
+        Cond = Cond*1000
+
+        # If amplifier gain alpha*beta == 1
+        #     1 unit = 10pF, 1nS, 1MOhms
+
+        #TODO - paused 1/10/2025
 
     def AIwaiting(self):
         '''
@@ -418,6 +497,10 @@ class MainWindow(QtWidgets.QMainWindow):
         raise NotImplementedError
 
     def FilterCalc(self,filterp,filtermaxp):
+        '''
+        Update the number of data points for averaging in the digital pre-filter (for raw data).
+        Ensures that the sine/square wave can be cancelled so DC current can be extracted.
+        '''
         ppw = self.daq.ai.sampleRate/self.PSDfreq/1000 #points per wave
         if (ppw > filtermaxp):
             filterv2p = 1
@@ -430,6 +513,9 @@ class MainWindow(QtWidgets.QMainWindow):
         return filterv2p
 
     def Refcalc(self):
+        '''
+        Calculate PSD reference waveform
+        '''
         PPS = (self.daq.ai.sampleRate/(self.PSDfreq*1000)) #points per sine wave
         L = (self.daq.ai.samplesPerTrig//PPS)*PPS #make sure that the DC noise can be cancled
         T = L/self.daq.ai.sampleRate #Note - set np.linspace(...,endpoint = False)
@@ -439,6 +525,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.PSD90 = np.sin(np.linspace((P+np.pi),(P+(np.pi*(1+(2*F*T)))),L,endpoint=False))
 
     def Wavecalc(self,freq,amp):
+        '''
+        Generate AO output waveform
+        '''
         L = round(self.daq.ao.sampleRate/self.rSR) #total samples
         N = self.daq.ao.sampleRate//(freq*1000) #samples per wave
         A = abs(amp/self.daqdefault.aoExtConvert)
@@ -786,7 +875,7 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         self.fcheck[self.sender().objectName()] = self.sender().isChecked()
 
-    def Set_filter_Callback(self):
+    def Set_filter_Callback(self): #pre-filter on raw data
         filtermaxp = self.daq.ai.samplesPerTrig #calculate maximal averaging points
         filterp = round(abs(float(self.filterset.text())/1000)*self.daq.ai.sampleRate)
         self.filterv2p = self.FilterCalc(filterp,filtermaxp)
@@ -795,7 +884,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.filterset.setText(str(1000*self.filterv2p/self.daq.ai.sampleRate))
 
-    def Set_filter2_Callback(self):
+    def Set_filter2_Callback(self): #moving filter
         self.fwindow = abs(round(float(self.filterset2.text())))
         if self.fwindow == 0:
             self.fwindow = 1
