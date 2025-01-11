@@ -480,7 +480,51 @@ class MainWindow(QtWidgets.QMainWindow):
         # If amplifier gain alpha*beta == 1
         #     1 unit = 10pF, 1nS, 1MOhms
 
-        #TODO - paused 1/10/2025
+        if self.autofp and self.autofreq:
+            maxA = peak.mean()
+            meantau = tau.mean()
+            if maxA >= 15: #20 originally
+                newamp = 10*self.PSDamp/15
+                if newamp > 50:
+                    newamp = 50
+            elif maxA < 5: #2 originally
+                newamp = 20*self.PSDamp
+            #TODO - paused 1/10/2025
+        #     if ((0.0005/handles.PSDfreq) > (meantau*taufactor)) %higher freq is better
+        #         %newfreq = handles.PSDfreq-0.2; %move 0.2kHz gradually
+        #         newfreq = 0.001/(meantau*taufactor*2); %in kHz
+        #         %assignin('base','newfreq',newfreq);
+        #         if newfreq < handles.rSR*2/1000
+        #             newfreq = handles.rSR*2/1000;
+        #         elseif newfreq > 10
+        #             newfreq = 10;
+        #         end
+        #         %disp('entered');
+        #     end
+        #     if (newfreq ~= handles.PSDfreq) || (newamp ~= handles.PSDamp)
+        #         [data,PSDfreq,PSDamp] = Wavecalc(FH,newfreq,newamp);
+        #         if (abs(PSDfreq-handles.PSDfreq)>0.1) || (abs(PSDamp-handles.PSDamp)>5)
+        #             %disp('entered');
+        #             %abs(PSDfreq-handles.PSDfreq)
+        # %             S = size(data); %v1
+        # %             handles.aodata = [data,zeros(S(1,1),1)]; %v1
+        #             handles.aodata = data; %v2
+        #             handles.PSDfreq = PSDfreq;
+        #             handles.PSDamp = PSDamp;
+        #             %handles.autofreq = 0;
+        #             handles.PSDlog = cat(1,handles.PSDlog,{handles.aitime(length(handles.aitime),1),...
+        #                 handles.PSDfreq,handles.PSDamp,NaN,'Square'});
+        #             set(handles.PSD_freq,'String',num2str(handles.PSDfreq,4));
+        #             set(handles.PSD_amp,'String',num2str(handles.PSDamp,4));
+        #             %set(handles.context_autofreq,'Checked','off');
+        #             guidata(FH,handles);
+        #             stop(handles.ao);
+        #             putdata(handles.ao,handles.aodata);
+        #             start(handles.ao);
+        #         end
+        #     end
+        # end
+        # output = [Cap,Cond,Ra];
 
     def AIwaiting(self):
         '''
