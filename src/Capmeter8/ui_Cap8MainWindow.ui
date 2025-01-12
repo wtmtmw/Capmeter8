@@ -525,10 +525,10 @@
          <string>adjust PSD phase angle</string>
         </property>
         <property name="minimum">
-         <number>-180</number>
+         <number>-18000</number>
         </property>
         <property name="maximum">
-         <number>180</number>
+         <number>18000</number>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
