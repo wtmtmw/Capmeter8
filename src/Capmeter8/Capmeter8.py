@@ -86,7 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Pulselog = []
         #self.rxr = []; %fragments of real-time raw data
         # Note - self.Cm.currentIndex() - 0:Hardware; 1:PSD; 2:I-SQA; 3:Q-SQA
-        # Note - self.algorithm = self.Cm.currentIndex()
+        self.algorithm = self.Cm.currentIndex()
 
         self.autofp = self.Auto_FP.isChecked() #for @SqAlgo
         self.autofreq = False #for @SqAlgo
@@ -170,6 +170,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.daq.config_ai(0,2) #Ch0: trigger, used in CapEngine; Ch1: current; Ch2: e.g. Ampero signal
             self.daq.ai.trigType = 'digital-positive-edge'
             self.daq.ai.iscontinuous = True
+            self.daq.ai.aqMode = 'background'
             self.daq.ai.grounding = 'single-ended'
             self.daq.ai.sampleRate = self.daqdefault.aiSR
             self.daq.ai.samplesPerTrig = int(((1/self.rSR)*0.9)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
@@ -283,11 +284,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot1.setData(XData,YData1)
         self.plot2.setData(XData,YData2)
 
-    def process_data(self,*args):
+    def process_data(self,_,*args):
         '''
         process data every ~0.5sec.
         AICh0: current, for direct recording and PSD; AICh1:current, e.g. from Ampero
         Ch1:Capacitance; Ch2:Conductance; Ch3:Current; Ch4:Ampero current
+        _ is the eventdata from daqx
         '''
         if len(args) == 0:
             getAll = False
@@ -526,9 +528,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # end
         # output = [Cap,Cond,Ra];
 
-    def AIwaiting(self):
+    def AIwaiting(self,_):
         '''
         aiTriggerFcn for Start_Stop button
+        _ is the eventdata from daqx
         '''
         self.daq.ai.trigFcn = None
         self.Start_Stop.setText('Started')
@@ -561,7 +564,7 @@ class MainWindow(QtWidgets.QMainWindow):
         Calculate PSD reference waveform
         '''
         PPS = (self.daq.ai.sampleRate/(self.PSDfreq*1000)) #points per sine wave
-        L = (self.daq.ai.samplesPerTrig//PPS)*PPS #make sure that the DC noise can be cancled
+        L = int((self.daq.ai.samplesPerTrig//PPS)*PPS) #make sure that the DC noise can be cancled
         T = L/self.daq.ai.sampleRate #Note - set np.linspace(...,endpoint = False)
         P = self.PSDphase*np.pi/180
         F = self.PSDfreq*1000
@@ -868,8 +871,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.PSDphase = self.PSDphase-360
         elif self.PSDphase < -180:
             self.PSDphase = self.PSDphase+360
-        self.PSD_phase.setText(str(self.PSDphase))
-        self.PSD_slider.setValue(self.PSDphase/180)
+        self.PSD_phase.setText(f'{self.PSDphase:.2f}')
+        self.PSD_slider.setValue(round(100*self.PSDphase/180)) #slider range is -18000 to 18000, int only
 
         #PSDlog
         L = len(self.aitime)
