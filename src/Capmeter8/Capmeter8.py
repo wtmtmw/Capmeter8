@@ -277,7 +277,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return [randint(20, 40) for _ in range(Nsp)]
 
     def update_plot(self):
-        #TODO - paused 1/10/2025
+        #TODO - paused 1/13/2025
         XData = list(range(1000))
         YData1 = self.pseudoDataGenerator(len(XData))
         YData2 = self.pseudoDataGenerator(len(XData))
