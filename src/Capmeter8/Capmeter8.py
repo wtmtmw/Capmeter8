@@ -77,7 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.disptimer = QtCore.QTimer() #connected to update_plot()
         self.disptimer.setInterval(1000) #in ms
         self.rSR = abs(float(self.RecordSampleRate.text()))
-        self.aidata = [] # M-by-Timepoint matrix, where M is the number of parameters/channels
+        self.aidata = [] # np.ndarray; M-by-Timepoint matrix, where M is the number of parameters/channels
         self.aidata2 = [] # Kseal adjusted data
         self.aodata = []
         self.aitime = []
@@ -94,7 +94,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.PSDfreq = float(self.PSD_freq.text()) 
         self.PSDamp = [] #make it empty in order to enter the 'if' codes in @Set_PSD_Callback
         self.PSDphase = float(self.PSD_phase.text()) #degree
-        self.PSDlog = [] #[[time,kHz,mV,degree,algorithm],...]
+        self.PSDlog = [] #List of [[time,kHz,mV,degree,algorithm],...]
         #Remove - self.PSDwaveindex = get(self.PSD_waveindex,'Value'); %1 for sine wave, 0 for square/triangular wave
         self.P1 = []
         self.P2 = [] #P1 and P2 are used in @AutoPhase
@@ -277,7 +277,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return [randint(20, 40) for _ in range(Nsp)]
 
     def update_plot(self):
-        #TODO
+        #TODO - paused 1/10/2025
         XData = list(range(1000))
         YData1 = self.pseudoDataGenerator(len(XData))
         YData2 = self.pseudoDataGenerator(len(XData))
@@ -506,20 +506,14 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.aodata = data
                     self.PSDfreq = PSDfreq
                     self.PSDamp = PSDamp
-                    #TODO - paused 1/10/2025
-            #         self.PSDlog = cat(1,self.PSDlog,{self.aitime(length(self.aitime),1),...
-            #             self.PSDfreq,self.PSDamp,NaN,'Square'});
-            #         set(handles.PSD_freq,'String',num2str(handles.PSDfreq,4));
-            #         set(handles.PSD_amp,'String',num2str(handles.PSDamp,4));
-            #         %set(handles.context_autofreq,'Checked','off');
-            #         guidata(FH,handles);
-            #         stop(handles.ao);
-            #         putdata(handles.ao,handles.aodata);
-            #         start(handles.ao);
-            #     end
-            # end
-        # end
-        # output = [Cap,Cond,Ra];
+                    self.PSDlog.append([self.aitime[-1],self.PSDfreq,self.PSDamp,
+                        self.PSDphase,self.Cm.currentText()]) #[[time,kHz,mV,degree,algorithm],...]
+                    self.PSD_freq.setText(f'{self.PSDfreq:.2f}')
+                    self.PSD_amp.setText(f'{self.PSDamp:.2f}')
+                    self.daq.ao.stop()
+                    self.daq.ao.putdata(self.aodata)
+                    self.daq.ao.start()
+        output = [Cap,Cond,Ra]
 
     def AIwaiting(self,_):
         '''
@@ -840,8 +834,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.aodata, PSDfreq, PSDamp = self.Wavecalc(PSDfreq,PSDamp)
             self.PSDfreq = PSDfreq
             self.PSDamp = PSDamp
-            self.PSD_freq.setText(str(self.PSDfreq))
-            self.PSD_amp.setText(str(self.PSDamp))
+            self.PSD_freq.setText(f'{self.PSDfreq:.2f}')
+            self.PSD_amp.setText(f'{self.PSDamp:.2f}')
             #TODO - translate below
             # if get(handles.Pulse,'Value')
             #     stop(handles.ao);
@@ -872,7 +866,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if L != 0:
             if self.daq.ai.isrunning:
                 self.PSDlog.append([self.aitime[-1],self.PSDfreq,
-                                    self.PSDamp,self.PSDphase,self.Cm.currentText()])
+                    self.PSDamp,self.PSDphase,self.Cm.currentText()])
         else:
             self.PSDlog = [[0,self.PSDfreq,self.PSDamp,self.PSDphase,self.Cm.currentText()]]
         
