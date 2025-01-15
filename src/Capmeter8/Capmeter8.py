@@ -1,4 +1,5 @@
-from PyQt6 import QtWidgets, uic, QtCore
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtCore import QTimer, QPoint
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
 import sys, traceback, ctypes
 import pyqtgraph as pg
@@ -74,7 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         List of DAQ-related variables
         '''
-        self.disptimer = QtCore.QTimer() #connected to update_plot()
+        self.disptimer = QTimer() #connected to update_plot()
         self.disptimer.setInterval(1000) #in ms
         self.rSR = abs(float(self.RecordSampleRate.text()))
         self.aidata = [] # np.ndarray; M-by-Timepoint matrix, where M is the number of parameters/channels
@@ -283,6 +284,13 @@ class MainWindow(QtWidgets.QMainWindow):
         YData2 = self.pseudoDataGenerator(len(XData))
         self.plot1.setData(XData,YData1)
         self.plot2.setData(XData,YData2)
+
+    def show_context_menu(self, pos: QPoint):
+        '''
+        Show the correct context menu depending on the sender and mode
+        '''
+        #TODO - paused 1/14/2025
+        pass
 
     def process_data(self,_,*args):
         '''
