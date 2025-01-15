@@ -14,7 +14,7 @@
    <string>Capmeter8</string>
   </property>
   <property name="toolTip">
-   <string>Applied on raw data. Irresible.</string>
+   <string/>
   </property>
   <property name="statusTip">
    <string/>
@@ -49,10 +49,10 @@
      </rect>
     </property>
     <property name="toolTip">
-     <string/>
+     <string>indicates current state</string>
     </property>
     <property name="whatsThis">
-     <string>indicates current state</string>
+     <string/>
     </property>
     <property name="styleSheet">
      <string notr="true">color:red</string>
