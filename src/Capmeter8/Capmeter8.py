@@ -733,6 +733,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 # %edit_Kseal_Callback %TW141023
             #self.disptimer.stop()
 
+    def context_axes_Callback(self,action,checked):
+        '''
+        for selecting display channels
+        action: the menu item being clicked
+        checked: status
+        '''
+        #TODO - paused 1/15/2025
+        pass
+
     def AxesSwitch_Callback(self):
         self.limsetindex[0] = self.AxesSwitch.currentIndex()
         self.Auto_axes.setChecked(self.limsetindex[0]+1)
