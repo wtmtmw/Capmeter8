@@ -3,29 +3,29 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QMenu, QMess
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QAction, QActionGroup #for context menu etc.
 
-def context_axes(self,pos:QPoint):
-    context_menu = QMenu(self) # create a QMenu
+def context_axes(parent,pos:QPoint):
+    context_menu = QMenu(parent) # create a QMenu
 
-    action_group = QActionGroup(self) # for setting group mutual exclusivity behavior
+    action_group = QActionGroup(parent) # for setting group mutual exclusivity behavior
     action_group.setExclusive(True)  # Ensure only one can be checked at a time
 
     # create and add items
-    act0 = QAction('Ch0(Y) C', self)
-    act1 = QAction('Ch1(X) G', self)
-    act2 = QAction('Ch2 I', self)
-    act3 = QAction('Ch3 Aux', self)
-    act4 = QAction('Ch4 Ra', self)
+    act0 = QAction('Ch0(Y) C', parent)
+    act1 = QAction('Ch1(X) G', parent)
+    act2 = QAction('Ch2 I', parent)
+    act3 = QAction('Ch3 Aux', parent)
+    act4 = QAction('Ch4 Ra', parent)
     actions = [act0, act1, act2, act3, act4]
 
     for act in actions:
         act.setCheckable(True)
-        if act is act0:
-            act.setChecked(True)
-        act.triggered.connect(lambda checked: self.context_axes_Callback(act, checked))
+        # if act is act0:
+        #     act.setChecked(True)
+        act.triggered.connect(lambda checked: parent.context_axes_Callback(parent.sender(),act))
         context_menu.addAction(act)
         action_group.addAction(act)
-    #TODO - test it, 1/15/2025
-    context_menu.exec(self.sender().mapToGlobal(pos))
+    #TODO - test it, 1/16/2025
+    context_menu.exec(parent.sender().mapToGlobal(pos))
 
 
 # def test_menu(self,pos:QPoint):

@@ -10,6 +10,9 @@
     <height>996</height>
    </rect>
   </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::NoContextMenu</enum>
+  </property>
   <property name="windowTitle">
    <string>Capmeter8</string>
   </property>
@@ -31,6 +34,9 @@
       <width>601</width>
       <height>271</height>
      </rect>
+    </property>
+    <property name="contextMenuPolicy">
+     <enum>Qt::CustomContextMenu</enum>
     </property>
     <property name="toolTip">
      <string>Right-click for channel selection</string>
@@ -80,6 +86,9 @@
      <enum>Qt::Vertical</enum>
     </property>
     <widget class="PlotWidget" name="axes1" native="true">
+     <property name="contextMenuPolicy">
+      <enum>Qt::CustomContextMenu</enum>
+     </property>
      <property name="toolTip">
       <string>Right-click for channel selection</string>
      </property>
@@ -88,6 +97,9 @@
      </property>
     </widget>
     <widget class="PlotWidget" name="axes2" native="true">
+     <property name="contextMenuPolicy">
+      <enum>Qt::CustomContextMenu</enum>
+     </property>
      <property name="toolTip">
       <string>Right-click for channel selection</string>
      </property>

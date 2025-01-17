@@ -9,6 +9,7 @@ from math import ceil
 from time import sleep
 from random import randint
 from daqx.util import createDevice
+from capmenu import *
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -236,6 +237,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.slider2.valueChanged.connect(self.slider_Callback)
+
+        # Set up context menu
+        self.axes1.getPlotItem().setMenuEnabled(False) #disable default pyqtplot context menu
+        self.axes1.customContextMenuRequested.connect(lambda pos: context_axes(self,pos)) #connect to custom context menu
+        #TODO - paused 1/16/2025
         #TODO - other GUI components
     
     # End of __init__() -------------------------------------------------------
@@ -733,14 +739,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 # %edit_Kseal_Callback %TW141023
             #self.disptimer.stop()
 
-    def context_axes_Callback(self,action,checked):
+    def context_axes_Callback(self,axes,action):
         '''
         for selecting display channels
         action: the menu item being clicked
         checked: status
         '''
-        #TODO - paused 1/15/2025
-        pass
+        print(axes)
+        print(f'{axes.objectName()}, {action.text()}')
+        #TODO - paused 1/16/2025
 
     def AxesSwitch_Callback(self):
         self.limsetindex[0] = self.AxesSwitch.currentIndex()
