@@ -1,5 +1,7 @@
-from PyQt6 import QtWidgets, uic
+from PyQt6 import uic
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu
 from PyQt6.QtCore import QTimer, QPoint
+from PyQt6.QtGui import QAction, QActionGroup #for context menu etc.
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
 import sys, traceback, ctypes
 import pyqtgraph as pg
@@ -9,9 +11,8 @@ from math import ceil
 from time import sleep
 from random import randint
 from daqx.util import createDevice
-from capmenu import *
 
-class MainWindow(QtWidgets.QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         '''
@@ -30,9 +31,10 @@ class MainWindow(QtWidgets.QMainWindow):
                                   aoExtConvert = 20, #in mV/V. For ao_1, not ao_0
                                   )
 
-        self.disp = self.kwarg2var(dispindex = [1,3,5], # 1-based
-                                   slider1range = 120,
-                                   slider2range = 50)
+        self.disp = self.kwarg2var(dispindex = [0,2,4], # 0-based
+                                   chcolor = ['r','b',(204,0,204),(64,153,166),'k'], #display color of the channel
+                                   slider0range = 120,
+                                   slider1range = 50)
         
         self.gh = self.kwarg2var(notePad = None) #TODO - Cap7_gh has not been implemented
 
@@ -53,18 +55,18 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         uic.loadUi(Path(self.appdir,'ui_Cap8MainWindow.ui'), self)
         self.menuindex = [0,0,0,0] # menuID,up aidata,middle aidata,bottom aidata], modified in @MenuSwitcher
-        self.limsetindex = [self.AxesSwitch.currentIndex(),True,True,True]; #[axis #,Auto,Auto,Auto]
+        self.limsetindex = [self.AxesSwitch.currentIndex(),True,True,True]; #[axis #,Auto,Auto,Auto], axes is 0-based
         self.Auto_axes.setChecked(self.limsetindex[self.limsetindex[0]+1])
 
-        self.plot1 = self.iniAxes(self.axes1,'r')
-        self.plot2 = self.iniAxes(self.axes2,'b')
-        self.plot3 = self.iniAxes(self.axes3,'r')
+        self.plot0 = self.iniAxes(self.axes0,self.disp.chcolor[self.disp.dispindex[0]])
+        self.plot1 = self.iniAxes(self.axes1,self.disp.chcolor[self.disp.dispindex[1]])
+        self.plot2 = self.iniAxes(self.axes2,self.disp.chcolor[self.disp.dispindex[2]])
 
-        self.labelindex = [] #[dispindex,time,data,'string']
+        self.labelindex = [] #[dispindex,time,data,'string'] 0-based
+        self.slider0.setMaximum(self.disp.slider0range)
+        self.text_slider0.setText(f'{self.slider0.value():.0f}')
         self.slider1.setMaximum(self.disp.slider1range)
         self.text_slider1.setText(f'{self.slider1.value():.0f}')
-        self.slider2.setMaximum(self.disp.slider2range)
-        self.text_slider2.setText(f'{self.slider2.value():.0f}')
         #TODO - implement the followings
         self.fswitch = self.FilterSwitch.currentIndex()
         self.shiftvalue = float(self.Phase_Shift.text())
@@ -185,8 +187,8 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # the calculation of sliderv2p as it behaves differently in MATLAB and PyQt
         #TODO - remove sliderv2p in future release
+        self.slider0v2p = round(self.slider0.value()*self.rSR) #for @update_plot, @slider0_Callback
         self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
-        self.slider2v2p = round(self.slider2.value()*self.rSR) #for @update_plot, @slider2_Callback
         self.filterv2p = round((float(self.filterset.text())/1000)*self.daq.ai.sampleRate) #points to be averaged
         
         self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
@@ -197,8 +199,35 @@ class MainWindow(QtWidgets.QMainWindow):
         self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
         self.daq.ai.samplesAcquiredFcn = (self.process_data,) # ',' makes it a tuple
         self.daq.ai.trigFcn = (self.AIwaiting,)
+        #TODO - translate below
+        # set(handles.ao,'StopFcn','');
+        # set(handles.ao,'TriggerFcn','');
+        # set(handles.ao,'RuntimeErrorFcn',{@AOrecover,gcf});
+        # set(handles.group_keypress(1,:),'KeyPressFcn',{@KeyPress,gcf});
+        # set(handles.group_stop(1,1:end-3),'KeyPressFcn',{@KeyPress2,gcf});
 
         #TODO - setup KeyPressFcn etc.
+        #TODO - translate below
+        # %launch reader mode if eg. DAQ is not installed
+        # if handles.reader
+        #     set(handles.group_reader(1,:),'Enable','off');
+        #     try
+        #         handles.ai.running = 'off';
+        #     end
+        #     try
+        #         handles.ao.running = 'off';
+        #     end
+        #     guidata(hObject,handles);
+        #     disp('Reader mode is launched');
+        # end
+
+        #adjust displayed channel
+        if self.algorithm >= 2:
+            self.MenuSwitcher(1) #SQA
+        else:
+            self.MenuSwitcher(0) #PSD
+
+        #ChangedOrSaved(handles.figure1);
 
 
         #%% 
@@ -235,13 +264,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Set_filter2.clicked.connect(self.Set_filter2_Callback)
         self.FilterSwitch.currentIndexChanged.connect(self.FilterSwitch_Callback)
 
+        self.slider0.valueChanged.connect(self.slider_Callback)
         self.slider1.valueChanged.connect(self.slider_Callback)
-        self.slider2.valueChanged.connect(self.slider_Callback)
 
         # Set up context menu
+        self.axes0.getPlotItem().setMenuEnabled(False) #disable default pyqtplot context menu
+        self.axes0.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes0,pos)) #connect to custom context menu
         self.axes1.getPlotItem().setMenuEnabled(False) #disable default pyqtplot context menu
-        self.axes1.customContextMenuRequested.connect(lambda pos: context_axes(self,pos)) #connect to custom context menu
-        #TODO - paused 1/16/2025
+        self.axes1.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes1,pos)) #connect to custom context menu
+        self.axes2.getPlotItem().setMenuEnabled(False) #disable default pyqtplot context menu
+        self.axes2.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes2,pos)) #connect to custom context menu
+        
         #TODO - other GUI components
     
     # End of __init__() -------------------------------------------------------
@@ -284,19 +317,56 @@ class MainWindow(QtWidgets.QMainWindow):
         return [randint(20, 40) for _ in range(Nsp)]
 
     def update_plot(self):
-        #TODO - paused 1/13/2025
+        D = self.fwindow
+        if not self.aitime:
+            print('waiting for data to be displayed... @update_plot');
+            return
+        
+        #TODO - paused 1/17/2025
         XData = list(range(1000))
         YData1 = self.pseudoDataGenerator(len(XData))
         YData2 = self.pseudoDataGenerator(len(XData))
-        self.plot1.setData(XData,YData1)
-        self.plot2.setData(XData,YData2)
+        self.plot0.setData(XData,YData1)
+        self.plot1.setData(XData,YData2)
 
-    def show_context_menu(self, pos: QPoint):
-        '''
-        Show the correct context menu depending on the sender and mode
-        '''
-        #TODO - paused 1/14/2025
-        pass
+    def create_context_axes(self,axes,pos:QPoint):
+        #axidx: index to the axes, 0-based
+        context_menu = QMenu(self) # create a QMenu
+
+        # create and add items
+        act0 = QAction('Ch0(Y) C', self)
+        act1 = QAction('Ch1(X) G', self)
+        act2 = QAction('Ch2 I', self)
+        act3 = QAction('Ch3 Aux', self)
+        act4 = QAction('Ch4 Ra', self)
+        actions = [act0, act1, act2, act3, act4]
+
+        for ch,act in enumerate(actions):
+            act.setCheckable(True)
+            if ch == self.disp.dispindex[int(axes.objectName()[-1])]:
+                act.setChecked(True)
+            # the following method must be used...
+            if ch == 0:
+                act.triggered.connect(lambda checked: self.context_axes_Callback(axes,0))
+            elif ch == 1:
+                act.triggered.connect(lambda checked: self.context_axes_Callback(axes,1))
+            elif ch == 2:
+                act.triggered.connect(lambda checked: self.context_axes_Callback(axes,2))
+            elif ch == 3:
+                act.triggered.connect(lambda checked: self.context_axes_Callback(axes,3))
+            else:
+                act.triggered.connect(lambda checked: self.context_axes_Callback(axes,4))
+            context_menu.addAction(act)
+            # action_group.addAction(act)
+        context_menu.exec(self.sender().mapToGlobal(pos))
+
+    def MenuSwitcher(self,type):
+        self.menuindex[0] = type
+        #TODO - paused 1/17/2025
+        if type == 1: #SQA
+            pass
+        else: #PSD
+            pass
 
     def process_data(self,_,*args):
         '''
@@ -661,16 +731,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self.Pulselog = []
             self.Stdfactor = [] # convert volt to fF
             self.labelindex = []
-            self.slider1.setValue(0)
+            self.slider0.setValue(0)
+            self.slider0v2p = round(self.slider0.value()*self.rSR) #for @update_plot, @slider0_Callback
             self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
-            self.slider2v2p = round(self.slider2.value()*self.rSR) #for @update_plot, @slider2_Callback
             #TODO - translate below
             # set(handles.xlim1,'String','0');
             # set(handles.xlim2,'String','0');
             # set(handles.figure1,'Name',handles.version.Shell);
             # set(Cap7_gh.NotePad.figure1,'Name',handles.version.Shell);
+            # delete(findobj('parent',handles.axes0,'Type','text'));
             # delete(findobj('parent',handles.axes1,'Type','text'));
-            # delete(findobj('parent',handles.axes2,'Type','text'));
             # set(handles.group_stop(1,:),'Enable','off');
             # set(handles.group_start(1,:),'Enable','on');
             self.Start_Stop.setText('Waiting')
@@ -739,15 +809,28 @@ class MainWindow(QtWidgets.QMainWindow):
                 # %edit_Kseal_Callback %TW141023
             #self.disptimer.stop()
 
-    def context_axes_Callback(self,axes,action):
+    def context_axes_Callback(self,axes,channel):
         '''
         for selecting display channels
-        action: the menu item being clicked
-        checked: status
+        axidx: index to the axes, 0-based
+        channel: the channel being clicked/selected
         '''
-        print(axes)
-        print(f'{axes.objectName()}, {action.text()}')
-        #TODO - paused 1/16/2025
+        axidx = int(axes.objectName()[-1])
+        self.disp.dispindex[axidx] = channel
+        #print(f'axes {axidx}, {channel}')
+        if axidx == 0:
+            plotx = self.plot0
+        elif axidx == 1:
+            plotx = self.plot1
+        else:
+            plotx = self.plot2
+        
+        #update plot color
+        plotx.setPen(pg.mkPen(width=2, color=self.disp.chcolor[channel]))
+        #TODO - translate the following
+        # if strcmpi(handles.ai.running,'off') && (~isempty(handles.aitime))
+        #     Show_update_Callback(hObject, eventdata, handles);
+        # end
 
     def AxesSwitch_Callback(self):
         self.limsetindex[0] = self.AxesSwitch.currentIndex()
@@ -755,11 +838,11 @@ class MainWindow(QtWidgets.QMainWindow):
         
     def Set_ylim_Callback(self):
         if self.limsetindex[0] == 0:
-            axes = self.axes1
+            axes = self.axes0
         elif self.limsetindex[0] == 1:
-            axes = self.axes2
+            axes = self.axes1
         else:
-            axes = self.axes3
+            axes = self.axes2
         #print(axes.getViewBox().viewRange())
         if self.Auto_axes.isChecked():
             self.Auto_axes.setChecked(False)
@@ -781,11 +864,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def Auto_axes_Callback(self):
         if self.limsetindex[0] == 0:
-            axes = self.axes1
+            axes = self.axes0
         elif self.limsetindex[0] == 1:
-            axes = self.axes2
+            axes = self.axes1
         else:
-            axes = self.axes3
+            axes = self.axes2
         
         if self.Auto_axes.isChecked():
             self.ylim(axes,'auto') # auto is on
@@ -798,11 +881,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def push_ylimAdj(self):
         if self.limsetindex[0] == 0:
-            axes = self.axes1
+            axes = self.axes0
         elif self.limsetindex[0] == 1:
-            axes = self.axes2
+            axes = self.axes1
         else:
-            axes = self.axes3
+            axes = self.axes2
         
         sender = self.sender()
         uplow = sender.objectName()[0] #'u' for upper lim, 'l' for lower lim
@@ -825,20 +908,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def Lock_Callback(self):
         if self.Lock.isChecked(): #Lock is on
-            if (self.limsetindex[0] == 1) and (self.limsetindex[2] == False): #Mark auto-axis if it's axes2
+            if (self.limsetindex[0] == 1) and (self.limsetindex[2] == False): #Mark auto-axis if it's axes1
                 self.Auto_axes.setChecked(True)
             self.limsetindex[2] = True
         else:
-            self.ylim(self.axes2,'auto')
+            self.ylim(self.axes1,'auto')
 
     def slider_Callback(self):
         value = self.sender().value() #int
-        if self.sender().objectName() == 'slider1': #slider1 or slider2
+        if self.sender().objectName() == 'slider0': #slider0 or slider1
+            self.slider0v2p = round(value*self.rSR)
+            self.text_slider0.setText(str(value))
+        else: #slider1
             self.slider1v2p = round(value*self.rSR)
             self.text_slider1.setText(str(value))
-        else: #slider2
-            self.slider2v2p = round(value*self.rSR)
-            self.text_slider2.setText(str(value))
         #TODO - remaining display control code
         #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback
     
@@ -965,7 +1048,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 #%% -------------------------------------------------------
 def main():
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     main = MainWindow()
     main.show()
     sys.exit(app.exec())
