@@ -54,7 +54,8 @@ class MainWindow(QMainWindow):
         Load and setup the UI Page
         '''
         uic.loadUi(Path(self.appdir,'ui_Cap8MainWindow.ui'), self)
-        self.menuindex = [0,0,0,0] # menuID,up aidata,middle aidata,bottom aidata], modified in @MenuSwitcher
+        self.menuindex = [0,'p','p','p'] # [context menu ID, axes0 PSD or SQA, axes1 PSD or SQA, axes2 PSD or SQA], modified in @MenuSwitcher
+        # context menu ID: 0-normal, 1-PSDofSQA; displayed data 'p'-PSD, 's'-SQA
         self.limsetindex = [self.AxesSwitch.currentIndex(),True,True,True]; #[axis #,Auto,Auto,Auto], axes is 0-based
         self.Auto_axes.setChecked(self.limsetindex[self.limsetindex[0]+1])
 
@@ -268,6 +269,10 @@ class MainWindow(QMainWindow):
         self.slider1.valueChanged.connect(self.slider_Callback)
 
         # Set up context menu
+        # Note - cannot connect context menu callback using the loop below. The default channel will be wrong (Ch4-Ra for all axes)...
+        # for ax in [self.axes0,self.axes1,self.axes2]:
+        #     ax.getPlotItem().setMenuEnabled(False) #disable default pyqtplot context menu
+        #     ax.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(ax,pos)) #connect to custom context menu
         self.axes0.getPlotItem().setMenuEnabled(False) #disable default pyqtplot context menu
         self.axes0.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes0,pos)) #connect to custom context menu
         self.axes1.getPlotItem().setMenuEnabled(False) #disable default pyqtplot context menu
@@ -339,13 +344,12 @@ class MainWindow(QMainWindow):
         act2 = QAction('Ch2 I', self)
         act3 = QAction('Ch3 Aux', self)
         act4 = QAction('Ch4 Ra', self)
-        actions = [act0, act1, act2, act3, act4]
 
-        for ch,act in enumerate(actions):
+        for ch,act in enumerate([act0, act1, act2, act3, act4]):
             act.setCheckable(True)
             if ch == self.disp.dispindex[int(axes.objectName()[-1])]:
                 act.setChecked(True)
-            # the following method must be used...
+            # the following method must be used... if using ch directly -> always points to ch = 4 somehow...
             if ch == 0:
                 act.triggered.connect(lambda checked: self.context_axes_Callback(axes,0))
             elif ch == 1:
@@ -360,13 +364,102 @@ class MainWindow(QMainWindow):
             # action_group.addAction(act)
         context_menu.exec(self.sender().mapToGlobal(pos))
 
+    def create_context_axes_b(self,axes,pos:QPoint):
+        #axidx: index to the axes, 0-based
+        context_menu = QMenu(self) # create a QMenu
+
+        # create and add items
+        # create Ch0 submenu
+        menu0 = QMenu('Ch0 C', self)
+        act00 = QAction('SQA', self)
+        act01 = QAction('PSD(Y)', self)
+        menu0.addAction(act00)
+        menu0.addAction(act01)
+
+        # create Ch1 submenu
+        menu1 = QMenu('Ch1 G', self)
+        act10 = QAction('SQA', self)
+        act11 = QAction('PSD(X)', self)
+        menu1.addAction(act10)
+        menu1.addAction(act11)
+        
+        # create Ch2-4
+        act2 = QAction('Ch2 I', self)
+        act3 = QAction('Ch3 Aux', self)
+        act4 = QAction('Ch4 Ra', self)
+
+        #add items to the context menu
+        context_menu.addMenu(menu0)
+        context_menu.addMenu(menu1)
+        for act in [act2,act3,act4]:
+            context_menu.addAction(act)
+
+        for idx,act in enumerate([act00, act01, act10, act11, act2, act3, act4]):
+            act.setCheckable(True)
+            if idx <= 3: #act for Ch0, Ch1
+                if idx <= 1: #Ch0
+                    if self.disp.dispindex[int(axes.objectName()[-1])] == 0: #disp Ch0
+                        if (idx == 0) and (self.menuindex[int(axes.objectName()[-1])+1] == 's'): #Ch0-SQA
+                            act.setChecked(True)
+                        elif (idx == 1) and (self.menuindex[int(axes.objectName()[-1])+1] == 'p'): #Ch0-PSD
+                            act.setChecked(True)
+                else: #disp Ch1
+                    if self.disp.dispindex[int(axes.objectName()[-1])] == 1: #disp Ch1
+                        if (idx == 2) and (self.menuindex[int(axes.objectName()[-1])+1] == 's'): #Ch0-SQA
+                            act.setChecked(True)
+                        elif (idx == 3) and (self.menuindex[int(axes.objectName()[-1])+1] == 'p'): #Ch0-PSD
+                            act.setChecked(True)
+                # if idx%2: #PSD
+                #     act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,int(idx/2),'p'))
+                # else: #SQA
+                #     act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,int(idx/2),'s'))
+            else: #Ch2-4
+                if self.disp.dispindex[int(axes.objectName()[-1])] == (idx-2):
+                    act.setChecked(True)
+                # act.triggered.connect(lambda checked: self.context_axes_Callback(axes,idx-2))
+
+            if idx == 0:   #Ch0sqa
+                act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,0,'s'))
+            elif idx == 1: #Ch0psd
+                act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,0,'p'))
+            elif idx == 2: #Ch1sqa
+                act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,1,'s'))
+            elif idx == 3: #Ch1psd
+                act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,1,'p'))
+            elif idx == 4: #Ch2
+                act.triggered.connect(lambda checked: self.context_axes_Callback(axes,2))
+            elif idx == 5: #Ch3
+                act.triggered.connect(lambda checked: self.context_axes_Callback(axes,3))
+            else:          #Ch4
+                act.triggered.connect(lambda checked: self.context_axes_Callback(axes,4))
+                
+        context_menu.exec(self.sender().mapToGlobal(pos))
+
     def MenuSwitcher(self,type):
         self.menuindex[0] = type
-        #TODO - paused 1/17/2025
         if type == 1: #SQA
-            pass
+            self.axes0.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(self.axes0,pos)) #connect to custom context menu
+            self.axes1.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(self.axes1,pos)) #connect to custom context menu
+            self.axes2.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(self.axes2,pos)) #connect to custom context menu
+            #TODO - translate the following
+            # if (handles.shiftswitch == 1)
+            #     contextS_Gsqa_Callback(handles.contextS_Gsqa,[],handles);
+            # elseif (handles.shiftswitch == 0)
+            #     contextS_Csqa_Callback(handles.contextS_Csqa,[],handles);
+            # else
+            #     contextS_GCsqa_Callback(handles.contextS_GCsqa,[],handles);
+            # end
         else: #PSD
-            pass
+            self.axes0.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes0,pos)) #connect to custom context menu
+            self.axes1.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes1,pos)) #connect to custom context menu
+            self.axes2.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes2,pos)) #connect to custom context menu
+            #TODO - translate the following
+            #set(handles.PhaseShift,'UIContextMenu',[]);
+            self.menuindex[1:] = 'p'*3 #[0,'p','p','p']
+
+        for axidx,ax in [self.axes0,self.axes1,self.axes2]: #this will update displayed channels
+            self.context_axes_Callback(self,ax,self.disp.dispindex[axidx])
+
 
     def process_data(self,_,*args):
         '''
@@ -764,6 +857,7 @@ class MainWindow(QMainWindow):
             self.daq.ai.start()
             self.Set_PSD_Callback() #this will start the AO
             #TODO - translate below
+            #TODO - paused 1/19/2025 - update all MenuSwitcher code!
             # if (handles.algorism ~= 1)&&(~handles.menuindex(1,1))
             #     MenuSwitcher(gcf,1); %for SQA
             # elseif (handles.algorism == 1)&&(handles.menuindex(1,1))
@@ -831,6 +925,17 @@ class MainWindow(QMainWindow):
         # if strcmpi(handles.ai.running,'off') && (~isempty(handles.aitime))
         #     Show_update_Callback(hObject, eventdata, handles);
         # end
+
+    def context_axes_b_Callback(self,axes,channel,algo):
+        '''
+        for selecting display channels (Ch0 and Ch1 only)
+        axidx: index to the axes, 0-based
+        channel: the channel being clicked/selected
+        algo: show PSD('p') or SQA('s') data for Ch0/1
+        '''
+        #print(f'ch:{channel}, algo:{algo}')
+        self.menuindex[int(axes.objectName()[-1])+1] = algo
+        self.context_axes_Callback(axes,channel)
 
     def AxesSwitch_Callback(self):
         self.limsetindex[0] = self.AxesSwitch.currentIndex()
