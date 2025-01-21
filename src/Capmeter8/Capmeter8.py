@@ -34,7 +34,9 @@ class MainWindow(QMainWindow):
         self.disp = self.kwarg2var(dispindex = [0,2,4], # 0-based
                                    chcolor = ['r','b',(204,0,204),(64,153,166),'k'], #display color of the channel
                                    slider0range = 120,
-                                   slider1range = 50)
+                                   slider1range = 50,
+                                   invertindex = [False,False,False], #[axes0,axes1,axes2]
+                                   )
         
         self.gh = self.kwarg2var(notePad = None) #TODO - Cap7_gh has not been implemented
 
@@ -178,7 +180,7 @@ class MainWindow(QMainWindow):
             self.daq.ai.aqMode = 'background'
             self.daq.ai.grounding = 'single-ended'
             self.daq.ai.sampleRate = self.daqdefault.aiSR
-            self.daq.ai.samplesPerTrig = int(((1/self.rSR)*0.9)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
         except:
             print('AI error in OpeningFcn')
             self.reader = True
@@ -295,8 +297,12 @@ class MainWindow(QMainWindow):
                 setattr(self, key, value)
 
     def iniAxes(self,axes,color):
+        '''
+        Initialize the axes. Use pyqtgraph's autoDownsample property instead of the original DispCtrl C function
+        Ref: https://pyqtgraph.readthedocs.io/en/latest/api_reference/graphicsItems/plotdataitem.html
+        '''
         #initializ the display axes
-        h = axes.plot([0],[0],pen=pg.mkPen(width=2, color=color))
+        h = axes.plot([0],[0],pen=pg.mkPen(width=2, color=color),autoDownsample = True)
         axes.setBackground('w')
         index = int(axes.objectName()[-1]) # index to the axis
         if not self.limsetindex[index]: # if not auto axis
@@ -308,7 +314,7 @@ class MainWindow(QMainWindow):
         axes.setRange(xRange=lim,padding=0)
 
     def ylim(self,axes,lim):
-        # lim: tuple
+        # lim: tuple or mode listed below
         if lim == 'auto':
             axes.getViewBox().enableAutoRange(axis='y')
         elif lim == 'manual':
@@ -324,7 +330,7 @@ class MainWindow(QMainWindow):
     def update_plot(self):
         D = self.fwindow
         if not self.aitime:
-            print('waiting for data to be displayed... @update_plot');
+            print('waiting for data to be displayed... @update_plot')
             return
         
         # draw the top and middle panels
@@ -387,14 +393,36 @@ class MainWindow(QMainWindow):
                 else:
                     YData2 = self.aidata[self.disp.dispindex[2]]
 
-        #[XData12 YData1 YData2 XData3 YData3] = DispCtrl(10000,XData12,YData1,YData2,5000,XData3,YData3);
-        
-        #TODO - paused 1/20/2025
-        XData = list(range(1000))
-        YData1 = self.pseudoDataGenerator(len(XData))
-        YData2 = self.pseudoDataGenerator(len(XData))
-        self.plot0.setData(XData,YData1)
-        self.plot1.setData(XData,YData2)
+        #TODO - translate the following
+        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,1))
+        #     YData1 = Dfilter2(handles.fswitch,YData1,handles.fwindow);
+        # end
+        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,2))
+        #     YData2 = Dfilter2(handles.fswitch,YData2,handles.fwindow);
+        # end
+        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,3))
+        #     YData3 = Dfilter2(handles.fswitch,YData3,handles.fwindow);
+        # end
+        if self.disp.invertindex[0]:
+            YData0 = -YData0
+        if self.disp.invertindex[1]:
+            YData1 = -YData1
+        if self.disp.invertindex[2]:
+            YData2 = -YData2
+
+        # XData = list(range(1000))
+        # YData1 = self.pseudoDataGenerator(len(XData))
+        # YData2 = self.pseudoDataGenerator(len(XData))
+        self.plot0.setData(XData01,YData0)
+        self.plot1.setData(XData01,YData1)
+        self.plot2.setData(XData2,YData2)
+        self.xlim(self.axes0,(XData01[0],XData01[-1]))
+        self.xlim(self.axes1,(XData01[0],XData01[-1]))
+        if self.Lock.isChecked():
+            lim1 = self.ylim(self.axes0,'range')
+            D = (lim1[1]-lim1[0])/2
+            M = (max(YData1)+min(YData1))/2
+            self.ylim(self.axes1,((M-D),(M+D)))
 
     def create_context_axes(self,axes,pos:QPoint):
         #axidx: index to the axes, 0-based
@@ -406,10 +434,12 @@ class MainWindow(QMainWindow):
         act2 = QAction('Ch2 I', self)
         act3 = QAction('Ch3 Aux', self)
         act4 = QAction('Ch4 Ra', self)
+        act5 = QAction('Invert signal', self)
 
-        for ch,act in enumerate([act0, act1, act2, act3, act4]):
+        axidx = int(axes.objectName()[-1])
+        for ch,act in enumerate([act0, act1, act2, act3, act4, act5]):
             act.setCheckable(True)
-            if ch == self.disp.dispindex[int(axes.objectName()[-1])]:
+            if ch == self.disp.dispindex[axidx]:
                 act.setChecked(True)
             # the following method must be used... if using ch directly -> always points to ch = 4 somehow...
             if ch == 0:
@@ -420,8 +450,13 @@ class MainWindow(QMainWindow):
                 act.triggered.connect(lambda checked: self.context_axes_Callback(axes,2))
             elif ch == 3:
                 act.triggered.connect(lambda checked: self.context_axes_Callback(axes,3))
-            else:
+            elif ch == 4:
                 act.triggered.connect(lambda checked: self.context_axes_Callback(axes,4))
+            else:
+                if self.disp.invertindex[axidx]:
+                    act.setChecked(True)
+                act.triggered.connect(lambda checked: self.context_invertSignal_Callback(axes,checked))
+
             context_menu.addAction(act)
             # action_group.addAction(act)
         context_menu.exec(self.sender().mapToGlobal(pos))
@@ -445,18 +480,21 @@ class MainWindow(QMainWindow):
         menu1.addAction(act10)
         menu1.addAction(act11)
         
-        # create Ch2-4
+        # create Ch2-4 etc.
         act2 = QAction('Ch2 I', self)
         act3 = QAction('Ch3 Aux', self)
         act4 = QAction('Ch4 Ra', self)
+        act5 = QAction('Invert signal', self)
+
+        axidx = int(axes.objectName()[-1])
 
         #add items to the context menu
         context_menu.addMenu(menu0)
         context_menu.addMenu(menu1)
-        for act in [act2,act3,act4]:
+        for act in [act2,act3,act4,act5]:
             context_menu.addAction(act)
 
-        for idx,act in enumerate([act00, act01, act10, act11, act2, act3, act4]):
+        for idx,act in enumerate([act00, act01, act10, act11, act2, act3, act4, act5]):
             act.setCheckable(True)
             if idx <= 3: #act for Ch0, Ch1
                 if idx <= 1: #Ch0
@@ -492,9 +530,13 @@ class MainWindow(QMainWindow):
                 act.triggered.connect(lambda checked: self.context_axes_Callback(axes,2))
             elif idx == 5: #Ch3
                 act.triggered.connect(lambda checked: self.context_axes_Callback(axes,3))
-            else:          #Ch4
+            elif idx == 6: #Ch4
                 act.triggered.connect(lambda checked: self.context_axes_Callback(axes,4))
-                
+            else:          #Invert signal
+                if self.disp.invertindex[axidx]:
+                    act.setChecked(True)
+                act.triggered.connect(lambda checked: self.context_invertSignal_Callback(axes,checked))
+        
         context_menu.exec(self.sender().mapToGlobal(pos))
 
     def MenuSwitcher(self,type):
@@ -519,8 +561,8 @@ class MainWindow(QMainWindow):
             #set(handles.PhaseShift,'UIContextMenu',[]);
             self.menuindex[1:] = 'p'*3 #[0,'p','p','p']
 
-        for axidx,ax in [self.axes0,self.axes1,self.axes2]: #this will update displayed channels
-            self.context_axes_Callback(self,ax,self.disp.dispindex[axidx])
+        for axidx,ax in enumerate([self.axes0,self.axes1,self.axes2]): #this will update displayed channels
+            self.context_axes_Callback(ax,self.disp.dispindex[axidx])
 
 
     def process_data(self,_,*args):
@@ -552,7 +594,7 @@ class MainWindow(QMainWindow):
                 Time,PSD2,PSD1,Curr,AICh2,asymp,peak,tau = self.CapEngine(self.algorithm)
 
             Cap,Cond,Ra = self.SqAlgo(asymp,peak,tau)
-            self.PSDofSQA = np.hstack((self.PSDofSQA,np.vstack(PSD2,PSD1)))
+            self.PSDofSQA = np.hstack((self.PSDofSQA,np.vstack((PSD2,PSD1))))
 
         elif self.algorithm == 1: #PSD
             Time,Cap,Cond,Curr,AICh2 = self.CapEngine(1)
@@ -563,9 +605,9 @@ class MainWindow(QMainWindow):
 
         self.aitime = np.concatenate((self.aitime,Time))
         if self.algorithm == 0:
-            self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr)))
+            self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr))))
         else:
-            self.aidata = np.hstack((self.aidata,np.vstack(Cap,Cond,Curr,AICh2,Ra)))
+            self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr,AICh2,Ra))))
 
         #TODO - translate the following
         # if Cap7_state.pulse.pulsing
@@ -805,6 +847,7 @@ class MainWindow(QMainWindow):
         N = self.daq.ao.sampleRate//(freq*1000) #samples per wave
         A = abs(amp/self.daqdefault.aoExtConvert)
         triggerpt = ceil(2/self.daq.ai.sampleRate*self.daq.ao.sampleRate)
+        #triggerpt = 10
         if A > 20:
             A = 20
         if (self.algorithm >=2): #SQA
@@ -835,7 +878,7 @@ class MainWindow(QMainWindow):
     
     #%% Callbacks -------------------------------------------------------
     def Start_Stop_Callback(self):
-        #TODO
+        #TODO - paused 1/20/2025. debug ai.samplePerTrig problem. most likely in daqx...
         if self.Start_Stop.isChecked(): #start
             #TODO - translate below
             # if Cap7_state.changed
@@ -856,7 +899,7 @@ class MainWindow(QMainWindow):
             self.PSDphase = float(self.PSD_phase.text()) #degree
 
             # adjust AI properties
-            self.daq.ai.samplesPerTrig = int(((1/self.rSR)*0.9)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
             self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
             self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
             self.daq.ai.trigFcn = (self.AIwaiting,)
@@ -907,6 +950,10 @@ class MainWindow(QMainWindow):
             
             self.daq.ao.stop() #might be started again @resume
             sleep(0.003)
+            if (self.algorithm >= 2) and (self.menuindex == 0): #SQA but PSD context menu
+                self.MenuSwitcher(1) #SQA context menu
+            elif (self.algorithm == 1) and (self.menuindex == 1): #PSD but SQA context menu
+                self.MenuSwitcher(0) #PSD context menu
             #TODO - translate below
             # if strcmpi(get(handles.context_TTL,'Checked'),'off')
             #     set(handles.ao,'TriggerType','Immediate');
@@ -915,19 +962,15 @@ class MainWindow(QMainWindow):
             #     set(handles.ao,'HwDigitalTriggerSource','PFI0');
             #     %set(handles.ao,'TriggerFcn',{@AIwaiting,gcf});
             # end
-
+            
             self.daq.ai.start()
             self.Set_PSD_Callback() #this will start the AO
-
-            if (self.algorithm >= 2) and (self.menuindex == 0): #SQA but PSD context menu
-                self.MenuSwitcher(1) #SQA context menu
-            elif (self.algorithm == 1) and (self.menuindex == 1): #PSD but SQA context menu
-                self.MenuSwitcher(0) #PSD context menu
 
             self.disptimer.start()
         else: #stop
             self.daq.ai.stop()
             self.daq.ao.stop()
+            self.disptimer.stop()
             self.Start_Stop.setText('Stopped')
             self.Start_Stop.setStyleSheet('color:red')
             if self.AutoPhase.isChecked():
@@ -997,6 +1040,16 @@ class MainWindow(QMainWindow):
         #print(f'ch:{channel}, algo:{algo}')
         self.menuindex[int(axes.objectName()[-1])+1] = algo
         self.context_axes_Callback(axes,channel)
+
+    def context_invertSignal_Callback(self,axes,checked):
+        '''
+        invert the polarity of the signal of a given axis or not
+        '''
+        self.disp.invertindex[int(axes.objectName()[-1])] = checked #[top, middle, bottom]
+        #TODO - translate the following
+        # if strcmpi(handles.ai.running,'off') && (~isempty(handles.aitime))
+        #     Show_update_Callback(hObject, eventdata, handles);
+        # end
 
     def AxesSwitch_Callback(self):
         self.limsetindex[0] = self.AxesSwitch.currentIndex()
@@ -1122,6 +1175,16 @@ class MainWindow(QMainWindow):
             self.daq.ao.putdata(self.aodata)
             self.Set_filter_Callback() #adjust filter setting accordingly
             self.daq.ao.start()
+            #TODO - translate below
+            # %---adjust filter setting automatically
+            # filtermaxp = handles.aiSamplesPerTrigger; %calculate maximal averaging points
+            # filterp = round(abs((str2double(get(handles.filterset,'String'))/1000)*Cap7_state.daq.aiSR));
+            # handles.filterv2p = FilterCalc(filterp,filtermaxp,Cap7_state.daq.aiSR,handles.PSDfreq);
+            # if (handles.filterv2p == 1)
+            #     set(handles.filterset,'String','0');
+            # else
+            #     set(handles.filterset,'String',num2str(1000*handles.filterv2p/Cap7_state.daq.aiSR));
+            # end
            
         self.PSDphase = float(self.PSD_phase.text())
         P = abs(self.PSDphase)
