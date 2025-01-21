@@ -327,7 +327,69 @@ class MainWindow(QMainWindow):
             print('waiting for data to be displayed... @update_plot');
             return
         
-        #TODO - paused 1/17/2025
+        # draw the top and middle panels
+        if (self.slider0v2p == 0): #show all data if the slider value is 0
+            XData01 = self.aitime
+            if (self.disp.dispindex[0] <= 1) and (self.menuindex[1] == 's'): #Ch0/1 SQA, top axis
+                YData0 = self.PSDofSQA[self.disp.dispindex[0]]
+            else:
+                YData0 = self.aidata[self.disp.dispindex[0]]
+
+            if (self.disp.dispindex[1] <= 1) and (self.menuindex[2] == 's'): #Ch0/1 SQA, middle axis
+                YData1 = self.PSDofSQA[self.disp.dispindex[1]]
+            else:
+                YData1 = self.aidata[self.disp.dispindex[1]]
+        else:
+            L = self.aitime.size
+            if L >= self.slider0v2p:
+                XData01 = self.aitime[L-self.slider0v2p:]
+                if (self.disp.dispindex[0] <= 1) and (self.menuindex[1] == 's'): #Ch0/1 SQA, top axis
+                    YData0 = self.PSDofSQA[self.disp.dispindex[0]][L-self.slider0v2p:]
+                else:
+                    YData0 = self.aidata[self.disp.dispindex[0]][L-self.slider0v2p:]
+
+                if (self.disp.dispindex[1] <= 1) and (self.menuindex[2] == 's'): #Ch0/1 SQA, middle axis
+                    YData1 = self.PSDofSQA[self.disp.dispindex[1]][L-self.slider0v2p:]
+                else:
+                    YData1 = self.aidata[self.disp.dispindex[1]][L-self.slider0v2p:]
+            else:
+                XData01 = self.aitime
+                if (self.disp.dispindex[0] <= 1) and (self.menuindex[1] == 's'): #Ch0/1 SQA, top axis
+                    YData0 = self.PSDofSQA[self.disp.dispindex[0]]
+                else:
+                    YData0 = self.aidata[self.disp.dispindex[0]]
+
+                if (self.disp.dispindex[1] <= 1) and (self.menuindex[2] == 's'): #Ch0/1 SQA, middle axis
+                    YData1 = self.PSDofSQA[self.disp.dispindex[1]]
+                else:
+                    YData1 = self.aidata[self.disp.dispindex[1]]
+
+        # draw the bottom panel
+        if (self.slider1v2p): #show all data if the slider value is 0
+            XData2 = self.aitime
+            if (self.disp.dispindex[2] <= 1) and (self.menuindex[3] == 's'): #Ch0/1 SQA
+                YData2 = self.PSDofSQA[self.disp.dispindex[2]]
+            else:
+                YData2 = self.aidata[self.disp.dispindex[2]]
+        else:
+            L = self.aitime.size
+            if L >= self.slider1v2p:
+                XData2 = self.aitime[L-self.slider1v2p:]
+                if (self.disp.dispindex[2] <= 1) and (self.menuindex[3] == 's'): #Ch0/1 SQA
+                    YData2 = self.PSDofSQA[self.disp.dispindex[2]][L-self.slider1v2p:]
+                else:
+                    YData2 = self.aidata[self.disp.dispindex[2]][L-self.slider1v2p:]
+
+            else:
+                XData2 = self.aitime
+                if (self.disp.dispindex[2] <= 1) and (self.menuindex[3] == 's'): #Ch0/1 SQA
+                    YData2 = self.PSDofSQA[self.disp.dispindex[2]]
+                else:
+                    YData2 = self.aidata[self.disp.dispindex[2]]
+
+        #[XData12 YData1 YData2 XData3 YData3] = DispCtrl(10000,XData12,YData1,YData2,5000,XData3,YData3);
+        
+        #TODO - paused 1/20/2025
         XData = list(range(1000))
         YData1 = self.pseudoDataGenerator(len(XData))
         YData2 = self.pseudoDataGenerator(len(XData))
@@ -856,14 +918,13 @@ class MainWindow(QMainWindow):
 
             self.daq.ai.start()
             self.Set_PSD_Callback() #this will start the AO
-            #TODO - translate below
-            #TODO - paused 1/19/2025 - update all MenuSwitcher code!
-            # if (handles.algorism ~= 1)&&(~handles.menuindex(1,1))
-            #     MenuSwitcher(gcf,1); %for SQA
-            # elseif (handles.algorism == 1)&&(handles.menuindex(1,1))
-            #     MenuSwitcher(gcf,0); %for PSD
-            # end
-            #self.disptimer.start()
+
+            if (self.algorithm >= 2) and (self.menuindex == 0): #SQA but PSD context menu
+                self.MenuSwitcher(1) #SQA context menu
+            elif (self.algorithm == 1) and (self.menuindex == 1): #PSD but SQA context menu
+                self.MenuSwitcher(0) #PSD context menu
+
+            self.disptimer.start()
         else: #stop
             self.daq.ai.stop()
             self.daq.ao.stop()
