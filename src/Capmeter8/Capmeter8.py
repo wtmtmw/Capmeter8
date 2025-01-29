@@ -177,10 +177,13 @@ class MainWindow(QMainWindow):
             self.daq.config_ai(0,2) #Ch0: trigger, used in CapEngine; Ch1: current; Ch2: e.g. Ampero signal
             self.daq.ai.trigType = 'digital-positive-edge'
             self.daq.ai.iscontinuous = True
+            self.daq.ai.trigRepeat = 1 # one trigger, continuous acquisition
             self.daq.ai.aqMode = 'background'
             self.daq.ai.grounding = 'single-ended'
             self.daq.ai.sampleRate = self.daqdefault.aiSR
-            self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            #self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            self.daq.ai.samplesPerTrig = 'inf' #This is actually optional. Put it here for clarity only
+            self.samplesPerTrig = round(self.daq.ai.sampleRate/self.rSR) # new for Cap8. For generating data points in CapEngine etc.
         except:
             print('AI error in OpeningFcn')
             self.reader = True
@@ -194,7 +197,7 @@ class MainWindow(QMainWindow):
         self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
         self.filterv2p = round((float(self.filterset.text())/1000)*self.daq.ai.sampleRate) #points to be averaged
         
-        self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
+        self.SpmCount = self.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
         self.databuffer = [] # for @process_data
         self.timebuffer = [] # for @process_data
         
@@ -657,25 +660,25 @@ class MainWindow(QMainWindow):
         * firstmin = Cpickend2(dataB, SPC, lastmax, taufactor) + endadj; in the DLL
         '''
         Nref = self.PSDref.size #self.PSDref: [] -> np.ndarray
-        ppch = int(self.timebuffer.size/self.daq.ai.samplesPerTrig) #points per channel
+        ppch = int(self.timebuffer.size/self.samplesPerTrig) #points per channel
         TIME = np.empty(ppch,dtype=np.float64)
         CAP = np.empty(ppch,dtype=np.float64)
         COND = np.empty(ppch,dtype=np.float64)
         CURR = np.empty(ppch,dtype=np.float64)
 
         self.lib.Dfilter(0,self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-            int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+            int(self.samplesPerTrig),int(self.filterv2p),ppch,
             TIME.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
         
         if algorithm == 0: #Hardware
             self.lib.Dfilter(int(self.fcheck['rf0']),self.databuffer[0,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                int(self.samplesPerTrig),int(self.filterv2p),ppch,
                 CAP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
             self.lib.Dfilter(int(self.fcheck['rf1']),self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                int(self.samplesPerTrig),int(self.filterv2p),ppch,
                 COND.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
             self.lib.Dfilter(int(self.fcheck['rf2']),self.databuffer[2,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                int(self.samplesPerTrig),int(self.filterv2p),ppch,
                 CURR.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
             return TIME,CAP,COND,CURR
@@ -683,10 +686,10 @@ class MainWindow(QMainWindow):
         else: #PSD, SQA
             AICH2 = np.empty(ppch,dtype=np.float64)
             self.lib.Dfilter(int(self.fcheck['rf1']),self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                int(self.samplesPerTrig),int(self.filterv2p),ppch,
                 CURR.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
             self.lib.Dfilter(int(self.fcheck['rf2']),self.databuffer[2,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                int(self.daq.ai.samplesPerTrig),int(self.filterv2p),ppch,
+                int(self.samplesPerTrig),int(self.filterv2p),ppch,
                 AICH2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
             if algorithm >= 2: #SQA
@@ -700,27 +703,27 @@ class MainWindow(QMainWindow):
                     self.lib.SqCF(self.databuffer[0,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                        int(self.daq.ai.samplesPerTrig),float(taufactor),int(endadj),ppch,
+                        int(self.samplesPerTrig),float(taufactor),int(endadj),ppch,
                         ASYMP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         PEAK.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         TAU.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
                 else: #Q-SQA
-                    interval = (self.timebuffer[self.daq.ai.samplesPerTrig-1] - self.timebuffer[0]) / (self.daq.ai.samplesPerTrig - 1) #calculate time interval between data points
+                    interval = (self.timebuffer[self.samplesPerTrig-1] - self.timebuffer[0]) / (self.samplesPerTrig - 1) #calculate time interval between data points
                     self.lib.SqQ(self.databuffer[0,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         self.timebuffer.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                        int(self.daq.ai.samplesPerTrig),float(taufactor),int(endadj),ppch,float(interval),
+                        int(self.samplesPerTrig),float(taufactor),int(endadj),ppch,float(interval),
                         ASYMP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         PEAK.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                         TAU.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
             #also do PSD even the SQA is selected
             self.lib.PSD(self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                 self.PSD90.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                Nref,int(self.daq.ai.samplesPerTrig),ppch,
+                Nref,int(self.samplesPerTrig),ppch,
                 CAP.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
             self.lib.PSD(self.databuffer[1,:].ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                 self.PSDref.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                Nref,int(self.daq.ai.samplesPerTrig),ppch,
+                Nref,int(self.samplesPerTrig),ppch,
                 COND.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
             if algorithm == 1: #PSD
                 return TIME,CAP,COND,CURR,AICH2
@@ -832,7 +835,7 @@ class MainWindow(QMainWindow):
         Calculate PSD reference waveform
         '''
         PPS = (self.daq.ai.sampleRate/(self.PSDfreq*1000)) #points per sine wave
-        L = int((self.daq.ai.samplesPerTrig//PPS)*PPS) #make sure that the DC noise can be cancled
+        L = int((self.samplesPerTrig//PPS)*PPS) #make sure that the DC noise can be cancled
         T = L/self.daq.ai.sampleRate #Note - set np.linspace(...,endpoint = False)
         P = self.PSDphase*np.pi/180
         F = self.PSDfreq*1000
@@ -870,7 +873,7 @@ class MainWindow(QMainWindow):
             output = np.zeros(L)
         
         trigsig = np.zeros(L) #trigger signal
-        trigsig[0:triggerpt] = 5 #1V is not enough to trigger MCC board...
+        trigsig[0:triggerpt] = 4 #1V is not enough to trigger MCC board...
         output = np.vstack((trigsig,output))
         
         amp = A*abs(self.daqdefault.aoExtConvert); #in mV
@@ -899,14 +902,14 @@ class MainWindow(QMainWindow):
             self.PSDphase = float(self.PSD_phase.text()) #degree
 
             # adjust AI properties
-            self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
-            self.SpmCount = self.daq.ai.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
+            #self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
+            self.SpmCount = self.samplesPerTrig*round(self.rSR*0.5) # process data every 0.5 sec
             self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
             self.daq.ai.trigFcn = (self.AIwaiting,)
             
             self.filterv2p = round((float(self.filterset.text())/1000)*self.daq.ai.sampleRate) #points to be averaged
             self.fwindow = abs(int(self.filterset2.text())) #samples for the moving filter
-            filtermaxp = self.daq.ai.samplesPerTrig #calculate maximal averaging points
+            filtermaxp = self.samplesPerTrig #calculate maximal averaging points
             if self.filterv2p > filtermaxp:
                 self.filterv2p = filtermaxp
                 self.filterset.setText(str(1000*filtermaxp/self.daq.ai.sampleRate))
@@ -1246,7 +1249,7 @@ class MainWindow(QMainWindow):
         self.fcheck[self.sender().objectName()] = self.sender().isChecked()
 
     def Set_filter_Callback(self): #pre-filter on raw data
-        filtermaxp = self.daq.ai.samplesPerTrig #calculate maximal averaging points
+        filtermaxp = self.samplesPerTrig #calculate maximal averaging points
         filterp = round(abs(float(self.filterset.text())/1000)*self.daq.ai.sampleRate)
         self.filterv2p = self.FilterCalc(filterp,filtermaxp)
         if (self.filterv2p == 1):
