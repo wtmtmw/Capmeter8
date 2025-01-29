@@ -609,9 +609,16 @@ class MainWindow(QMainWindow):
 
         self.aitime = np.concatenate((self.aitime,Time))
         if self.algorithm == 0:
-            self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr))))
+            if not self.aidata: #no data yet
+                self.aidata = np.vstack((Cap,Cond,Curr))
+            else:
+                self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr))))
         else:
-            self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr,AICh2,Ra))))
+            if not self.aidata: #no data yet
+                self.aidata = np.vstack((Cap,Cond,Curr,AICh2,Ra))
+            else:
+                self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr,AICh2,Ra))))
+        #TODO - paused 1/29/2025, check if the dimension for hstack matches
 
         #TODO - translate the following
         # if Cap7_state.pulse.pulsing
@@ -891,8 +898,8 @@ class MainWindow(QMainWindow):
             #     end
             # end
             self.rSR = abs(float(self.RecordSampleRate.text()))
-            if self.rSR > 500:
-                self.rSR = 500
+            if self.rSR > 100:
+                self.rSR = 100
                 self.RecordSampleRate.setText(str(self.rSR))
             elif self.rSR < 5:
                 self.rSR = 5
@@ -926,7 +933,7 @@ class MainWindow(QMainWindow):
             #     return
             # end
             # set(handles.Start_Stop,'HitTest','off');
-            self.aidata = [] #TODO - paused 1/29/2025, match the dimension for np.hstack
+            self.aidata = []
             self.aitime = []
             self.PSDofSQA = []
             self.Pulselog = []
