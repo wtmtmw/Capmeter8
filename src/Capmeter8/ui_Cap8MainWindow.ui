@@ -862,6 +862,32 @@
      </widget>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="panel_show">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>780</y>
+      <width>131</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Show data</string>
+    </property>
+    <widget class="QPushButton" name="Show">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>50</y>
+       <width>75</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Show</string>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
