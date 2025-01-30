@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
                                   aoExtConvert = 20, #in mV/V. For ao_1, not ao_0
                                   )
 
-        self.disp = self.kwarg2var(dispindex = [0,2,4], # 0-based
+        self.disp = self.kwarg2var(dispindex = [0,1,2], # 0-based
                                    chcolor = ['r','b',(204,0,204),(64,153,166),'k'], #display color of the channel
                                    slider0range = 120,
                                    slider1range = 50,
@@ -334,7 +334,7 @@ class MainWindow(QMainWindow):
 
     def update_plot(self):
         D = self.fwindow
-        if not self.aitime:
+        if type(self.aitime) == list: #not self.aitime <- won't work once it becomes np array
             print('waiting for data to be displayed... @update_plot')
             return
         
@@ -610,12 +610,12 @@ class MainWindow(QMainWindow):
 
         self.aitime = np.concatenate((self.aitime,Time))
         if self.algorithm == 0:
-            if not self.aidata: #no data yet
+            if type(self.aidata) == list: #not self.aidata: #no data yet
                 self.aidata = np.vstack((Cap,Cond,Curr))
             else:
                 self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr))))
         else:
-            if not self.aidata: #no data yet
+            if type(self.aidata) == list: #not self.aidata: #no data yet
                 self.aidata = np.vstack((Cap,Cond,Curr,AICh2,Ra))
             else:
                 self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr,AICh2,Ra))))
@@ -1008,7 +1008,7 @@ class MainWindow(QMainWindow):
             # Cap7_state.changed = true;
             # ChangedOrSaved(handles.figure1);
             # %assignin('base','aodata',handles.aodata);
-            if not self.aitime:
+            if type(self.aidata) == list:
                 return
             else:
                 pass
