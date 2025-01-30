@@ -257,6 +257,10 @@ class MainWindow(QMainWindow):
         self.Lock.clicked.connect(self.Lock_Callback)
         self.Set_ylim.clicked.connect(self.Set_ylim_Callback)
 
+        self.slider0.valueChanged.connect(self.slider_Callback)
+        self.slider1.valueChanged.connect(self.slider_Callback)
+        self.Show.clicked.connect(self.Show_Callback)
+
         self.Set_PSD.clicked.connect(self.Set_PSD_Callback)
         self.PhaseShift.clicked.connect(self.PhaseShift_Callback)
         self.PSDadd90.clicked.connect(self.PSDadd90_Callback)
@@ -270,9 +274,6 @@ class MainWindow(QMainWindow):
         self.Set_filter.clicked.connect(self.Set_filter_Callback)
         self.Set_filter2.clicked.connect(self.Set_filter2_Callback)
         self.FilterSwitch.currentIndexChanged.connect(self.FilterSwitch_Callback)
-
-        self.slider0.valueChanged.connect(self.slider_Callback)
-        self.slider1.valueChanged.connect(self.slider_Callback)
 
         # Set up context menu
         # Note - cannot connect context menu callback using the loop below. The default channel will be wrong (Ch4-Ra for all axes)...
@@ -1153,6 +1154,10 @@ class MainWindow(QMainWindow):
             self.text_slider1.setText(str(value))
         #TODO - remaining display control code
         #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback
+
+    def Show_Callback(self):
+        #TODO - paused 1/29/2025
+        pass
     
     def Set_PSD_Callback(self):
         if not self.Start_Stop.isChecked():
