@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
         self.aidata2 = [] # Kseal adjusted data
         self.aodata = []
         self.aitime = np.array([])
-        self.PSDofSQA = []
+        self.PSDofSQA = np.array([])
         self.Pulsedata = [] # AO1 output array, has been converted to actual Vcmd
         self.Pulselog = []
         #self.rxr = []; %fragments of real-time raw data
@@ -378,7 +378,7 @@ class MainWindow(QMainWindow):
                     YData1 = self.aidata[self.disp.dispindex[1]]
 
         # draw the bottom panel
-        if (self.slider1v2p): #show all data if the slider value is 0
+        if (self.slider1v2p == 0): #show all data if the slider value is 0
             XData2 = self.aitime
             if (self.disp.dispindex[2] <= 1) and (self.menuindex[3] == 's'): #Ch0/1 SQA
                 YData2 = self.PSDofSQA[self.disp.dispindex[2]]
@@ -601,7 +601,10 @@ class MainWindow(QMainWindow):
                 Time,PSD2,PSD1,Curr,AICh2,asymp,peak,tau = self.CapEngine(self.algorithm)
 
             Cap,Cond,Ra = self.SqAlgo(asymp,peak,tau)
-            self.PSDofSQA = np.hstack((self.PSDofSQA,np.vstack((PSD2,PSD1))))
+            if self.PSDofSQA.size == 0: #no data yet
+                self.PSDofSQA = np.vstack((PSD2,PSD1))
+            else:
+                self.PSDofSQA = np.hstack((self.PSDofSQA,np.vstack((PSD2,PSD1))))
 
         elif self.algorithm == 1: #PSD
             Time,Cap,Cond,Curr,AICh2 = self.CapEngine(1)
@@ -808,7 +811,7 @@ class MainWindow(QMainWindow):
                     self.daq.ao.stop()
                     self.daq.ao.putdata(self.aodata)
                     self.daq.ao.start()
-        output = [Cap,Cond,Ra]
+        return (Cap,Cond,Ra)
 
     def AIwaiting(self):
         '''
@@ -938,7 +941,7 @@ class MainWindow(QMainWindow):
             # set(handles.Start_Stop,'HitTest','off');
             self.aidata = np.array([])
             self.aitime = np.array([])
-            self.PSDofSQA = []
+            self.PSDofSQA = np.array([])
             self.Pulselog = []
             self.Stdfactor = [] # convert volt to fF
             self.labelindex = []
@@ -1158,6 +1161,9 @@ class MainWindow(QMainWindow):
             self.ylim(self.axes1,'auto')
 
     def slider_Callback(self):
+        if self.aitime.size == 0:
+            return #this happens when resetting slider value in Start_Stop_Callback
+        
         V = self.sender().value() #int
         slideridx = int(self.sender().objectName()[-1])
         if slideridx == 0: #slider0
