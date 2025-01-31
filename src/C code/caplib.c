@@ -82,6 +82,120 @@ double Csign(double data) {
     return (data < 0) ? -1 : 1;
 }
 
+int compare(const void *a, const void *b) { //used with qsort() in median filter
+    const double *p = (const double *)a;
+    const double *q = (const double *)b;
+
+    if (*p > *q) return 1;
+    else if (*p < *q) return -1;
+    else return 0;
+}
+
+void Rmean(double *A, int W, int M, int *NaNindex, double *output) { // running mean
+    double sum = 0;
+    int i, j;
+    int count = W; // actual sample number
+    
+    for (i = 0; i < M; i++) {
+        if (i != 0) {
+            if (!NaNindex[i - 1]) {
+                sum -= A[i - 1];
+                count--;
+            }
+            if (!NaNindex[i + W - 1]) {
+                sum += A[i + W - 1];
+                count++;
+            }
+        }
+        else {
+            for (j = 0; j < W; j++) {
+                if (NaNindex[j]) {count--;}
+                else {sum += A[j];}
+            }
+        }
+        
+        if (count == 0) {
+            output[i] = NAN;
+            sum = 0;
+        }
+        else {output[i] = sum / count;}
+    }
+}
+
+void Rmedian(double *A, int W, int M, int *NaNindex, double *output) { // running median
+    double *B;  // sorted data
+    double *B0 = NULL;  // remove NaN before qsort
+    double nextPt;
+    int i, j;
+    int indexR;  // index of point to be removed
+    int indexI;  // insertion index
+    int cycle;   // for moving data in B[]
+    int count = 0;  // actual sample number
+    
+    B = (double *)malloc(W * sizeof(double));
+
+    for (i = 0; i < M; i++) {
+        indexR = -1;
+        indexI = -2;
+
+        if (i != 0) {
+            nextPt = A[i + W - 1];
+            if (NaNindex[i + W - 1]) {indexI = count - 1;}
+            if (NaNindex[i - 1]) {indexR = count;}
+
+            for (j = 0; j < count; j++) {
+                // looking for insertion point
+                if ((indexI == -2) && (B[j] >= nextPt)) {indexI = j - 1;}
+                // looking for the point to be removed
+                if ((indexR == -1) && (B[j] == A[i - 1])) {indexR = j;}
+                if ((indexI != -2) && (indexR != -1)) {break;}
+            }
+            if (indexI == -2) {indexI = count - 1;}
+            if (!NaNindex[i + W - 1]) {count++;}
+            if (!NaNindex[i - 1]) {count--;}
+
+            // start insertion and sorting
+            if (indexI > indexR) {
+                cycle = indexI - indexR;
+                for (j = 0; j < cycle; j++) {B[indexR + j] = B[indexR + j + 1];}
+                B[indexR + j] = nextPt;
+            }
+            else {
+                cycle = indexR - indexI - 1;
+                for (j = 0; j < cycle; j++) {B[indexR - j] = B[indexR - j - 1];}
+                B[indexR - j] = nextPt;
+            }
+        }
+        else {
+            for (j = 0; j < W; j++) {
+                if (!NaNindex[j]) {
+                    B[count] = A[j];
+                    count++;
+                }
+                else {
+                    B[W + count - j - 1] = NAN;
+                }
+            }
+            if (count == W) {qsort(B, W, sizeof(double), compare);}
+            else {
+                B0 = (double *)realloc(B0, count * sizeof(double));
+                for (j = 0; j < count; j++) {B0[j] = B[j];}
+                qsort(B0, count, sizeof(double), compare);
+                for (j = 0; j < count; j++) {B[j] = B0[j];}
+            }
+        }
+
+        if (count == 0) {output[i] = NAN;}
+        else {
+            if (count % 2) {output[i] = B[(count - 1) / 2];}
+            else {output[i] = (B[(count / 2) - 1] + B[count / 2]) / 2;}
+        }
+    }
+
+    free(B);
+    free(B0);
+}
+
 ///////////////////////////////////////////
 //Digital Filter///////////////////////////
 ///////////////////////////////////////////
@@ -112,6 +226,58 @@ __declspec(dllexport) void Dfilter(int fcheck, double *data, int L, int filtered
         }
     }
     free(A);
+}
+
+__declspec(dllexport) void Dfilter2(int fswitch, double *data, int W, int wswitch, int M, double *output) {
+    /*
+    Moving/rolling filter
+    fswitch 0:bypass,1:mean,2:median
+    wswitch -1:left,0:center,1:right (window position relative to the time point)
+    */
+    double *A; //padded data
+    int *NaNindex;
+    int i;
+    int Lcat;
+
+    if (fswitch != 0) {
+        A = (double *)malloc((M + W - 1) * sizeof(double));
+        NaNindex = (int *)malloc((M + W - 1) * sizeof(int));
+        // if (!A || !NaNindex) {
+        //     fprintf(stderr, "Memory allocation failed\n");
+        //     free(A);
+        //     free(NaNindex);
+        //     return;
+        // }
+        if (wswitch == 1) {Lcat = W - 1;} // cat at the beginning
+        else if (wswitch == -1) {Lcat = 0;} // cat at the end
+        else { // cat at both edges
+            if (W % 2) {Lcat = (W - 1) / 2;}
+            else {Lcat = W / 2;}
+        }
+        // padding
+        for (i = 0; i < (M + W - 1); i++) {
+            if (i < Lcat) {A[i] = data[0];}
+            else if (i >= (M + Lcat)) {A[i] = data[M - 1];}
+            else {A[i] = data[i - Lcat];}
+            NaNindex[i] = isnan(A[i]);
+        }
+    }
+    else {
+        // bypass
+        for (i = 0; i < M; i++) {output[i] = data[i];}
+        return;
+    }
+
+    if (fswitch == 1) {
+        // mean
+        Rmean(A, W, M, NaNindex, output);
+    }
+    else {
+        // median
+        Rmedian(A, W, M, NaNindex, output);
+    }
+    free(A);
+    free(NaNindex);
 }
 
 ///////////////////////////////////////////
