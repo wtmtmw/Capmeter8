@@ -148,6 +148,8 @@ class MainWindow(QMainWindow):
         self.lib = ctypes.CDLL(str(Path(self.appdir,'caplib.dll')))
         self.lib.Dfilter.restype = None
         self.lib.Dfilter.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
+        self.lib.Dfilter2.restype = None
+        self.lib.Dfilter2.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
         self.lib.PSD.restype = None
         self.lib.PSD.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
         self.lib.SqCF.restype = None
@@ -400,22 +402,16 @@ class MainWindow(QMainWindow):
                 else:
                     YData2 = self.aidata[self.disp.dispindex[2]]
 
-        #TODO - translate the following
-        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,1))
-        #     YData1 = Dfilter2(handles.fswitch,YData1,handles.fwindow);
-        # end
-        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,2))
-        #     YData2 = Dfilter2(handles.fswitch,YData2,handles.fwindow);
-        # end
-        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,3))
-        #     YData3 = Dfilter2(handles.fswitch,YData3,handles.fwindow);
-        # end
-        if self.disp.invertindex[0]:
-            YData0 = -YData0
-        if self.disp.invertindex[1]:
-            YData1 = -YData1
-        if self.disp.invertindex[2]:
-            YData2 = -YData2
+        # void Dfilter2(int fswitch, double *data, int W, int wswitch, int M, double *output)
+        # fswitch 0:bypass,1:mean,2:median
+        # wswitch -1:left,0:center,1:right (window position relative to the time point)
+        for idx,ydata in enumerate([YData0,YData1,YData2]): # modify in-place
+            if self.fcheck[f'mf{self.disp.dispindex[idx]}']:
+                self.lib.Dfilter2(self.fswitch,ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                                self.fwindow,0,ydata.size,
+                                ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in place
+            if self.disp.invertindex[idx]:
+                ydata = -ydata
 
         # XData = list(range(1000))
         # YData1 = self.pseudoDataGenerator(len(XData))
