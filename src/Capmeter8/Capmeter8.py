@@ -85,10 +85,10 @@ class MainWindow(QMainWindow):
         self.disptimer.setInterval(1000) #in ms
         self.rSR = abs(float(self.RecordSampleRate.text()))
         self.samplesPerTp = None # samples per timepoint = round(self.daq.ai.sampleRate/self.rSR) # new for Cap8. For generating data points in CapEngine etc.
-        self.aidata = [] # np.ndarray; M-by-Timepoint matrix, where M is the number of parameters/channels
+        self.aidata = np.array([]) # np.ndarray; M-by-Timepoint matrix, where M is the number of parameters/channels
         self.aidata2 = [] # Kseal adjusted data
         self.aodata = []
-        self.aitime = []
+        self.aitime = np.array([])
         self.PSDofSQA = []
         self.Pulsedata = [] # AO1 output array, has been converted to actual Vcmd
         self.Pulselog = []
@@ -310,7 +310,9 @@ class MainWindow(QMainWindow):
         h = axes.plot([0],[0],pen=pg.mkPen(width=2, color=color),autoDownsample = True)
         axes.setBackground('w')
         index = int(axes.objectName()[-1]) # index to the axis
-        if not self.limsetindex[index]: # if not auto axis
+        if self.limsetindex[index+1]: # if not auto axis
+            self.ylim(axes,'auto')
+        else:
             self.ylim(axes,(-1,1))
         return h
     
@@ -334,7 +336,7 @@ class MainWindow(QMainWindow):
 
     def update_plot(self):
         D = self.fwindow
-        if type(self.aitime) == list: #not self.aitime <- won't work once it becomes np array
+        if self.aitime.size == 0: #not self.aitime <- won't work once it becomes np array
             print('waiting for data to be displayed... @update_plot')
             return
         
@@ -610,12 +612,12 @@ class MainWindow(QMainWindow):
 
         self.aitime = np.concatenate((self.aitime,Time))
         if self.algorithm == 0:
-            if type(self.aidata) == list: #not self.aidata: #no data yet
+            if self.aidata.size == 0: #not self.aidata: #no data yet
                 self.aidata = np.vstack((Cap,Cond,Curr))
             else:
                 self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr))))
         else:
-            if type(self.aidata) == list: #not self.aidata: #no data yet
+            if self.aidata.size == 0: #not self.aidata: #no data yet
                 self.aidata = np.vstack((Cap,Cond,Curr,AICh2,Ra))
             else:
                 self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr,AICh2,Ra))))
@@ -934,13 +936,24 @@ class MainWindow(QMainWindow):
             #     return
             # end
             # set(handles.Start_Stop,'HitTest','off');
-            self.aidata = []
-            self.aitime = []
+            self.aidata = np.array([])
+            self.aitime = np.array([])
             self.PSDofSQA = []
             self.Pulselog = []
             self.Stdfactor = [] # convert volt to fF
             self.labelindex = []
+            self.slider0.setMaximum(self.disp.slider0range)
             self.slider0.setValue(0)
+            self.text_slider0.setText(f'{self.slider0.value():.0f}')
+            self.slider0.setSingleStep(1)
+            self.slider0.setPageStep(10)
+
+            self.slider1.setMaximum(self.disp.slider1range)
+            self.slider1.setValue(0)
+            self.text_slider1.setText(f'{self.slider1.value():.0f}')
+            self.slider1.setSingleStep(1)
+            self.slider1.setPageStep(10)
+
             self.slider0v2p = round(self.slider0.value()*self.rSR) #for @update_plot, @slider0_Callback
             self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
             #TODO - translate below
@@ -1008,7 +1021,7 @@ class MainWindow(QMainWindow):
             # Cap7_state.changed = true;
             # ChangedOrSaved(handles.figure1);
             # %assignin('base','aodata',handles.aodata);
-            if type(self.aidata) == list:
+            if self.aidata.size == 0:
                 return
             else:
                 pass
@@ -1145,18 +1158,70 @@ class MainWindow(QMainWindow):
             self.ylim(self.axes1,'auto')
 
     def slider_Callback(self):
-        value = self.sender().value() #int
-        if self.sender().objectName() == 'slider0': #slider0 or slider1
-            self.slider0v2p = round(value*self.rSR)
-            self.text_slider0.setText(str(value))
+        V = self.sender().value() #int
+        slideridx = int(self.sender().objectName()[-1])
+        if slideridx == 0: #slider0
+            self.slider0v2p = round(V*self.rSR)
+            self.text_slider0.setText(str(V))
         else: #slider1
-            self.slider1v2p = round(value*self.rSR)
-            self.text_slider1.setText(str(value))
-        #TODO - remaining display control code
+            self.slider1v2p = round(V*self.rSR)
+            self.text_slider1.setText(str(V))
+        #TODO - paused 1/30/2025, remaining display control code
         #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback
+        if not self.daq.ai.isrunning:
+            if slideridx == 0: #slider0
+                data,_ = self.plot0.getOriginalDataset()
+            else: #slider1
+                data,_ = self.plot2.getOriginalDataset()
+        
+            I = data.size #in pt
+            L = self.aitime.size #in pt
+            self.sender().setMaximum(L-I)
+            self.sender().setSingleStep(ceil(0.1*I))
+            self.sender().setPageStep(int(I))
+
+            XData = self.aitime[V:V+I]
+            #TODO - translate the following
+        #     if Cap7_state.applyKseal %TW141015
+        #         YTarget = handles.aidata2; %Kseal adjusted data
+        #     else
+        #         YTarget = handles.aidata; %original data
+        #     end
+            
+        #     if handles.menuindex(1,2)
+        #         YData1 = handles.PSDofSQA(floor(V*(L-I))+1:floor(V*(L-I)+I),Cap7_state.disp.dispindex(1,1));
+        #     else
+        #         YData1 = YTarget(floor(V*(L-I))+1:floor(V*(L-I)+I),Cap7_state.disp.dispindex(1,1));
+        #     end
+        #     if handles.menuindex(1,3)
+        #         YData2 = handles.PSDofSQA(floor(V*(L-I))+1:floor(V*(L-I)+I),Cap7_state.disp.dispindex(1,2));
+        #     else
+        #         YData2 = YTarget(floor(V*(L-I))+1:floor(V*(L-I)+I),Cap7_state.disp.dispindex(1,2));
+        #     end
+
+        #     if handles.fcheck(1,Cap7_state.disp.dispindex(1,1))
+        #         YData1 = Dfilter2(handles.fswitch,YData1,handles.fwindow);
+        #     end
+        #     if handles.fcheck(1,Cap7_state.disp.dispindex(1,2))
+        #         YData2 = Dfilter2(handles.fswitch,YData2,handles.fwindow);
+        #     end
+
+        #     set(handles.plot1,'XData',XData12,'YData',YData1);
+        #     set(handles.plot2,'XData',XData12,'YData',YData2);
+        #     xlim(handles.axes1,[XData12(1) XData12(end)]); %TW160215
+        #     xlim(handles.axes2,xlim(handles.axes1));
+        #     if get(handles.Lock,'Value') %Lock is pressed
+        #         lim1 = ylim(handles.axes1);
+        #         H = (lim1(1,2)-lim1(1,1))/2;
+        #         M = (max(YData2)+min(YData2))/2;
+        #         ylim(handles.axes2,[(M-H),(M+H)]);
+        #     end
+        #     set(handles.xlim1,'String',num2str(XData12(1,1)));
+        #     set(handles.xlim2,'String',num2str(XData12(length(XData12),1)));
+        # end
 
     def Show_Callback(self):
-        #TODO - paused 1/29/2025
+        #TODO
         pass
     
     def Set_PSD_Callback(self):
