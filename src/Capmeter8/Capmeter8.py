@@ -345,12 +345,12 @@ class MainWindow(QMainWindow):
         # draw the top and middle panels
         if (self.slider0v2p == 0): #show all data if the slider value is 0
             XData01 = self.aitime
-            if (self.disp.dispindex[0] <= 1) and (self.menuindex[1] == 's'): #Ch0/1 SQA, top axis
+            if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'): #Ch0/1 PSDofSQA, top axis
                 YData0 = self.PSDofSQA[self.disp.dispindex[0]]
             else:
                 YData0 = self.aidata[self.disp.dispindex[0]]
 
-            if (self.disp.dispindex[1] <= 1) and (self.menuindex[2] == 's'): #Ch0/1 SQA, middle axis
+            if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'): #Ch0/1 PSDofSQA, middle axis
                 YData1 = self.PSDofSQA[self.disp.dispindex[1]]
             else:
                 YData1 = self.aidata[self.disp.dispindex[1]]
@@ -358,23 +358,23 @@ class MainWindow(QMainWindow):
             L = self.aitime.size
             if L >= self.slider0v2p:
                 XData01 = self.aitime[L-self.slider0v2p:]
-                if (self.disp.dispindex[0] <= 1) and (self.menuindex[1] == 's'): #Ch0/1 SQA, top axis
+                if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'): #Ch0/1 PSDofSQA, top axis
                     YData0 = self.PSDofSQA[self.disp.dispindex[0]][L-self.slider0v2p:]
                 else:
                     YData0 = self.aidata[self.disp.dispindex[0]][L-self.slider0v2p:]
 
-                if (self.disp.dispindex[1] <= 1) and (self.menuindex[2] == 's'): #Ch0/1 SQA, middle axis
+                if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'): #Ch0/1 PSDofSQA, middle axis
                     YData1 = self.PSDofSQA[self.disp.dispindex[1]][L-self.slider0v2p:]
                 else:
                     YData1 = self.aidata[self.disp.dispindex[1]][L-self.slider0v2p:]
             else:
                 XData01 = self.aitime
-                if (self.disp.dispindex[0] <= 1) and (self.menuindex[1] == 's'): #Ch0/1 SQA, top axis
+                if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'): #Ch0/1 PSDofSQA, top axis
                     YData0 = self.PSDofSQA[self.disp.dispindex[0]]
                 else:
                     YData0 = self.aidata[self.disp.dispindex[0]]
 
-                if (self.disp.dispindex[1] <= 1) and (self.menuindex[2] == 's'): #Ch0/1 SQA, middle axis
+                if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'): #Ch0/1 PSDofSQA, middle axis
                     YData1 = self.PSDofSQA[self.disp.dispindex[1]]
                 else:
                     YData1 = self.aidata[self.disp.dispindex[1]]
@@ -382,7 +382,7 @@ class MainWindow(QMainWindow):
         # draw the bottom panel
         if (self.slider1v2p == 0): #show all data if the slider value is 0
             XData2 = self.aitime
-            if (self.disp.dispindex[2] <= 1) and (self.menuindex[3] == 's'): #Ch0/1 SQA
+            if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'): #Ch0/1 PSDofSQA
                 YData2 = self.PSDofSQA[self.disp.dispindex[2]]
             else:
                 YData2 = self.aidata[self.disp.dispindex[2]]
@@ -390,14 +390,14 @@ class MainWindow(QMainWindow):
             L = self.aitime.size
             if L >= self.slider1v2p:
                 XData2 = self.aitime[L-self.slider1v2p:]
-                if (self.disp.dispindex[2] <= 1) and (self.menuindex[3] == 's'): #Ch0/1 SQA
+                if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'): #Ch0/1 PSDofSQA
                     YData2 = self.PSDofSQA[self.disp.dispindex[2]][L-self.slider1v2p:]
                 else:
                     YData2 = self.aidata[self.disp.dispindex[2]][L-self.slider1v2p:]
 
             else:
                 XData2 = self.aitime
-                if (self.disp.dispindex[2] <= 1) and (self.menuindex[3] == 's'): #Ch0/1 SQA
+                if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'): #Ch0/1 PSDofSQA
                     YData2 = self.PSDofSQA[self.disp.dispindex[2]]
                 else:
                     YData2 = self.aidata[self.disp.dispindex[2]]
@@ -620,7 +620,6 @@ class MainWindow(QMainWindow):
                 self.aidata = np.vstack((Cap,Cond,Curr,AICh2,Ra))
             else:
                 self.aidata = np.hstack((self.aidata,np.vstack((Cap,Cond,Curr,AICh2,Ra))))
-        #TODO - paused 1/29/2025, check if the dimension for hstack matches
 
         #TODO - translate the following
         # if Cap7_state.pulse.pulsing
@@ -1168,7 +1167,6 @@ class MainWindow(QMainWindow):
         else: #slider1
             self.slider1v2p = round(V*self.rSR)
             self.text_slider1.setText(str(V))
-        #TODO - paused 1/30/2025, remaining display control code
         #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback
         if not self.daq.ai.isrunning:
             if slideridx == 0: #slider0
@@ -1183,44 +1181,48 @@ class MainWindow(QMainWindow):
             self.sender().setPageStep(int(I))
 
             XData = self.aitime[V:V+I]
-            #TODO - translate the following
-        #     if Cap7_state.applyKseal %TW141015
-        #         YTarget = handles.aidata2; %Kseal adjusted data
-        #     else
-        #         YTarget = handles.aidata; %original data
-        #     end
-            
-        #     if handles.menuindex(1,2)
-        #         YData1 = handles.PSDofSQA(floor(V*(L-I))+1:floor(V*(L-I)+I),Cap7_state.disp.dispindex(1,1));
-        #     else
-        #         YData1 = YTarget(floor(V*(L-I))+1:floor(V*(L-I)+I),Cap7_state.disp.dispindex(1,1));
-        #     end
-        #     if handles.menuindex(1,3)
-        #         YData2 = handles.PSDofSQA(floor(V*(L-I))+1:floor(V*(L-I)+I),Cap7_state.disp.dispindex(1,2));
-        #     else
-        #         YData2 = YTarget(floor(V*(L-I))+1:floor(V*(L-I)+I),Cap7_state.disp.dispindex(1,2));
-        #     end
+            if self.applyKseal:
+                raise NotImplementedError
+                #YTarget = self.aidata2 #Kseal adjusted data
+            else:
+                YTarget = self.aidata; #original data
+            def processYdata(ydata,fcheck):
+                '''
+                this nested function slices and filters data
+                '''
+                ydata = ydata[V:V+I]
+                if fcheck:
+                    self.lib.Dfilter2(self.fswitch,ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                                    self.fwindow,0,ydata.size,
+                                    ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in place
+                return ydata
 
-        #     if handles.fcheck(1,Cap7_state.disp.dispindex(1,1))
-        #         YData1 = Dfilter2(handles.fswitch,YData1,handles.fwindow);
-        #     end
-        #     if handles.fcheck(1,Cap7_state.disp.dispindex(1,2))
-        #         YData2 = Dfilter2(handles.fswitch,YData2,handles.fwindow);
-        #     end
-
-        #     set(handles.plot1,'XData',XData12,'YData',YData1);
-        #     set(handles.plot2,'XData',XData12,'YData',YData2);
-        #     xlim(handles.axes1,[XData12(1) XData12(end)]); %TW160215
-        #     xlim(handles.axes2,xlim(handles.axes1));
-        #     if get(handles.Lock,'Value') %Lock is pressed
-        #         lim1 = ylim(handles.axes1);
-        #         H = (lim1(1,2)-lim1(1,1))/2;
-        #         M = (max(YData2)+min(YData2))/2;
-        #         ylim(handles.axes2,[(M-H),(M+H)]);
-        #     end
-        #     set(handles.xlim1,'String',num2str(XData12(1,1)));
-        #     set(handles.xlim2,'String',num2str(XData12(length(XData12),1)));
-        # end
+            if not slideridx: #slider0
+                if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'):
+                    YData0 = processYdata(self.PSDofSQA[self.disp.dispindex[0]],self.fcheck[f'mf{self.disp.dispindex[0]}'])
+                else:
+                    YData0 = processYdata(YTarget[self.disp.dispindex[0]],self.fcheck[f'mf{self.disp.dispindex[0]}'])
+                if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'):
+                    YData1 = processYdata(self.PSDofSQA[self.disp.dispindex[1]],self.fcheck[f'mf{self.disp.dispindex[1]}'])
+                else:
+                    YData1 = processYdata(YTarget[self.disp.dispindex[1]],self.fcheck[f'mf{self.disp.dispindex[1]}'])
+                self.plot0.setData(XData,YData0)
+                self.plot1.setData(XData,YData1)
+                self.xlim(self.axes0,(XData[0],XData[-1]))
+                self.xlim(self.axes1,(XData[0],XData[-1]))
+                if self.Lock.isChecked():
+                    lim1 = self.ylim(self.axes0,'range')
+                    D = (lim1[1]-lim1[0])/2
+                    M = (max(YData1)+min(YData1))/2
+                    self.ylim(self.axes1,((M-D),(M+D)))
+            else: #slider1
+                if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'):
+                    YData2 = processYdata(self.PSDofSQA[self.disp.dispindex[2]],self.fcheck[f'mf{self.disp.dispindex[2]}'])
+                else:
+                    YData2 = processYdata(YTarget[self.disp.dispindex[2]],self.fcheck[f'mf{self.disp.dispindex[2]}'])
+                self.plot2.setData(XData,YData2)
+                self.xlim(self.axes2,(XData[0],XData[-1]))
+            #TODO - paused 1/31/2025 - test it
 
     def Show_Callback(self):
         #TODO
