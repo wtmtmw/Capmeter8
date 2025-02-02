@@ -157,7 +157,7 @@ class MainWindow(QMainWindow):
         self.lib.SqQ.restype = None
         self.lib.SqQ.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
         self.lib.SqWaveCalc.restype = None
-        self.lib.SqWaveCalc.argtypes = [ctypes.c_int,ctypes.c_int,ctypes.c_double]
+        self.lib.SqWaveCalc.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.POINTER(ctypes.c_double)]
         
         #%%
         '''
@@ -346,61 +346,61 @@ class MainWindow(QMainWindow):
         if (self.slider0v2p == 0): #show all data if the slider value is 0
             XData01 = self.aitime
             if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'): #Ch0/1 PSDofSQA, top axis
-                YData0 = self.PSDofSQA[self.disp.dispindex[0]]
+                YData0 = self.PSDofSQA[self.disp.dispindex[0]]+0 # +0 forces Python to make a hard copy of the data
             else:
-                YData0 = self.aidata[self.disp.dispindex[0]]
+                YData0 = self.aidata[self.disp.dispindex[0]]+0
 
             if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'): #Ch0/1 PSDofSQA, middle axis
-                YData1 = self.PSDofSQA[self.disp.dispindex[1]]
+                YData1 = self.PSDofSQA[self.disp.dispindex[1]]+0
             else:
-                YData1 = self.aidata[self.disp.dispindex[1]]
+                YData1 = self.aidata[self.disp.dispindex[1]]+0
         else:
             L = self.aitime.size
             if L >= self.slider0v2p:
                 XData01 = self.aitime[L-self.slider0v2p:]
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'): #Ch0/1 PSDofSQA, top axis
-                    YData0 = self.PSDofSQA[self.disp.dispindex[0]][L-self.slider0v2p:]
+                    YData0 = self.PSDofSQA[self.disp.dispindex[0]][L-self.slider0v2p:]+0
                 else:
-                    YData0 = self.aidata[self.disp.dispindex[0]][L-self.slider0v2p:]
+                    YData0 = self.aidata[self.disp.dispindex[0]][L-self.slider0v2p:]+0
 
                 if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'): #Ch0/1 PSDofSQA, middle axis
-                    YData1 = self.PSDofSQA[self.disp.dispindex[1]][L-self.slider0v2p:]
+                    YData1 = self.PSDofSQA[self.disp.dispindex[1]][L-self.slider0v2p:]+0
                 else:
-                    YData1 = self.aidata[self.disp.dispindex[1]][L-self.slider0v2p:]
+                    YData1 = self.aidata[self.disp.dispindex[1]][L-self.slider0v2p:]+0
             else:
                 XData01 = self.aitime
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'): #Ch0/1 PSDofSQA, top axis
-                    YData0 = self.PSDofSQA[self.disp.dispindex[0]]
+                    YData0 = self.PSDofSQA[self.disp.dispindex[0]]+0
                 else:
-                    YData0 = self.aidata[self.disp.dispindex[0]]
+                    YData0 = self.aidata[self.disp.dispindex[0]]+0
 
                 if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'): #Ch0/1 PSDofSQA, middle axis
-                    YData1 = self.PSDofSQA[self.disp.dispindex[1]]
+                    YData1 = self.PSDofSQA[self.disp.dispindex[1]]+0
                 else:
-                    YData1 = self.aidata[self.disp.dispindex[1]]
+                    YData1 = self.aidata[self.disp.dispindex[1]]+0
 
         # draw the bottom panel
         if (self.slider1v2p == 0): #show all data if the slider value is 0
             XData2 = self.aitime
             if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'): #Ch0/1 PSDofSQA
-                YData2 = self.PSDofSQA[self.disp.dispindex[2]]
+                YData2 = self.PSDofSQA[self.disp.dispindex[2]]+0
             else:
-                YData2 = self.aidata[self.disp.dispindex[2]]
+                YData2 = self.aidata[self.disp.dispindex[2]]+0
         else:
             L = self.aitime.size
             if L >= self.slider1v2p:
                 XData2 = self.aitime[L-self.slider1v2p:]
                 if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'): #Ch0/1 PSDofSQA
-                    YData2 = self.PSDofSQA[self.disp.dispindex[2]][L-self.slider1v2p:]
+                    YData2 = self.PSDofSQA[self.disp.dispindex[2]][L-self.slider1v2p:]+0
                 else:
-                    YData2 = self.aidata[self.disp.dispindex[2]][L-self.slider1v2p:]
+                    YData2 = self.aidata[self.disp.dispindex[2]][L-self.slider1v2p:]+0
 
             else:
                 XData2 = self.aitime
                 if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'): #Ch0/1 PSDofSQA
-                    YData2 = self.PSDofSQA[self.disp.dispindex[2]]
+                    YData2 = self.PSDofSQA[self.disp.dispindex[2]]+0
                 else:
-                    YData2 = self.aidata[self.disp.dispindex[2]]
+                    YData2 = self.aidata[self.disp.dispindex[2]]+0
 
         # void Dfilter2(int fswitch, double *data, int W, int wswitch, int M, double *output)
         # fswitch 0:bypass,1:mean,2:median
@@ -545,9 +545,12 @@ class MainWindow(QMainWindow):
     def MenuSwitcher(self,type):
         self.menuindex[0] = type
         if type == 1: #SQA
-            self.axes0.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(self.axes0,pos)) #connect to custom context menu
-            self.axes1.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(self.axes1,pos)) #connect to custom context menu
-            self.axes2.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(self.axes2,pos)) #connect to custom context menu
+            for ax in [self.axes0,self.axes1,self.axes2]:
+                try:
+                    ax.customContextMenuRequested.disconnect()
+                except: #this happens when no signal is connected yet
+                    pass
+                ax.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(self.axes0,pos)) #connect to custom context menu
             #TODO - translate the following
             # if (handles.shiftswitch == 1)
             #     contextS_Gsqa_Callback(handles.contextS_Gsqa,[],handles);
@@ -556,14 +559,19 @@ class MainWindow(QMainWindow):
             # else
             #     contextS_GCsqa_Callback(handles.contextS_GCsqa,[],handles);
             # end
+            self.menuindex[1:] = 's'*3 #[1,'s','s','s']
         else: #PSD
-            self.axes0.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes0,pos)) #connect to custom context menu
-            self.axes1.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes1,pos)) #connect to custom context menu
-            self.axes2.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes2,pos)) #connect to custom context menu
+            for ax in [self.axes0,self.axes1,self.axes2]:
+                try:
+                    ax.customContextMenuRequested.disconnect()
+                except: #this happens when no signal is connected yet
+                    pass
+                ax.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes0,pos)) #connect to custom context menu
             #TODO - translate the following
             #set(handles.PhaseShift,'UIContextMenu',[]);
             self.menuindex[1:] = 'p'*3 #[0,'p','p','p']
 
+        #TODO - paused 2/1/2025 - combine the 2 loops and test algo change during acq
         for axidx,ax in enumerate([self.axes0,self.axes1,self.axes2]): #this will update displayed channels
             self.context_axes_Callback(ax,self.disp.dispindex[axidx])
 
@@ -867,10 +875,10 @@ class MainWindow(QMainWindow):
                 N = N+1
             elif N == 0:
                 N = 2
-            L = round(L/N)*N; #re-calculate samples per trigger
+            L = int(round(L/N)*N); #re-calculate samples per trigger
             freq = self.daq.ao.sampleRate/N/1000; #in kHz
             output = np.empty(L,dtype = np.float64)
-            output = self.lib.SqWaveCalc(int(L),int(N),A,output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+            self.lib.SqWaveCalc(int(L),int(N),A,output.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in-place
         elif self.algorithm ==1: #PSD, produce sine wave
             T = L/self.daq.ao.sampleRate
             P = np.pi/2 #pi/2 shifted, in order to put the trigger at the top -> this seems unnecessary since we use digital trigger now
@@ -883,6 +891,8 @@ class MainWindow(QMainWindow):
         
         trigsig = np.zeros(L) #trigger signal
         trigsig[0:triggerpt] = 4 #1V is not enough to trigger MCC board...
+        # print(f'trig shape:{trigsig.shape}')
+        # print(f'output shape:{output.shape}')
         output = np.vstack((trigsig,output))
         
         amp = A*abs(self.daqdefault.aoExtConvert); #in mV
@@ -1192,6 +1202,7 @@ class MainWindow(QMainWindow):
                 '''
                 ydata = ydata[V:V+I]
                 if fcheck:
+                    ydata += 0 # +0 forces Python to make a hard copy of the data
                     self.lib.Dfilter2(self.fswitch,ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                                     self.fwindow,0,ydata.size,
                                     ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in place
@@ -1228,7 +1239,7 @@ class MainWindow(QMainWindow):
         #TODO
         pass
     
-    def Set_PSD_Callback(self):
+    def Set_PSD_Callback(self,algoChange = False):
         if not self.Start_Stop.isChecked():
             return #only continue if the program is running
 
@@ -1240,7 +1251,7 @@ class MainWindow(QMainWindow):
             elif PSDfreq < 2*self.rSR/1000:
                 PSDfreq = 2*self.rSR/1000
 
-        if (PSDfreq != self.PSDfreq) or (PSDamp != self.PSDamp):
+        if (PSDfreq != self.PSDfreq) or (PSDamp != self.PSDamp) or (algoChange):
             self.aodata, PSDfreq, PSDamp = self.Wavecalc(PSDfreq,PSDamp)
             self.PSDfreq = PSDfreq
             self.PSDamp = PSDamp
@@ -1308,10 +1319,22 @@ class MainWindow(QMainWindow):
         '''
         index 0:Hardware, 1:PSD, 2:I-SQA, 3:Q-SQA
         '''
-        #print(index)
-        self.algorithm = index
-        #TODO - prohibit transition from Hardware to any other algorithms or vice versa during acquisition
-        #TODO - full implementation
+        # prohibit transition from Hardware to any other algorithms or vice versa during acquisition
+        if self.algorithm != index:
+            if self.algorithm == 0: # hardware to others
+                self.Cm.setCurrentIndex(0)
+                return
+            elif (index == 0) and (self.algorithm != 0): # others to hardware
+                self.Cm.setCurrentIndex(self.algorithm)
+                return
+
+            if index == 1: #PSD
+                self.MenuSwitcher(0)
+            elif index >= 2: #SQA
+                self.MenuSwitcher(1)
+
+            self.algorithm = index
+            self.Set_PSD_Callback(algoChange = True)
 
     def Auto_FP_Callback(self,index):
         '''
