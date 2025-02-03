@@ -552,13 +552,15 @@ class MainWindow(QMainWindow):
 
     def MenuSwitcher(self,type):
         self.menuindex[0] = type
+        #TODO - paused 2/2/2025 - probably cannot loop through the axes...
         if type == 1: #SQA
             for ax in [self.axes0,self.axes1,self.axes2]:
                 try:
                     ax.customContextMenuRequested.disconnect()
                 except: #this happens when no signal is connected yet
                     pass
-                ax.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(self.axes0,pos)) #connect to custom context menu
+                ax.customContextMenuRequested.connect(lambda pos: self.create_context_axes_b(ax,pos)) #connect to custom context menu
+                #self.context_axes_Callback(ax,self.disp.dispindex[axidx]) #this will update displayed channels
             #TODO - translate the following
             # if (handles.shiftswitch == 1)
             #     contextS_Gsqa_Callback(handles.contextS_Gsqa,[],handles);
@@ -574,7 +576,8 @@ class MainWindow(QMainWindow):
                     ax.customContextMenuRequested.disconnect()
                 except: #this happens when no signal is connected yet
                     pass
-                ax.customContextMenuRequested.connect(lambda pos: self.create_context_axes(self.axes0,pos)) #connect to custom context menu
+                ax.customContextMenuRequested.connect(lambda pos: self.create_context_axes(ax,pos)) #connect to custom context menu
+                #self.context_axes_Callback(ax,self.disp.dispindex[axidx]) #this will update displayed channels
             #TODO - translate the following
             #set(handles.PhaseShift,'UIContextMenu',[]);
             self.menuindex[1:] = 'p'*3 #[0,'p','p','p']
