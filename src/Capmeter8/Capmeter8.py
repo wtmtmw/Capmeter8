@@ -33,8 +33,8 @@ class MainWindow(QMainWindow):
 
         self.disp = self.kwarg2var(dispindex = [0,1,2], # 0-based
                                    chcolor = ['r','b',(204,0,204),(64,153,166),'k'], #display color of the channel
-                                   slider0range = 120,
-                                   slider1range = 50,
+                                   slider0range = 120, # in sec
+                                   slider1range = 50, # in sec
                                    invertindex = [False,False,False], #[axes0,axes1,axes2]
                                    )
         
@@ -66,10 +66,6 @@ class MainWindow(QMainWindow):
         self.plot2 = self.iniAxes(self.axes2,self.disp.chcolor[self.disp.dispindex[2]])
 
         self.labelindex = [] #[dispindex,time,data,'string'] 0-based
-        self.slider0.setMaximum(self.disp.slider0range)
-        self.text_slider0.setText(f'{self.slider0.value():.0f}')
-        self.slider1.setMaximum(self.disp.slider1range)
-        self.text_slider1.setText(f'{self.slider1.value():.0f}')
         #TODO - implement the followings
         self.fswitch = self.FilterSwitch.currentIndex()
         self.shiftvalue = float(self.Phase_Shift.text())
@@ -166,6 +162,7 @@ class MainWindow(QMainWindow):
         # create device and AO
         try:
             self.daq = createDevice('mcc',self.daqdefault.daqid)
+            self.daq.eventlistener.timer._dt = 0.005 #default was 0.0001. Adjust according to CPU speed
             self.daq.config_ao(0,1)
             self.daq.ao.endMode = 'hold'
             self.daq.ao.sampleRate = self.daqdefault.aoSR
@@ -196,8 +193,18 @@ class MainWindow(QMainWindow):
         
         # the calculation of sliderv2p as it behaves differently in MATLAB and PyQt
         #TODO - remove sliderv2p in future release
-        self.slider0v2p = round(self.slider0.value()*self.rSR) #for @update_plot, @slider0_Callback
-        self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
+        self.slider0.setMaximum(int(self.disp.slider0range*self.rSR))
+        self.slider0.setSingleStep(ceil(self.rSR)) # 1 sec
+        self.slider0.setPageStep(ceil(10*self.rSR)) #10 sec
+        self.slider0.setTickInterval(ceil(10*self.rSR))
+        self.text_slider0.setText(f'{self.slider0.value()/self.rSR:.0f}')
+        self.slider1.setMaximum(int(self.disp.slider1range*self.rSR))
+        self.slider1.setSingleStep(ceil(self.rSR)) # 1 sec
+        self.slider1.setPageStep(ceil(10*self.rSR)) #10 sec
+        self.slider1.setTickInterval(ceil(10*self.rSR))
+        self.text_slider1.setText(f'{self.slider1.value()/self.rSR:.0f}')
+        self.slider0v2p = self.slider0.value() #for @update_plot, @slider0_Callback
+        self.slider1v2p = self.slider1.value() #for @update_plot, @slider1_Callback
         self.filterv2p = round((float(self.filterset.text())/1000)*self.daq.ai.sampleRate) #points to be averaged
         
         self.SpmCount = self.samplesPerTp*round(self.rSR*0.5) # process data every 0.5 sec
@@ -421,6 +428,7 @@ class MainWindow(QMainWindow):
         self.plot2.setData(XData2,YData2)
         self.xlim(self.axes0,(XData01[0],XData01[-1]))
         self.xlim(self.axes1,(XData01[0],XData01[-1]))
+        self.xlim(self.axes2,(XData2[0],XData2[-1]))
         if self.Lock.isChecked():
             lim1 = self.ylim(self.axes0,'range')
             D = (lim1[1]-lim1[0])/2
@@ -950,21 +958,22 @@ class MainWindow(QMainWindow):
             self.Pulselog = []
             self.Stdfactor = [] # convert volt to fF
             self.labelindex = []
-            self.slider0.setMaximum(self.disp.slider0range)
+            self.slider0.setMaximum(int(self.disp.slider0range*self.rSR))
             self.slider0.setValue(0)
-            self.text_slider0.setText(f'{self.slider0.value():.0f}')
-            self.slider0.setSingleStep(1)
-            self.slider0.setPageStep(10)
+            self.slider0.setSingleStep(ceil(self.rSR)) # 1 sec
+            self.slider0.setPageStep(ceil(10*self.rSR)) #10 sec
+            self.slider0.setTickInterval(ceil(10*self.rSR))
 
-            self.slider1.setMaximum(self.disp.slider1range)
+            self.text_slider0.setText(f'{self.slider0.value()/self.rSR:.0f}')
+            self.slider1.setMaximum(int(self.disp.slider1range*self.rSR))
             self.slider1.setValue(0)
-            self.text_slider1.setText(f'{self.slider1.value():.0f}')
-            self.slider1.setSingleStep(1)
-            self.slider1.setPageStep(10)
+            self.slider1.setSingleStep(ceil(self.rSR)) # 1 sec
+            self.slider1.setPageStep(ceil(10*self.rSR)) #10 sec
+            self.slider1.setTickInterval(ceil(10*self.rSR))
+            self.text_slider1.setText(f'{self.slider1.value()/self.rSR:.0f}')
 
-            self.slider0v2p = round(self.slider0.value()*self.rSR) #for @update_plot, @slider0_Callback
-            self.slider1v2p = round(self.slider1.value()*self.rSR) #for @update_plot, @slider1_Callback
-            #TODO - translate below
+            self.slider0v2p = self.slider0.value() #for @update_plot, @slider0_Callback
+            self.slider1v2p = self.slider1.value() #for @update_plot, @slider1_Callback#TODO - translate below
             # set(handles.xlim1,'String','0');
             # set(handles.xlim2,'String','0');
             # set(handles.figure1,'Name',handles.version.Shell);
@@ -1009,6 +1018,22 @@ class MainWindow(QMainWindow):
                 self.AutoPhase.setText('PAdj')
                 self.AutoPhase.setChecked(False)
             self.daq.ao.putvalue([0,0])
+
+            #TODO - adjust slider scaling
+            I,_ = self.plot0.getOriginalDataset()
+            I = I.size
+            self.slider0.setMaximum(self.aitime.size - I)
+            self.slider0.setValue(self.aitime.size - I)
+            self.slider0.setSingleStep(ceil(0.1*I))
+            self.slider0.setPageStep(ceil(0.8*I))
+
+            I,_ = self.plot2.getOriginalDataset()
+            I = I.size
+            self.slider1.setMaximum(self.aitime.size - I)
+            self.slider1.setValue(self.aitime.size - I)
+            self.slider1.setSingleStep(ceil(0.1*I))
+            self.slider1.setPageStep(ceil(0.8*I))
+
             #TODO - translate below
             # if ~isempty(handles.rxr) %TW150503: added back
             #     assignin('base','rxr',handles.rxr);
@@ -1169,14 +1194,14 @@ class MainWindow(QMainWindow):
         if self.aitime.size == 0:
             return #this happens when resetting slider value in Start_Stop_Callback
         
-        V = self.sender().value() #int
+        V = self.sender().value() #int, in points
         slideridx = int(self.sender().objectName()[-1])
         if slideridx == 0: #slider0
-            self.slider0v2p = round(V*self.rSR)
-            self.text_slider0.setText(str(V))
+            self.slider0v2p = V
+            self.text_slider0.setText(f'{V/self.rSR:.0f}')
         else: #slider1
-            self.slider1v2p = round(V*self.rSR)
-            self.text_slider1.setText(str(V))
+            self.slider1v2p = V
+            self.text_slider1.setText(f'{V/self.rSR:.0f}')
         #Note - Page change won't emit sliderReleased() signal. i.e. cannot put disp update code in the corresponding callback
         if not self.daq.ai.isrunning:
             if slideridx == 0: #slider0
@@ -1185,11 +1210,7 @@ class MainWindow(QMainWindow):
                 data,_ = self.plot2.getOriginalDataset()
         
             I = data.size #in pt
-            L = self.aitime.size #in pt
-            self.sender().setMaximum(L-I)
-            self.sender().setSingleStep(ceil(0.1*I))
-            self.sender().setPageStep(int(I))
-
+            
             XData = self.aitime[V:V+I]
             if self.applyKseal:
                 raise NotImplementedError
@@ -1233,7 +1254,6 @@ class MainWindow(QMainWindow):
                     YData2 = processYdata(YTarget[self.disp.dispindex[2]],self.fcheck[f'mf{self.disp.dispindex[2]}'])
                 self.plot2.setData(XData,YData2)
                 self.xlim(self.axes2,(XData[0],XData[-1]))
-            #TODO - paused 1/31/2025 - test it
 
     def Show_Callback(self):
         #TODO
