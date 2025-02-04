@@ -3,12 +3,11 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu
 from PyQt6.QtCore import QTimer, QPoint
 from PyQt6.QtGui import QAction, QActionGroup #for context menu etc.
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
-import sys, traceback, ctypes
+import sys, traceback, ctypes, time
 import pyqtgraph as pg
 from pathlib import Path
 import numpy as np
 from math import ceil
-from time import sleep
 from random import randint
 from daqx.util import createDevice
 
@@ -968,7 +967,8 @@ class MainWindow(QMainWindow):
             self.text_slider1.setText(f'{self.slider1.value()/self.rSR:.0f}')
 
             self.slider0v2p = self.slider0.value() #for @update_plot, @slider0_Callback
-            self.slider1v2p = self.slider1.value() #for @update_plot, @slider1_Callback#TODO - translate below
+            self.slider1v2p = self.slider1.value() #for @update_plot, @slider1_Callback
+            #TODO - translate below
             # set(handles.xlim1,'String','0');
             # set(handles.xlim2,'String','0');
             # set(handles.figure1,'Name',handles.version.Shell);
@@ -985,7 +985,7 @@ class MainWindow(QMainWindow):
                 self.daq.ao.stop()
             
             self.daq.ao.stop() #might be started again @resume
-            sleep(0.003)
+            time.sleep(0.003)
             if (self.algorithm >= 2) and (self.menuindex == 0): #SQA but PSD context menu
                 self.MenuSwitcher(1) #SQA context menu
             elif (self.algorithm == 1) and (self.menuindex == 1): #PSD but SQA context menu
@@ -1014,7 +1014,6 @@ class MainWindow(QMainWindow):
                 self.AutoPhase.setChecked(False)
             self.daq.ao.putvalue([0,0])
 
-            #TODO - adjust slider scaling
             I,_ = self.plot0.getOriginalDataset()
             I = I.size
             self.slider0.setMaximum(self.aitime.size - I)
@@ -1185,11 +1184,11 @@ class MainWindow(QMainWindow):
         else:
             self.ylim(self.axes1,'auto')
 
-    def slider_Callback(self):
+    def slider_Callback(self,V):
         if self.aitime.size == 0:
             return #this happens when resetting slider value in Start_Stop_Callback
         
-        V = self.sender().value() #int, in points
+        #V = self.sender().value() #int, in points
         slideridx = int(self.sender().objectName()[-1])
         if slideridx == 0: #slider0
             self.slider0v2p = V
@@ -1285,16 +1284,6 @@ class MainWindow(QMainWindow):
             self.daq.ao.putdata(self.aodata)
             self.Set_filter_Callback() #adjust filter setting accordingly
             self.daq.ao.start()
-            #TODO - translate below
-            # %---adjust filter setting automatically
-            # filtermaxp = handles.aiSamplesPerTrigger; %calculate maximal averaging points
-            # filterp = round(abs((str2double(get(handles.filterset,'String'))/1000)*Cap7_state.daq.aiSR));
-            # handles.filterv2p = FilterCalc(filterp,filtermaxp,Cap7_state.daq.aiSR,handles.PSDfreq);
-            # if (handles.filterv2p == 1)
-            #     set(handles.filterset,'String','0');
-            # else
-            #     set(handles.filterset,'String',num2str(1000*handles.filterv2p/Cap7_state.daq.aiSR));
-            # end
            
         self.PSDphase = float(self.PSD_phase.text())
         P = abs(self.PSDphase)
@@ -1328,7 +1317,16 @@ class MainWindow(QMainWindow):
         pass #TODO
 
     def PSD_slider_Callback(self):
-        pass #TODO
+        now = time.time()
+        #TODO - paused 2/4/2025 - AttributeError: 'method' object has no attribute 'lastcall'
+        if not hasattr(self.PSD_slider_Callback, "lastcall"):
+            setattr(self.PSD_slider_Callback,'lastcall',now)  # Initialize on first call
+        self.PSD_phase.setText(f'{self.sender().value()/100:.2f}') #slider range is +/- 18000
+        if self.daq.ai.isrunning:
+            interval = now - self.PSD_slider_Callback.lastcall
+            if interval >= 0.1:
+                self.PSD_slider_Callback.lastcall = now
+                self.Set_PSD_Callback()
 
     def Cm_Callback(self,index):
         '''
