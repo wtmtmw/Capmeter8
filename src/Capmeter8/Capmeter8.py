@@ -470,14 +470,18 @@ class MainWindow(QMainWindow):
 
         # create and add items
         # create Ch0 submenu
-        menu0 = QMenu('Ch0 C', self)
+        menu0 = QMenu(self)
+        menu0action = QAction('Ch0 C', self, checkable=True)
+        menu0action.setMenu(menu0) #this approach makes the submenu itself checkable
         act00 = QAction('SQA', self)
         act01 = QAction('PSD(Y)', self)
         menu0.addAction(act00)
         menu0.addAction(act01)
 
         # create Ch1 submenu
-        menu1 = QMenu('Ch1 G', self)
+        menu1 = QMenu(self) 
+        menu1action = QAction('Ch1 G', self, checkable=True)
+        menu1action.setMenu(menu1) #this approach makes the submenu itself checkable
         act10 = QAction('SQA', self)
         act11 = QAction('PSD(X)', self)
         menu1.addAction(act10)
@@ -492,8 +496,8 @@ class MainWindow(QMainWindow):
         axidx = int(axes.objectName()[-1])
 
         #add items to the context menu
-        context_menu.addMenu(menu0)
-        context_menu.addMenu(menu1)
+        context_menu.addAction(menu0action)
+        context_menu.addAction(menu1action)
         for act in [act2,act3,act4,act5]:
             context_menu.addAction(act)
 
@@ -501,14 +505,15 @@ class MainWindow(QMainWindow):
             act.setCheckable(True)
             if idx <= 3: #act for Ch0, Ch1
                 if idx <= 1: #Ch0
-                    menu0.menuAction().setVisible(True) #TODO - paused 2/3/2025 - still don't see a checkmark...
                     if self.disp.dispindex[int(axes.objectName()[-1])] == 0: #disp Ch0
+                        menu0action.setChecked(True)
                         if (idx == 0) and (self.menuindex[int(axes.objectName()[-1])+1] == 's'): #Ch0-SQA
                             act.setChecked(True)
                         elif (idx == 1) and (self.menuindex[int(axes.objectName()[-1])+1] == 'p'): #Ch0-PSD
                             act.setChecked(True)
                 else: #disp Ch1
                     if self.disp.dispindex[int(axes.objectName()[-1])] == 1: #disp Ch1
+                        menu1action.setChecked(True)
                         if (idx == 2) and (self.menuindex[int(axes.objectName()[-1])+1] == 's'): #Ch0-SQA
                             act.setChecked(True)
                         elif (idx == 3) and (self.menuindex[int(axes.objectName()[-1])+1] == 'p'): #Ch0-PSD
