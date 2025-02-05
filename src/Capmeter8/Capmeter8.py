@@ -267,7 +267,12 @@ class MainWindow(QMainWindow):
         self.PhaseShift.clicked.connect(self.PhaseShift_Callback)
         self.PSDadd90.clicked.connect(self.PSDadd90_Callback)
         self.AutoPhase.clicked.connect(self.AutoPhase_Callback)
-        self.PSD_slider.valueChanged.connect(self.PSD_slider_Callback)
+        self.PSD_slider.valueChanged.connect(self.PSD_slider_Callback) #for updating PSD_phase edit box
+        self.PSD_slider.sliderReleased.connect(self.Set_PSD_Callback) #set PSD only when the slider is released
+        # self.PSD_slider.sliderPressed.connect(lambda : print('sliderPressed')) #valueChanged somehow is ahead of sliderPressed
+        # self.PSD_slider.valueChanged.connect(lambda v: print(f'valueChanged {v}'))
+        # self.PSD_slider.sliderMoved.connect(lambda v: print(f'sliderMoved {v}')) #sliderMoved execution is ahead of valueChanged
+        # self.PSD_slider.sliderReleased.connect(lambda : print('sliderReleased'))
         self.Cm.currentIndexChanged.connect(self.Cm_Callback)
         self.Auto_FP.stateChanged.connect(self.Auto_FP_Callback)
 
@@ -277,6 +282,12 @@ class MainWindow(QMainWindow):
         self.Set_filter2.clicked.connect(self.Set_filter2_Callback)
         self.FilterSwitch.currentIndexChanged.connect(self.FilterSwitch_Callback)
 
+        #%%
+        '''
+        Other GUI setting
+        '''
+        #self.PSD_phase.setTextMargins(QMargins(0,0,0,0)) #zero already...
+        #print(self.PSD_phase.textMargins().left())
         # Set up context menu
         # Note - cannot connect context menu callback using the loop below. The default channel will be wrong (Ch4-Ra for all axes)...
         for ax in [self.axes0,self.axes1,self.axes2]:
@@ -1308,25 +1319,27 @@ class MainWindow(QMainWindow):
         self.Refcalc()
 
     def PhaseShift_Callback(self):
-        pass #TODO
+        raise NotImplementedError
     
     def PSDadd90_Callback(self):
-        pass #TODO
+        if self.daq.ai.isrunning:
+            self.PSD_phase.setText(f'{self.PSDphase + 90:.2f}')
+            self.Set_PSD_Callback()
+        else:
+            self.Phase_Shift.setText(f'{self.shiftvalue + 90:.2f}')
+            self.PhaseShift_Callback()
 
     def AutoPhase_Callback(self):
-        pass #TODO
+        raise NotImplementedError
 
     def PSD_slider_Callback(self):
-        now = time.time()
-        #TODO - paused 2/4/2025 - AttributeError: 'method' object has no attribute 'lastcall'
-        if not hasattr(self.PSD_slider_Callback, "lastcall"):
-            setattr(self.PSD_slider_Callback,'lastcall',now)  # Initialize on first call
+        '''
+        this is a valueChanged callback, for updating PSD_phase text only
+        sliderReleased signal is connected to Set_PSD_Callback directly
+        '''
         self.PSD_phase.setText(f'{self.sender().value()/100:.2f}') #slider range is +/- 18000
-        if self.daq.ai.isrunning:
-            interval = now - self.PSD_slider_Callback.lastcall
-            if interval >= 0.1:
-                self.PSD_slider_Callback.lastcall = now
-                self.Set_PSD_Callback()
+        # if self.daq.ai.isrunning:
+        #     self.Set_PSD_Callback()
 
     def Cm_Callback(self,index):
         '''
@@ -1334,10 +1347,10 @@ class MainWindow(QMainWindow):
         '''
         # prohibit transition from Hardware to any other algorithms or vice versa during acquisition
         if (self.algorithm != index):
-            if self.algorithm == 0: # hardware to others
+            if (self.algorithm == 0) and (self.Start_Stop.isChecked()): # hardware to others
                 self.Cm.setCurrentIndex(0)
                 return
-            elif (index == 0) and (self.algorithm != 0): # others to hardware
+            elif (index == 0) and (self.algorithm != 0) and (self.Start_Stop.isChecked()): # others to hardware
                 self.Cm.setCurrentIndex(self.algorithm)
                 return
 
@@ -1348,6 +1361,16 @@ class MainWindow(QMainWindow):
 
             self.algorithm = index
             self.Set_PSD_Callback(algoChange = True)
+
+        if not self.daq.ai.isrunning: #MATLAB experience: %run the following scrips when ai is running will cause error
+            if self.algorithm > 1: #not PSD or Hardware
+                self.Auto_FP.setChecked(True)
+                self.autofp = True
+                self.PSDamp = []
+            else: #SQA
+                self.Auto_FP.setChecked(False)
+                self.autofp = False
+                self.PSDamp = []
 
     def Auto_FP_Callback(self,index):
         '''
