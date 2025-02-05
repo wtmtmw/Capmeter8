@@ -902,8 +902,13 @@ class MainWindow(QMainWindow):
         else: #Hardware
             output = np.zeros(L)
         
-        trigsig = np.zeros(L) #trigger signal
-        trigsig[0:triggerpt] = 4 #1V is not enough to trigger MCC board...
+        # trigsig = np.zeros(L) #this is wrong. Intact square wave is needed for locating peak current.
+        # trigsig[0:triggerpt] = 4 #1V is not enough to trigger MCC board...
+        if self.algorithm <= 1: #Hardware or PSD
+            trigsig = np.zeros(L)
+            trigsig[0:triggerpt] = 4 #1V is not enough to trigger MCC board...
+        else: #SQA
+            trigsig = output/(A/8) #+/-4V #TODO - paused - verify it
         # print(f'trig shape:{trigsig.shape}')
         # print(f'output shape:{output.shape}')
         output = np.vstack((trigsig,output))
@@ -1295,6 +1300,7 @@ class MainWindow(QMainWindow):
             self.daq.ao.putdata(self.aodata)
             self.Set_filter_Callback() #adjust filter setting accordingly
             self.daq.ao.start()
+            #TODO - paused - need to re-sync AI and AO...
            
         self.PSDphase = float(self.PSD_phase.text())
         P = abs(self.PSDphase)
