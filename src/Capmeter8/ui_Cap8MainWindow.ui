@@ -244,6 +244,9 @@
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
+      <property name="spacing">
+       <number>0</number>
+      </property>
       <item row="0" column="0">
        <widget class="QPushButton" name="uplimdown2">
         <property name="toolTip">
@@ -462,76 +465,20 @@
     <property name="title">
      <string>Lock-in amplifier</string>
     </property>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QWidget" name="">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>20</y>
+       <x>12</x>
+       <y>23</y>
        <width>171</width>
-       <height>91</height>
+       <height>93</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="2">
-       <widget class="QLineEdit" name="PSD_phase">
-        <property name="toolTip">
-         <string>phase, in degree</string>
-        </property>
-        <property name="text">
-         <string>0</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLineEdit" name="Phase_Shift">
-        <property name="toolTip">
-         <string>offline phase shift, in degree</string>
-        </property>
-        <property name="text">
-         <string>0</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QPushButton" name="Set_PSD">
-        <property name="toolTip">
-         <string>set phase or amplitude</string>
-        </property>
-        <property name="text">
-         <string>Set</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLineEdit" name="PSD_freq">
-        <property name="toolTip">
-         <string>frequency, in kHz</string>
-        </property>
-        <property name="text">
-         <string>0.5</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QPushButton" name="PhaseShift">
-        <property name="toolTip">
-         <string>adjust phase angle offline</string>
-        </property>
-        <property name="text">
-         <string>Shift</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0" colspan="4">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <item row="0" column="0" colspan="3">
        <widget class="QSlider" name="PSD_slider">
         <property name="toolTip">
          <string>adjust PSD phase angle</string>
@@ -555,45 +502,169 @@
          <enum>QSlider::TicksAbove</enum>
         </property>
         <property name="tickInterval">
-         <number>3000</number>
+         <number>6000</number>
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QPushButton" name="PSDadd90">
+      <item row="1" column="0" colspan="2">
+       <widget class="QLineEdit" name="Phase_Shift">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
         <property name="toolTip">
-         <string>+90 degree</string>
+         <string>offline phase shift, in degree</string>
         </property>
         <property name="text">
-         <string>+90</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="PSD_amp">
-        <property name="toolTip">
-         <string>pk-pk, will be converted to board output</string>
-        </property>
-        <property name="text">
-         <string>20</string>
+         <string>0</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
-      <item row="1" column="3">
-       <widget class="QPushButton" name="AutoPhase">
+      <item row="1" column="2">
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="PhaseShift">
+          <property name="toolTip">
+           <string>adjust phase angle offline</string>
+          </property>
+          <property name="text">
+           <string>Shift</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="PSDadd90">
+          <property name="toolTip">
+           <string>+90 degree</string>
+          </property>
+          <property name="text">
+           <string>+90</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="AutoPhase">
+          <property name="toolTip">
+           <string>click,change Cap,then click again</string>
+          </property>
+          <property name="text">
+           <string>PAdj</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLineEdit" name="PSD_phase">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>3</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+          <kerning>true</kerning>
+         </font>
+        </property>
         <property name="toolTip">
-         <string>click,change Cap,then click again</string>
+         <string>phase, in degree</string>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
         </property>
         <property name="text">
-         <string>PAdj</string>
+         <string>0</string>
         </property>
-        <property name="checkable">
-         <bool>true</bool>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="clearButtonEnabled">
+         <bool>false</bool>
         </property>
        </widget>
+      </item>
+      <item row="2" column="1" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLineEdit" name="PSD_freq">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>8</pointsize>
+           </font>
+          </property>
+          <property name="toolTip">
+           <string>frequency, in kHz</string>
+          </property>
+          <property name="text">
+           <string>0.5</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="PSD_amp">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>8</pointsize>
+           </font>
+          </property>
+          <property name="toolTip">
+           <string>pk-pk, will be converted to board output</string>
+          </property>
+          <property name="text">
+           <string>20</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="Set_PSD">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>set phase or amplitude</string>
+          </property>
+          <property name="text">
+           <string>Set</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -772,8 +843,14 @@
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
+       <property name="spacing">
+        <number>4</number>
+       </property>
        <item row="0" column="0">
         <layout class="QGridLayout" name="gridLayout_5">
+         <property name="spacing">
+          <number>4</number>
+         </property>
          <item row="0" column="0">
           <widget class="QComboBox" name="FilterSwitch">
            <property name="toolTip">
@@ -940,8 +1017,8 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>502</x>
-     <y>800</y>
+     <x>505</x>
+     <y>797</y>
     </hint>
     <hint type="destinationlabel">
      <x>649</x>
@@ -1036,8 +1113,8 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>158</x>
-     <y>906</y>
+     <x>157</x>
+     <y>907</y>
     </hint>
     <hint type="destinationlabel">
      <x>168</x>
