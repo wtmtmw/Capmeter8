@@ -465,7 +465,7 @@
     <property name="title">
      <string>Lock-in amplifier</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>12</x>
@@ -531,6 +531,9 @@
         </property>
         <item>
          <widget class="QPushButton" name="PhaseShift">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="toolTip">
            <string>adjust phase angle offline</string>
           </property>
@@ -551,6 +554,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="AutoPhase">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="toolTip">
            <string>click,change Cap,then click again</string>
           </property>
