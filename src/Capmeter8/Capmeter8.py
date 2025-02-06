@@ -84,6 +84,8 @@ class MainWindow(QMainWindow):
         self.aidata2 = [] # Kseal adjusted data
         self.aodata = []
         self.aitime = np.array([])
+        self.starttime = -1 #negative value for initialization; time of the first AI trigger
+        self.timeoffset = 0 #AI may be restarted by Set_PSD_Callback. This offset is needed to make aitime continuous
         self.PSDofSQA = np.array([])
         self.Pulsedata = [] # AO1 output array, has been converted to actual Vcmd
         self.Pulselog = []
@@ -213,7 +215,7 @@ class MainWindow(QMainWindow):
         # setup Callbacks
         self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
         self.daq.ai.samplesAcquiredFcn = lambda eventdata: self.process_data()
-        self.daq.ai.trigFcn = lambda eventdata: self.AIwaiting()
+        self.daq.ai.trigFcn = lambda eventdata: self.AIwaiting(eventdata)
         #TODO - translate below
         # set(handles.ao,'StopFcn','');
         # set(handles.ao,'TriggerFcn','');
@@ -630,6 +632,7 @@ class MainWindow(QMainWindow):
         else: #Hardware
             Time,Cap,Cond,Curr = self.CapEngine(0)
 
+        Time += self.timeoffset #AI may be restarted by Set_PSD_Callback. timeoffset is the time difference between the 1st and current triggers
         self.aitime = np.concatenate((self.aitime,Time))
         if self.algorithm == 0:
             if self.aidata.size == 0: #not self.aidata: #no data yet
@@ -829,14 +832,16 @@ class MainWindow(QMainWindow):
                     self.daq.ao.start()
         return (Cap,Cond,Ra)
 
-    def AIwaiting(self):
+    def AIwaiting(self,eventdata):
         '''
         aiTriggerFcn for Start_Stop button
-        _ is the eventdata from daqx
+        eventdata is a dict of {'time':event time, 'event':event type}
         '''
-        self.daq.ai.trigFcn = None
         self.Start_Stop.setText('Started')
         self.Start_Stop.setStyleSheet('color:green')
+        if self.starttime<0:
+            self.starttime = eventdata['time']
+        self.timeoffset = eventdata['time'] - self.starttime
 
     def resume(self):
         '''
@@ -908,8 +913,7 @@ class MainWindow(QMainWindow):
             trigsig = np.zeros(L)
             trigsig[0:triggerpt] = 4 #1V is not enough to trigger MCC board...
         else: #SQA
-            trigsig = output/(A/8) #+/-4V #TODO - paused - verify it
-        # print(f'trig shape:{trigsig.shape}')
+            trigsig = output/(A/8) #+/-4V
         # print(f'output shape:{output.shape}')
         output = np.vstack((trigsig,output))
         
@@ -941,7 +945,7 @@ class MainWindow(QMainWindow):
             #self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
             self.SpmCount = self.samplesPerTp*round(self.rSR*0.5) # process data every 0.5 sec
             self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
-            self.daq.ai.trigFcn = lambda eventdata: self.AIwaiting()
+            self.daq.ai.trigFcn = lambda eventdata: self.AIwaiting(eventdata)
             
             self.filterv2p = round((float(self.filterset.text())/1000)*self.daq.ai.sampleRate) #points to be averaged
             self.fwindow = abs(int(self.filterset2.text())) #samples for the moving filter
@@ -964,6 +968,8 @@ class MainWindow(QMainWindow):
             # set(handles.Start_Stop,'HitTest','off');
             self.aidata = np.array([])
             self.aitime = np.array([])
+            self.starttime = -1 #negative value for initialization
+            self.timeoffset = 0 #AI may be restarted by Set_PSD_Callback. This offset is needed to make aitime continuous
             self.PSDofSQA = np.array([])
             self.Pulselog = []
             self.Stdfactor = [] # convert volt to fF
@@ -1015,8 +1021,8 @@ class MainWindow(QMainWindow):
             #     %set(handles.ao,'TriggerFcn',{@AIwaiting,gcf});
             # end
             
-            self.daq.ai.start()
-            self.Set_PSD_Callback() #this will start the AO
+            #self.daq.ai.start()
+            self.Set_PSD_Callback() #this will start both AI and AO
 
             self.disptimer.start()
         else: #stop
@@ -1291,6 +1297,7 @@ class MainWindow(QMainWindow):
             # if get(handles.Pulse,'Value')
             #     stop(handles.ao);
             # end
+            self.daq.ai.stop()
             self.daq.ao.stop() #ao might be started again in @resume
             #TODO - translate below
             # if ~strcmpi(handles.ao.TriggerType,'Immediate') && (handles.ai.TriggersExecuted ~= 0)
@@ -1299,8 +1306,9 @@ class MainWindow(QMainWindow):
             # %assignin('base','aodata',handles.aodata);
             self.daq.ao.putdata(self.aodata)
             self.Set_filter_Callback() #adjust filter setting accordingly
+            self.daq.ai.start()
             self.daq.ao.start()
-            #TODO - paused - need to re-sync AI and AO...
+            #TODO - need to re-sync AI and AO - verify it
            
         self.PSDphase = float(self.PSD_phase.text())
         P = abs(self.PSDphase)
@@ -1310,8 +1318,8 @@ class MainWindow(QMainWindow):
             self.PSDphase = self.PSDphase-360
         elif self.PSDphase < -180:
             self.PSDphase = self.PSDphase+360
-        self.PSD_phase.setText(f'{self.PSDphase:.2f}')
-        self.PSD_slider.setValue(round(100*self.PSDphase/180)) #slider range is -18000 to 18000, int only
+        #self.PSD_phase.setText(f'{self.PSDphase:.2f}') #text will be updated by PSD_slider_callack
+        self.PSD_slider.setValue(round(100*self.PSDphase)) #slider range is -18000 to 18000, int only
 
         #PSDlog
         L = len(self.aitime)
