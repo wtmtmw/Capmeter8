@@ -1,6 +1,6 @@
 from PyQt6 import uic
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu
-from PyQt6.QtCore import QTimer, QPoint
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu, QToolBar, QStyle
+from PyQt6.QtCore import QTimer, QPoint, QSize
 from PyQt6.QtGui import QAction, QActionGroup #for context menu etc.
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
 import sys, traceback, ctypes, time
@@ -55,6 +55,7 @@ class MainWindow(QMainWindow):
         Load and setup the UI Page
         '''
         uic.loadUi(Path(self.appdir,'ui_Cap8MainWindow.ui'), self)
+        self.create_toolbar()
         self.menuindex = [0,'p','p','p'] # [context menu ID, axes0 PSD or SQA, axes1 PSD or SQA, axes2 PSD or SQA], modified in @MenuSwitcher
         # context menu ID: 0-normal, 1-PSDofSQA; displayed data 'p'-PSD, 's'-SQA
         self.limsetindex = [self.AxesSwitch.currentIndex(),True,True,True]; #[axis #,Auto,Auto,Auto], axes is 0-based
@@ -441,6 +442,34 @@ class MainWindow(QMainWindow):
             M = (max(YData1)+min(YData1))/2
             self.ylim(self.axes1,((M-D),(M+D)))
 
+    def create_toolbar(self):
+        '''
+        Ref: https://www.pythonguis.com/tutorials/pyqt-actions-toolbars-menus/
+             https://www.pythonguis.com/faq/built-in-qicons-pyqt/
+        '''
+        # Create a Toolbar
+        toolbar = QToolBar("Main Toolbar")
+        toolbar.setIconSize(QSize(16,16))
+        self.addToolBar(toolbar)
+        
+
+        # Get Standard Icon
+        save_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton)
+        load_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton)
+        note_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
+
+        # Create Action
+        act0 = QAction(save_icon, "Save", self)
+        act0.setShortcut("Ctrl+S")  # Add Shortcut
+        act1 = QAction(load_icon, "Open", self)
+        act1.setShortcut("Ctrl+O")  # Add Shortcut
+        act2 = QAction(note_icon, "Notepad", self)
+        #save_act.triggered.connect(self.close)  # Close App on Click
+
+        # Add Action to Toolbar
+        for act in [act0,act1,act2]:
+            toolbar.addAction(act)
+
     def create_context_axes(self,axes,pos:QPoint):
         #axidx: index to the axes, 0-based
         context_menu = QMenu(self) # create a QMenu
@@ -542,25 +571,6 @@ class MainWindow(QMainWindow):
                 if self.disp.dispindex[int(axes.objectName()[-1])] == (idx-2):
                     act.setChecked(True)
                 act.triggered.connect(lambda checked,idx=idx: self.context_axes_Callback(axes,idx-2))
-
-            # if idx == 0:   #Ch0sqa
-            #     act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,0,'s'))
-            # elif idx == 1: #Ch0psd
-            #     act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,0,'p'))
-            # elif idx == 2: #Ch1sqa
-            #     act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,1,'s'))
-            # elif idx == 3: #Ch1psd
-            #     act.triggered.connect(lambda checked: self.context_axes_b_Callback(axes,1,'p'))
-            # elif idx == 4: #Ch2
-            #     act.triggered.connect(lambda checked: self.context_axes_Callback(axes,2))
-            # elif idx == 5: #Ch3
-            #     act.triggered.connect(lambda checked: self.context_axes_Callback(axes,3))
-            # elif idx == 6: #Ch4
-            #     act.triggered.connect(lambda checked: self.context_axes_Callback(axes,4))
-            # else:          #Invert signal
-            #     if self.disp.invertindex[axidx]:
-            #         act.setChecked(True)
-            #     act.triggered.connect(lambda checked: self.context_invertSignal_Callback(axes,checked))
         
         context_menu.exec(self.sender().mapToGlobal(pos))
 
@@ -942,6 +952,7 @@ class MainWindow(QMainWindow):
             self.PSDphase = float(self.PSD_phase.text()) #degree
 
             # adjust AI properties
+            #TODO - change ai.trigType to 'instant' for Hardware mode? may also need to disable the Set_PSD button
             #self.daq.ai.samplesPerTrig = int(((1/self.rSR)-0.001)*self.daqdefault.aiSR) # 100Hz rSR => acquire 9ms data
             self.SpmCount = self.samplesPerTp*round(self.rSR*0.5) # process data every 0.5 sec
             self.daq.ai.samplesAcquiredFcnCount = self.SpmCount
