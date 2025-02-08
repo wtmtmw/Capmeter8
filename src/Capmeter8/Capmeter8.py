@@ -1,7 +1,9 @@
 from PyQt6 import uic
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu, QToolBar, QStyle
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QMenu, QToolBar, QStyle, QSizePolicy
 from PyQt6.QtCore import QTimer, QPoint, QSize
-from PyQt6.QtGui import QAction, QActionGroup #for context menu etc.
+from PyQt6.QtGui import QAction
+import qtawesome as qta #for FontAwesome icon
+from tkinter import filedialog, Tk
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
 import sys, traceback, ctypes, time
 import pyqtgraph as pg
@@ -18,6 +20,7 @@ class MainWindow(QMainWindow):
         Set up variables
         '''
         self.appdir = Path(__file__).parent
+        self.shell = 'Capmeter8'
         
         self.pulse = self.kwarg2var(JustDone = 0,  #blank C,G,Ra and assign data used in @process_data and @resume
                                    pulsing = False,
@@ -55,6 +58,8 @@ class MainWindow(QMainWindow):
         Load and setup the UI Page
         '''
         uic.loadUi(Path(self.appdir,'ui_Cap8MainWindow.ui'), self)
+        self.setWindowTitle(self.shell)
+        self.setWindowIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarMenuButton))
         self.create_toolbar()
         self.menuindex = [0,'p','p','p'] # [context menu ID, axes0 PSD or SQA, axes1 PSD or SQA, axes2 PSD or SQA], modified in @MenuSwitcher
         # context menu ID: 0-normal, 1-PSDofSQA; displayed data 'p'-PSD, 's'-SQA
@@ -317,6 +322,46 @@ class MainWindow(QMainWindow):
             for key, value in kwargs.items():
                 setattr(self, key, value)
 
+    def uigetfile(self,**kargs):
+        '''
+        **kargs include:
+        parent - the window to place the dialog on top of
+        title - the title of the window
+        initialdir - the directory that the dialog starts in
+        initialfile - the file selected upon opening of the dialog
+        filetypes - a sequence of (label, pattern) tuples, ‘*’ wildcard is allowed
+        defaultextension - default extension to append to file (save dialogs)
+        multiple - when true, selection of multiple items is allowed
+        Ref: https://docs.python.org/3/library/dialog.html#module-tkinter.filedialog
+        Ref: https://realpython.com/python-pathlib/
+        '''
+        root = Tk()
+        root.attributes('-topmost',True)
+        root.withdraw()
+        file = filedialog.askopenfilename(**kargs)
+        root.destroy()
+        return Path(file)
+
+    def uisavefile(self,**kargs):
+        '''
+        **kargs include:
+        parent - the window to place the dialog on top of
+        title - the title of the window
+        initialdir - the directory that the dialog starts in
+        initialfile - the file selected upon opening of the dialog
+        filetypes - a sequence of (label, pattern) tuples, ‘*’ wildcard is allowed
+        defaultextension - default extension to append to file (save dialogs)
+        multiple - when true, selection of multiple items is allowed
+        Ref: https://docs.python.org/3/library/dialog.html#module-tkinter.filedialog
+        Ref: https://realpython.com/python-pathlib/
+        '''
+        root = Tk()
+        root.attributes('-topmost',True)
+        root.withdraw()
+        file = filedialog.asksaveasfilename(**kargs)
+        root.destroy()
+        return Path(file)
+
     def iniAxes(self,axes,color):
         '''
         Initialize the axes. Use pyqtgraph's autoDownsample property instead of the original DispCtrl C function
@@ -446,6 +491,8 @@ class MainWindow(QMainWindow):
         '''
         Ref: https://www.pythonguis.com/tutorials/pyqt-actions-toolbars-menus/
              https://www.pythonguis.com/faq/built-in-qicons-pyqt/
+             https://github.com/spyder-ide/qtawesome
+             https://fontawesome.com/search?ic=free
         '''
         # Create a Toolbar
         toolbar = QToolBar("Main Toolbar")
@@ -459,16 +506,32 @@ class MainWindow(QMainWindow):
         note_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
 
         # Create Action
+        sep = False #False will actually add a separator
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding) #push the setting icon to the right side of the toolbar
         act0 = QAction(save_icon, "Save", self)
         act0.setShortcut("Ctrl+S")  # Add Shortcut
         act1 = QAction(load_icon, "Open", self)
         act1.setShortcut("Ctrl+O")  # Add Shortcut
         act2 = QAction(note_icon, "Notepad", self)
-        #save_act.triggered.connect(self.close)  # Close App on Click
+        act3 = QAction(qta.icon('fa5s.cog'),'Setting',self)
+        #act3 = QAction(qta.icon('fa5s.ellipsis-h'),'Setting',self)
+
+        # Connect to Callback
+        act0.triggered.connect(self.Save_Callback)
+        act1.triggered.connect(self.Load_Callback)
+        act2.triggered.connect(self.Notepad_Callback)
+        act3.triggered.connect(self.Setting_Callback)
 
         # Add Action to Toolbar
-        for act in [act0,act1,act2]:
-            toolbar.addAction(act)
+        for act in [act0,act1,sep,act2,spacer,act3]:
+            if act:
+                if isinstance(act,QAction):
+                    toolbar.addAction(act)
+                else:
+                    toolbar.addWidget(spacer)
+            else:
+                toolbar.addSeparator()
 
     def create_context_axes(self,axes,pos:QPoint):
         #axidx: index to the axes, 0-based
@@ -1441,6 +1504,23 @@ class MainWindow(QMainWindow):
         # if strcmpi(handles.ai.running,'off')
         #     Show_update_Callback(hObject, eventdata, handles);
         # end
+
+    def Save_Callback(self):
+        file = self.uisavefile(initialdir=self.current_folder, initialfile='*.npy')
+        #TODO - paused 2/7/2025
+        print(file)
+    
+    def Load_Callback(self):
+        print('load not implemented')
+        raise NotImplementedError
+    
+    def Notepad_Callback(self):
+        print('notepad not implemented')
+        raise NotImplementedError
+    
+    def Setting_Callback(self):
+        print('setting not implemented')
+        raise NotImplementedError
     
 
 #%% -------------------------------------------------------
