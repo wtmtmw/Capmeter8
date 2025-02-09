@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         Set up variables
         '''
         self.appdir = Path(__file__).parent
-        self.shell = 'Capmeter8'
+        self.shell = 'Capmeter8 v0.0.0'
         
         self.pulse = self.kwarg2var(JustDone = 0,  #blank C,G,Ra and assign data used in @process_data and @resume
                                    pulsing = False,
@@ -509,22 +509,25 @@ class MainWindow(QMainWindow):
         sep = False #False will actually add a separator
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding) #push the setting icon to the right side of the toolbar
-        act0 = QAction(save_icon, "Save", self)
-        act0.setShortcut("Ctrl+S")  # Add Shortcut
-        act1 = QAction(load_icon, "Open", self)
-        act1.setShortcut("Ctrl+O")  # Add Shortcut
-        act2 = QAction(note_icon, "Notepad", self)
-        act3 = QAction(qta.icon('fa5s.cog'),'Setting',self)
+        saveact = QAction(save_icon, "Save", self)
+        saveact.setShortcut("Ctrl+S")  # Add Shortcut
+        loadact = QAction(load_icon, "Open", self)
+        loadact.setShortcut("Ctrl+O")  # Add Shortcut
+        noteact = QAction(note_icon, "Notepad", self)
+        noteact.setShortcut("Ctrl+N")  # Add Shortcut
+        setact = QAction(qta.icon('fa5s.cog'),'Setting',self)
         #act3 = QAction(qta.icon('fa5s.ellipsis-h'),'Setting',self)
 
+        #saveact.setEnabled(False) #disable it when just launched
+
         # Connect to Callback
-        act0.triggered.connect(self.Save_Callback)
-        act1.triggered.connect(self.Load_Callback)
-        act2.triggered.connect(self.Notepad_Callback)
-        act3.triggered.connect(self.Setting_Callback)
+        saveact.triggered.connect(self.Save_Callback)
+        loadact.triggered.connect(self.Load_Callback)
+        noteact.triggered.connect(self.Notepad_Callback)
+        setact.triggered.connect(self.Setting_Callback)
 
         # Add Action to Toolbar
-        for act in [act0,act1,sep,act2,spacer,act3]:
+        for act in [saveact,loadact,sep,noteact,spacer,setact]:
             if act:
                 if isinstance(act,QAction):
                     toolbar.addAction(act)
@@ -993,6 +996,37 @@ class MainWindow(QMainWindow):
         amp = A*abs(self.daqdefault.aoExtConvert); #in mV
         return output,freq,amp
     
+    def savevar(self,file):
+        '''
+        Prepare and save variables. It will be used by manual and auto save functions
+        file: pathlib.Path of the target file
+        '''
+        data = {'DAQinfo':{}} #collect all variables to be saved
+        data['DAQinfo']['aiSR'] = self.daq.ai.sampleRate
+        data['DAQinfo']['aoSR'] = self.daq.ao.sampleRate
+        data['DAQinfo']['aoExtConvert'] = self.daqdefault.aoExtConvert
+        data['DAQinfo']['startTime'] = time.ctime(self.starttime)
+        data['pulseData'] = self.pulse.data
+
+        #note = deblank(cellstr(get(Cap7_gh.NotePad.edit_note,'String')));
+        for var in ['aidata','aitime','labelindex','PSDlog','Pulselog','shell','PSDofSQA']: #collect the rest of variables to be saved
+            try:
+                data[var] = getattr(self,var)
+            except:
+                print(f'{var} not saved')
+        #TODO - paused - 2/8/2025 - translate
+        # [pathstr, name, ext] = fileparts(filename);
+        # save(fullfile(pathname,[name,'.mat']),'data','time','labels','note',...
+        #     'PSDlog','Pulselog','DAQinfo','version');
+
+
+        print(data)
+
+    def ChangedOrSaved(self):
+        raise NotImplementedError
+    
+
+
     #%% Callbacks -------------------------------------------------------
     def Start_Stop_Callback(self):
         if self.Start_Stop.isChecked(): #start
@@ -1067,7 +1101,7 @@ class MainWindow(QMainWindow):
             #TODO - translate below
             # set(handles.xlim1,'String','0');
             # set(handles.xlim2,'String','0');
-            # set(handles.figure1,'Name',handles.version.Shell);
+            self.setWindowTitle(self.shell)
             # set(Cap7_gh.NotePad.figure1,'Name',handles.version.Shell);
             # delete(findobj('parent',handles.axes0,'Type','text'));
             # delete(findobj('parent',handles.axes1,'Type','text'));
@@ -1508,7 +1542,13 @@ class MainWindow(QMainWindow):
     def Save_Callback(self):
         file = self.uisavefile(initialdir=self.current_folder, initialfile='*.npy')
         #TODO - paused 2/7/2025
-        print(file)
+        if not file.anchor: #if not cannelled, it will be something like 'C:\'
+            return
+        self.savevar(file)
+        self.setWindowTitle(f'{self.shell} {file.name}')
+        self.current_folder = file.parent #<class 'pathlib.WindowsPath'>
+        self.changed = False
+        self.ChangedOrSaved()
     
     def Load_Callback(self):
         print('load not implemented')
