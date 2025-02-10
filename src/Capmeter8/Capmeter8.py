@@ -60,7 +60,7 @@ class MainWindow(QMainWindow):
         uic.loadUi(Path(self.appdir,'ui_Cap8MainWindow.ui'), self)
         self.setWindowTitle(self.shell)
         self.setWindowIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarMenuButton))
-        self.create_toolbar()
+        self.toolbar = self.create_toolbar()
         self.menuindex = [0,'p','p','p'] # [context menu ID, axes0 PSD or SQA, axes1 PSD or SQA, axes2 PSD or SQA], modified in @MenuSwitcher
         # context menu ID: 0-normal, 1-PSDofSQA; displayed data 'p'-PSD, 's'-SQA
         self.limsetindex = [self.AxesSwitch.currentIndex(),True,True,True]; #[axis #,Auto,Auto,Auto], axes is 0-based
@@ -244,7 +244,7 @@ class MainWindow(QMainWindow):
         #     disp('Reader mode is launched');
         # end
 
-        #ChangedOrSaved(handles.figure1);
+        self.ChangedOrSaved()
 
 
         #%% 
@@ -349,7 +349,7 @@ class MainWindow(QMainWindow):
         title - the title of the window
         initialdir - the directory that the dialog starts in
         initialfile - the file selected upon opening of the dialog
-        filetypes - a sequence of (label, pattern) tuples, ‘*’ wildcard is allowed
+        filetypes - a list of (label, pattern) tuples, ‘*’ wildcard is allowed
         defaultextension - default extension to append to file (save dialogs)
         multiple - when true, selection of multiple items is allowed
         Ref: https://docs.python.org/3/library/dialog.html#module-tkinter.filedialog
@@ -499,7 +499,6 @@ class MainWindow(QMainWindow):
         toolbar.setIconSize(QSize(16,16))
         self.addToolBar(toolbar)
         
-
         # Get Standard Icon
         save_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton)
         load_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton)
@@ -511,14 +510,16 @@ class MainWindow(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding) #push the setting icon to the right side of the toolbar
         saveact = QAction(save_icon, "Save", self)
         saveact.setShortcut("Ctrl+S")  # Add Shortcut
+        toolbar.saveact = saveact #create a reference so it can be modified by other methods
         loadact = QAction(load_icon, "Open", self)
         loadact.setShortcut("Ctrl+O")  # Add Shortcut
+        toolbar.loadact = loadact #create a reference so it can be modified by other methods
         noteact = QAction(note_icon, "Notepad", self)
         noteact.setShortcut("Ctrl+N")  # Add Shortcut
+        toolbar.noteact = noteact #create a reference so it can be modified by other methods
         setact = QAction(qta.icon('fa5s.cog'),'Setting',self)
-        #act3 = QAction(qta.icon('fa5s.ellipsis-h'),'Setting',self)
-
-        #saveact.setEnabled(False) #disable it when just launched
+        #setact = QAction(qta.icon('fa5s.ellipsis-h'),'Setting',self)
+        toolbar.setact = setact #create a reference so it can be modified by other methods
 
         # Connect to Callback
         saveact.triggered.connect(self.Save_Callback)
@@ -535,6 +536,8 @@ class MainWindow(QMainWindow):
                     toolbar.addWidget(spacer)
             else:
                 toolbar.addSeparator()
+
+        return toolbar
 
     def create_context_axes(self,axes,pos:QPoint):
         #axidx: index to the axes, 0-based
@@ -1000,6 +1003,8 @@ class MainWindow(QMainWindow):
         '''
         Prepare and save variables. It will be used by manual and auto save functions
         file: pathlib.Path of the target file
+        Combining file parts:
+        https://stackoverflow.com/questions/61321503/is-there-a-pathlib-alternate-for-os-path-join
         '''
         data = {'DAQinfo':{}} #collect all variables to be saved
         data['DAQinfo']['aiSR'] = self.daq.ai.sampleRate
@@ -1014,16 +1019,24 @@ class MainWindow(QMainWindow):
                 data[var] = getattr(self,var)
             except:
                 print(f'{var} not saved')
-        #TODO - paused - 2/8/2025 - translate
-        # [pathstr, name, ext] = fileparts(filename);
-        # save(fullfile(pathname,[name,'.mat']),'data','time','labels','note',...
-        #     'PSDlog','Pulselog','DAQinfo','version');
-
-
-        print(data)
+        if file.suffix == '.csv':
+            raise NotImplementedError
+        elif file.suffix == '.mat':
+            raise NotImplementedError
+        else:
+            savename = file.parent/f'{file.stem}.npy' #ensure the extension is npy
+            np.save(savename,data)
 
     def ChangedOrSaved(self):
-        raise NotImplementedError
+        if self.changed:
+            self.toolbar.saveact.setEnabled(True)
+            self.setWindowTitle(f'{self.shell}*') #add a '*'
+        else: #saved
+            self.toolbar.saveact.setEnabled(False)
+            self.setWindowTitle(self.shell) #remove '*'
+            #TODO - translate below
+            #set(Cap7_gh.NotePad.figure1,'Name',strtok(get(Cap7_gh.NotePad.figure1,'Name'),'*')); %remove '*'
+        #set(Cap7_gh.NotePad.figure1,'Name',get(handles.figure1,'Name'));
     
 
 
@@ -1175,8 +1188,8 @@ class MainWindow(QMainWindow):
             self.aodata = [0,0]
             # handles.aidata2 = handles.aidata; %for Kseal adjusted data; %TW141013
             # guidata(handles.figure1,handles);
-            # Cap7_state.changed = true;
-            # ChangedOrSaved(handles.figure1);
+            self.changed = True
+            self.ChangedOrSaved()
             # %assignin('base','aodata',handles.aodata);
             if self.aidata.size == 0:
                 return
@@ -1540,8 +1553,7 @@ class MainWindow(QMainWindow):
         # end
 
     def Save_Callback(self):
-        file = self.uisavefile(initialdir=self.current_folder, initialfile='*.npy')
-        #TODO - paused 2/7/2025
+        file = self.uisavefile(initialdir=self.current_folder, initialfile='*.npy',filetypes=[('Python','*.npy'),('All','*.*')])
         if not file.anchor: #if not cannelled, it will be something like 'C:\'
             return
         self.savevar(file)
@@ -1551,6 +1563,7 @@ class MainWindow(QMainWindow):
         self.ChangedOrSaved()
     
     def Load_Callback(self):
+        #TODO - paused - 2/9/2025 - add label buttons before continue on this part
         print('load not implemented')
         raise NotImplementedError
     
