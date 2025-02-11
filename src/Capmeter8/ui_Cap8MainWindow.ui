@@ -113,7 +113,7 @@
      <rect>
       <x>50</x>
       <y>634</y>
-      <width>77</width>
+      <width>84</width>
       <height>24</height>
      </rect>
     </property>
@@ -990,13 +990,13 @@
      <string/>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>50</x>
       <y>669</y>
       <width>321</width>
-      <height>141</height>
+      <height>150</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_16">
@@ -1396,7 +1396,7 @@
           <number>2</number>
          </property>
          <item>
-          <widget class="QPushButton" name="labelButton_10">
+          <widget class="QPushButton" name="labelButton_0">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -1415,7 +1415,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="label_10">
+          <widget class="QLineEdit" name="label_0">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -1748,9 +1748,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>label_10</sender>
+   <sender>label_0</sender>
    <signal>returnPressed()</signal>
-   <receiver>labelButton_10</receiver>
+   <receiver>labelButton_0</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">

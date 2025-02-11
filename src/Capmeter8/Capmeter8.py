@@ -290,6 +290,9 @@ class MainWindow(QMainWindow):
         self.Set_filter2.clicked.connect(self.Set_filter2_Callback)
         self.FilterSwitch.currentIndexChanged.connect(self.FilterSwitch_Callback)
 
+        for n in range(10):
+            exec(f'self.labelButton_{n}.clicked.connect(self.LabelButton_Callback)')
+
         #%%
         '''
         Other GUI setting
@@ -1392,9 +1395,24 @@ class MainWindow(QMainWindow):
                 self.plot2.setData(XData,YData2)
                 self.xlim(self.axes2,(XData[0],XData[-1]))
 
+    def LabelButton_Callback(self):
+        idx = self.sender().objectName()[-1] #which button
+        X = self.aitime[-1]
+        Y = self.aidata[:,-1]
+        S = eval(f'self.label_{idx}.text()')
+        text = pg.TextItem(f'\u2191\n{S}',color = 'k')
+        self.axes1.addItem(text)
+        text.setPos(X,Y[self.disp.dispindex[1]])
+        if self.daq.ai.isrunning:
+            if not self.labelindex:
+                self.labelindex.append([self.disp.dispindex[1],X,Y,S])
+            else:
+                self.labelindex = [[self.disp.dispindex[1],X,Y,S]]
+        #TODO - paused 2/11/2025 - make font larger and change arrow direction
+
+
     def Show_Callback(self):
-        #TODO
-        pass
+        raise NotImplementedError
     
     def Set_PSD_Callback(self,algoChange = False):
         if not self.Start_Stop.isChecked():
