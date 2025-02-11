@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1330</width>
-    <height>996</height>
+    <width>1324</width>
+    <height>1013</height>
    </rect>
   </property>
   <property name="contextMenuPolicy">
@@ -49,7 +49,7 @@
     <property name="geometry">
      <rect>
       <x>610</x>
-      <y>920</y>
+      <y>926</y>
       <width>75</width>
       <height>24</height>
      </rect>
@@ -112,8 +112,8 @@
     <property name="geometry">
      <rect>
       <x>50</x>
-      <y>670</y>
-      <width>84</width>
+      <y>634</y>
+      <width>77</width>
       <height>24</height>
      </rect>
     </property>
@@ -143,7 +143,7 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>50</x>
+      <x>130</x>
       <y>630</y>
       <width>441</width>
       <height>34</height>
@@ -219,10 +219,10 @@
    <widget class="QGroupBox" name="panel_axislim">
     <property name="geometry">
      <rect>
-      <x>350</x>
+      <x>380</x>
       <y>660</y>
       <width>311</width>
-      <height>121</height>
+      <height>111</height>
      </rect>
     </property>
     <property name="toolTip">
@@ -240,7 +240,7 @@
        <x>10</x>
        <y>20</y>
        <width>291</width>
-       <height>91</height>
+       <height>81</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
@@ -453,9 +453,9 @@
    <widget class="QGroupBox" name="panel_PSD">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>780</y>
-      <width>191</width>
+      <x>380</x>
+      <y>810</y>
+      <width>171</width>
       <height>121</height>
      </rect>
     </property>
@@ -469,9 +469,9 @@
      <property name="geometry">
       <rect>
        <x>12</x>
-       <y>23</y>
-       <width>171</width>
-       <height>93</height>
+       <y>15</y>
+       <width>151</width>
+       <height>101</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout">
@@ -678,8 +678,8 @@
    <widget class="QGroupBox" name="panel_algorithm">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>780</y>
+      <x>290</x>
+      <y>820</y>
       <width>81</width>
       <height>71</height>
      </rect>
@@ -954,10 +954,10 @@
    <widget class="QGroupBox" name="panel_show">
     <property name="geometry">
      <rect>
-      <x>550</x>
-      <y>780</y>
+      <x>560</x>
+      <y>810</y>
       <width>131</width>
-      <height>121</height>
+      <height>111</height>
      </rect>
     </property>
     <property name="title">
@@ -977,13 +977,472 @@
      </property>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="panel_pulse">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>780</y>
+      <width>311</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>669</y>
+      <width>321</width>
+      <height>141</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_16">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_1">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F1</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_1">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F2</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_3">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F3</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_3">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_4">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F4</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_4">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_10">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_5">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F5</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_5">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_6">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F6</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_6">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_12">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_7">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F7</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_7">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_13">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_8">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F8</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_8">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_14">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_9">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F9</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_9">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_15">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="labelButton_10">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>35</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>F10</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="label_10">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1330</width>
+     <width>1324</width>
      <height>22</height>
     </rect>
    </property>
@@ -1023,12 +1482,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>505</x>
-     <y>797</y>
+     <x>535</x>
+     <y>788</y>
     </hint>
     <hint type="destinationlabel">
-     <x>649</x>
-     <y>791</y>
+     <x>679</x>
+     <y>789</y>
     </hint>
    </hints>
   </connection>
@@ -1039,12 +1498,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>576</x>
-     <y>790</y>
+     <x>607</x>
+     <y>788</y>
     </hint>
     <hint type="destinationlabel">
-     <x>649</x>
-     <y>791</y>
+     <x>679</x>
+     <y>789</y>
     </hint>
    </hints>
   </connection>
@@ -1055,12 +1514,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>486</x>
-     <y>910</y>
+     <x>445</x>
+     <y>950</y>
     </hint>
     <hint type="destinationlabel">
-     <x>529</x>
-     <y>911</y>
+     <x>540</x>
+     <y>952</y>
     </hint>
    </hints>
   </connection>
@@ -1071,12 +1530,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>442</x>
-     <y>910</y>
+     <x>509</x>
+     <y>950</y>
     </hint>
     <hint type="destinationlabel">
-     <x>529</x>
-     <y>911</y>
+     <x>540</x>
+     <y>952</y>
     </hint>
    </hints>
   </connection>
@@ -1087,12 +1546,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>373</x>
-     <y>910</y>
+     <x>447</x>
+     <y>950</y>
     </hint>
     <hint type="destinationlabel">
-     <x>529</x>
-     <y>911</y>
+     <x>540</x>
+     <y>952</y>
     </hint>
    </hints>
   </connection>
@@ -1103,12 +1562,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>387</x>
-     <y>869</y>
+     <x>393</x>
+     <y>919</y>
     </hint>
     <hint type="destinationlabel">
-     <x>417</x>
-     <y>869</y>
+     <x>472</x>
+     <y>921</y>
     </hint>
    </hints>
   </connection>
@@ -1141,6 +1600,166 @@
     <hint type="destinationlabel">
      <x>196</x>
      <y>914</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_1</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_1</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>104</x>
+     <y>722</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>78</x>
+     <y>725</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_2</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_2</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>143</x>
+     <y>749</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>78</x>
+     <y>750</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_3</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_3</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>127</x>
+     <y>773</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>79</x>
+     <y>772</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_4</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_4</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>167</x>
+     <y>798</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>78</x>
+     <y>798</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_5</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_5</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>153</x>
+     <y>827</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>77</x>
+     <y>829</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_6</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_6</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>708</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>232</x>
+     <y>717</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_7</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_7</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>273</x>
+     <y>741</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>234</x>
+     <y>745</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_8</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_8</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>273</x>
+     <y>773</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>242</x>
+     <y>773</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_9</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_9</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>274</x>
+     <y>801</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>240</x>
+     <y>804</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>label_10</sender>
+   <signal>returnPressed()</signal>
+   <receiver>labelButton_10</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>264</x>
+     <y>828</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>241</x>
+     <y>828</y>
     </hint>
    </hints>
   </connection>
