@@ -1413,14 +1413,15 @@ class MainWindow(QMainWindow):
 
     def LabelButton_Callback(self):
         if self.Start_Stop.isChecked():
-            idx = self.sender().objectName()[-1] #which button
+            idx = int(self.sender().objectName()[-1]) #which button
             X = self.aitime[-1]
             Y = self.aidata[:,-1]
             S = eval(f'self.label_{idx}.text()')
             #text = pg.TextItem(f'\u2191\n{S}',color = 'k') #with upward arrow
             text = pg.TextItem(S,color = 'k')
             text.setFont(QFont('Arial',14))
-            def dojob(axid):
+            def dojob(axid,X,Y,S,text):
+                #note - exec is executing in another scope and does not have access to vars outside of this nested function (chatGPT)
                 exec(f'self.axes{axid}.addItem(text)')
                 exec(f'text.setPos(X,Y[self.disp.dispindex[{axid}]])')
                 if not self.labelindex:
@@ -1429,11 +1430,9 @@ class MainWindow(QMainWindow):
                     exec(f'self.labelindex = [[self.disp.dispindex[{axid}],X,Y,S]]')
 
             if (1<=idx<=5): #left-hand set of buttons
-                dojob(0) #tag upper panel
+                dojob(0,X,Y,S,text) #tag upper panel
             else: #right-hand set of buttons
-                dojob(1) #tag middle panel
-        #TODO - paused 2/11/2025 - validate it
-
+                dojob(1,X,Y,S,text) #tag middle panel
 
     def Show_Callback(self):
         raise NotImplementedError
