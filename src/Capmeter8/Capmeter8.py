@@ -1,9 +1,9 @@
 from PyQt6 import uic
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QMenu, QToolBar, QStyle, QSizePolicy
 from PyQt6.QtCore import QTimer, QPoint, QSize
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QFont
 import qtawesome as qta #for FontAwesome icon
-from tkinter import filedialog, Tk
+from tkinter import filedialog, Tk, messagebox
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
 import sys, traceback, ctypes, time
 import pyqtgraph as pg
@@ -290,8 +290,12 @@ class MainWindow(QMainWindow):
         self.Set_filter2.clicked.connect(self.Set_filter2_Callback)
         self.FilterSwitch.currentIndexChanged.connect(self.FilterSwitch_Callback)
 
-        for n in range(10):
+        for n in range(10): #connect to callback and set shortcut setShortcut("F1")
             exec(f'self.labelButton_{n}.clicked.connect(self.LabelButton_Callback)')
+            if n == 0:
+                self.labelButton_0.setShortcut("F10")
+            else:
+                exec(f'self.labelButton_{n}.setShortcut("F{n}")')
 
         #%%
         '''
@@ -1040,19 +1044,31 @@ class MainWindow(QMainWindow):
             #TODO - translate below
             #set(Cap7_gh.NotePad.figure1,'Name',strtok(get(Cap7_gh.NotePad.figure1,'Name'),'*')); %remove '*'
         #set(Cap7_gh.NotePad.figure1,'Name',get(handles.figure1,'Name'));
-    
+
+    def dlg_SaveData(self):
+        '''
+        Ref: https://docs.python.org/3/library/tkinter.messagebox.html
+            Return True if the answer is yes, None if cancelled, and False otherwise
+        '''    
+        button = messagebox.askyesnocancel(title='Capmeter8', message='Save data?', default='yes')
+        if button: #yes
+            self.Save_Callback()
+            return True #for if continuing or not
+        elif button == False: #no
+            return True
+        else: #cancel or no selection
+            #print('cancel or no selection')
+            return False
 
 
     #%% Callbacks -------------------------------------------------------
     def Start_Stop_Callback(self):
         if self.Start_Stop.isChecked(): #start
             #TODO - translate below
-            # if Cap7_state.changed
-            #     if ~dlg_SaveData(handles.figure1) %canceled or no selection
-            #         set(hObject,'Value',0);
-            #         return
-            #     end
-            # end
+            if self.changed:
+                if not self.dlg_SaveData(): #canceled or no selection
+                    self.Start_Stop.setChecked(False)
+                    return
             self.rSR = abs(float(self.RecordSampleRate.text()))
             if self.rSR > 100:
                 self.rSR = 100
@@ -1396,19 +1412,27 @@ class MainWindow(QMainWindow):
                 self.xlim(self.axes2,(XData[0],XData[-1]))
 
     def LabelButton_Callback(self):
-        idx = self.sender().objectName()[-1] #which button
-        X = self.aitime[-1]
-        Y = self.aidata[:,-1]
-        S = eval(f'self.label_{idx}.text()')
-        text = pg.TextItem(f'\u2191\n{S}',color = 'k')
-        self.axes1.addItem(text)
-        text.setPos(X,Y[self.disp.dispindex[1]])
-        if self.daq.ai.isrunning:
-            if not self.labelindex:
-                self.labelindex.append([self.disp.dispindex[1],X,Y,S])
-            else:
-                self.labelindex = [[self.disp.dispindex[1],X,Y,S]]
-        #TODO - paused 2/11/2025 - make font larger and change arrow direction
+        if self.Start_Stop.isChecked():
+            idx = self.sender().objectName()[-1] #which button
+            X = self.aitime[-1]
+            Y = self.aidata[:,-1]
+            S = eval(f'self.label_{idx}.text()')
+            #text = pg.TextItem(f'\u2191\n{S}',color = 'k') #with upward arrow
+            text = pg.TextItem(S,color = 'k')
+            text.setFont(QFont('Arial',14))
+            def dojob(axid):
+                exec(f'self.axes{axid}.addItem(text)')
+                exec(f'text.setPos(X,Y[self.disp.dispindex[{axid}]])')
+                if not self.labelindex:
+                    exec(f'self.labelindex.append([self.disp.dispindex[{axid}],X,Y,S])')
+                else:
+                    exec(f'self.labelindex = [[self.disp.dispindex[{axid}],X,Y,S]]')
+
+            if (1<=idx<=5): #left-hand set of buttons
+                dojob(0) #tag upper panel
+            else: #right-hand set of buttons
+                dojob(1) #tag middle panel
+        #TODO - paused 2/11/2025 - validate it
 
 
     def Show_Callback(self):
@@ -1581,9 +1605,13 @@ class MainWindow(QMainWindow):
         self.ChangedOrSaved()
     
     def Load_Callback(self):
+        if self.changed:
+            if not self.dlg_SaveData(): #canceled or no selection
+                return
+        file = self.uigetfile(initialdir=self.current_folder, initialfile='*.npy',filetypes=[('Python','*.npy'),('All','*.*')])
+        if not file.anchor: #if not cannelled, it will be something like 'C:\'
+            return
         #TODO - paused - 2/9/2025 - add label buttons before continue on this part
-        print('load not implemented')
-        raise NotImplementedError
     
     def Notepad_Callback(self):
         print('notepad not implemented')
@@ -1592,6 +1620,33 @@ class MainWindow(QMainWindow):
     def Setting_Callback(self):
         print('setting not implemented')
         raise NotImplementedError
+    
+    def closeEvent(self, a0):
+        #print('closeEvent called')
+        #TODO - translate
+        # global Cap7_state Cap7_gh
+        # try
+        #     if strcmpi(handles.ai.running,'On')
+        #         stop(handles.ai);
+        #     end
+        # end
+        # try
+        #     if strcmpi(handles.ao.running,'On')
+        #         stop(handles.ao);
+        #         putsample(handles.ao,[0 0]);
+        #     end
+        # end
+        # if Cap7_state.changed
+        #     if ~dlg_SaveData(handles.figure1) %canceled or no selection
+        #         return
+        #     end
+        # end
+        # % Hint: delete(hObject) closes the figure
+        # try
+        #     daqreset;
+        # end
+        # delete(Cap7_gh.LoadedGUI);
+        return super().closeEvent(a0)
     
 
 #%% -------------------------------------------------------
