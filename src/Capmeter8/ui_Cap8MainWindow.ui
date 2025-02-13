@@ -113,7 +113,7 @@
      <rect>
       <x>50</x>
       <y>614</y>
-      <width>71</width>
+      <width>77</width>
       <height>24</height>
      </rect>
     </property>
@@ -961,7 +961,7 @@
      </rect>
     </property>
     <property name="title">
-     <string>Show data</string>
+     <string>Update X-axis</string>
     </property>
     <widget class="QPushButton" name="Show">
      <property name="geometry">
@@ -974,6 +974,38 @@
      </property>
      <property name="text">
       <string>Show</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="xlim0">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>51</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="xlim1">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>20</y>
+       <width>51</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </widget>
