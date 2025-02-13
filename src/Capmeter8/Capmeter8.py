@@ -1032,7 +1032,7 @@ class MainWindow(QMainWindow):
             raise NotImplementedError
         else:
             savename = file.parent/f'{file.stem}.npy' #ensure the extension is npy
-            np.save(savename,data)
+            np.save(savename,data,allow_pickle=True)
 
     def ChangedOrSaved(self):
         if self.changed:
@@ -1059,6 +1059,12 @@ class MainWindow(QMainWindow):
         else: #cancel or no selection
             #print('cancel or no selection')
             return False
+        
+    def deleteLabel(self):
+        for ax in [self.axes0, self.axes1]:
+            for item in ax.items():
+                if isinstance(item,pg.TextItem):
+                    ax.removeItem(item)
 
 
     #%% Callbacks -------------------------------------------------------
@@ -1421,7 +1427,7 @@ class MainWindow(QMainWindow):
             text = pg.TextItem(S,color = 'k')
             text.setFont(QFont('Arial',14))
             def dojob(axid,X,Y,S,text):
-                #note - exec is executing in another scope and does not have access to vars outside of this nested function (chatGPT)
+                #Note - exec is executing in a separate scope and does not have access to vars outside of this nested function (chatGPT)
                 exec(f'self.axes{axid}.addItem(text)')
                 exec(f'text.setPos(X,Y[self.disp.dispindex[{axid}]])')
                 if not self.labelindex:
@@ -1604,13 +1610,54 @@ class MainWindow(QMainWindow):
         self.ChangedOrSaved()
     
     def Load_Callback(self):
+        '''
+        The loaded data is in class np.ndarray instead of dict. Need to use data.item() to change it back to dict.
+        Ref: https://stackoverflow.com/questions/66230865/load-dictionary-from-np-load
+        '''
         if self.changed:
             if not self.dlg_SaveData(): #canceled or no selection
                 return
         file = self.uigetfile(initialdir=self.current_folder, initialfile='*.npy',filetypes=[('Python','*.npy'),('All','*.*')])
         if not file.anchor: #if not cannelled, it will be something like 'C:\'
             return
-        #TODO - paused - 2/9/2025 - add label buttons before continue on this part
+        
+        self.deleteLabel()
+        data = np.load(file,allow_pickle=True)
+        self.current_folder = file.parent
+        for key,value in data.item().items(): #assign variables
+            if key not in ['DAQinfo','shell']: #shell shouldn't be overwritten
+                setattr(self,key,value)
+
+        #TODO - translate below
+        # handles.rSR = 1/(handles.aitime(3,1)-handles.aitime(2,1));
+        # handles.Stdfactor = []; %convert volt to fF
+        # guidata(hObject,handles);
+
+        # if isfield(loadedvar,'note') %TW141108
+        #     set(Cap7_gh.NotePad.edit_note,'String',loadedvar.note);
+        # else
+        #     set(Cap7_gh.NotePad.edit_note,'String','');
+        # end
+
+        if self.menuindex[0] != (0 if (len(self.PSDofSQA) == 0) else 1): #use appropriate context menu
+            self.MenuSwitcher(1-self.menuindex[0]) # 0->1, 1->0
+
+        #TODO - translate below
+        self.setWindowTitle(f'{self.shell} {file.name}')
+        # set(handles.DeDrift,'Enable','on');
+        # %Show all the points in top and middle panels upon loading
+        # set(handles.xlim1,'String','0');
+        # set(handles.xlim2,'String','0');
+        # %Show all the points in bottom panel upon loading
+        self.slider1.setValue(0)
+        # set(handles.slider2,'Value',0);
+        # set(handles.text_slider2,'String','0');
+        # set(handles.plot3,'XData',0,'YData',0);
+        # edit_Kseal_Callback(handles.edit_Kseal, eventdata, handles); %TW141015, will update the plot
+        # Cap7_state.changed = false;
+        # ChangedOrSaved(handles.figure1);
+
+        #TODO - paused - 2/12/2025 - Finish show_update_callback before continue on this part
     
     def Notepad_Callback(self):
         print('notepad not implemented')
@@ -1619,6 +1666,13 @@ class MainWindow(QMainWindow):
     def Setting_Callback(self):
         print('setting not implemented')
         raise NotImplementedError
+    
+    def Show_update_Callback(self):
+        '''
+        returnPresed Fcn of xlim0, xlim1 QLineEdit boxes
+        '''
+        #TODO - paused 2/12/2025
+        pass
     
     def closeEvent(self, a0):
         #print('closeEvent called')
