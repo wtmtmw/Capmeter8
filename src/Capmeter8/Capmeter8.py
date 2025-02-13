@@ -1006,6 +1006,15 @@ class MainWindow(QMainWindow):
         amp = A*abs(self.daqdefault.aoExtConvert); #in mV
         return output,freq,amp
     
+    def indexLoc(self,timeref,pts):
+        '''
+        get the index(es) closest to the input time point(s)
+        timeref: time reference
+        pts: query time point(s) in a tuple
+        '''
+        #TODO - paused 2/13/2025
+        pass
+    
     def savevar(self,file):
         '''
         Prepare and save variables. It will be used by manual and auto save functions
@@ -1675,33 +1684,41 @@ class MainWindow(QMainWindow):
         '''
         returnPresed Fcn of xlim0, xlim1 QLineEdit boxes
         '''
-        #TODO - paused 2/12/2025
-        pass
+        L = self.aitime.size
+        if L == 0:
+            print('No data to be displayed')
+            return
+        lim0 = float(self.xlim0.text())
+        lim1 = float(self.xlim1.text())
+        index0 = [] #for bottom panel
+        index1 = [] #for bottom panel
+        if (lim0 == lim1) or (lim0 > lim1):
+            self.xlim0.setText('0')
+            self.xlim1.setText('0')
+            lim0 = 0
+            lim1 = 0
+        XData2,_ = self.plot2.getOriginalDataset()
+        if (XData2.size < 2) or (XData2[-1] > self.aitime[-1]):
+            XData2 = self.aitime
+            self.slider1.setValue(0)
+        #TODO - paused 2/13/2025 - work on indexLoc
     
     def closeEvent(self, a0):
         #print('closeEvent called')
+        if self.Start_Stop.isChecked():
+            self.Start_Stop.setChecked(False)
+            self.Start_Stop_Callback()
+        
+        if self.daq.ai.isrunning: #should not be needed. added to be safe anyway.
+            self.daq.ai.stop() 
+
+        if self.daq.ao.isrunning:
+            self.daq.ao.stop()
+            self.daq.ao.putvalue([0,0])
+        
+        if self.changed:
+            self.dlg_SaveData()
         #TODO - translate
-        # global Cap7_state Cap7_gh
-        # try
-        #     if strcmpi(handles.ai.running,'On')
-        #         stop(handles.ai);
-        #     end
-        # end
-        # try
-        #     if strcmpi(handles.ao.running,'On')
-        #         stop(handles.ao);
-        #         putsample(handles.ao,[0 0]);
-        #     end
-        # end
-        # if Cap7_state.changed
-        #     if ~dlg_SaveData(handles.figure1) %canceled or no selection
-        #         return
-        #     end
-        # end
-        # % Hint: delete(hObject) closes the figure
-        # try
-        #     daqreset;
-        # end
         # delete(Cap7_gh.LoadedGUI);
         return super().closeEvent(a0)
     
