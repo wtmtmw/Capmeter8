@@ -1527,12 +1527,16 @@ class MainWindow(QMainWindow):
         '''
         index 0:Hardware, 1:PSD, 2:I-SQA, 3:Q-SQA
         '''
-        # prohibit transition from Hardware to any other algorithms or vice versa during acquisition
         if (self.algorithm != index):
-            if (self.algorithm == 0) and (self.Start_Stop.isChecked()): # hardware to others
-                self.Cm.setCurrentIndex(0)
-                return
-            elif (index == 0) and (self.algorithm != 0) and (self.Start_Stop.isChecked()): # others to hardware
+            # prohibit transition from Hardware and PSD to any other algorithms or vice versa during acquisition
+            # if (self.algorithm <= 1) and (self.Start_Stop.isChecked()): # hardware or PSD to others
+            #     self.Cm.setCurrentIndex(self.algorithm)
+            #     return
+            # elif (index <= 1) and (self.algorithm >= 2) and (self.Start_Stop.isChecked()): # SQA to hardware or PSD
+            #     self.Cm.setCurrentIndex(self.algorithm)
+            #     return
+            if (((self.algorithm <= 1) and (self.Start_Stop.isChecked())) or 
+                ((index <= 1) and (self.algorithm >= 2) and (self.Start_Stop.isChecked()))):
                 self.Cm.setCurrentIndex(self.algorithm)
                 return
 
