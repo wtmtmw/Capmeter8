@@ -1010,10 +1010,10 @@ class MainWindow(QMainWindow):
         '''
         get the index(es) closest to the input time point(s)
         timeref: time reference
-        pts: query time point(s) in a tuple
+        pts: query time point(s) in a list e.g. [t1,t2,...,ti]
+        [n1,n2,...ni] = indexLoc(timeref,t1,t2,...,ti)
         '''
-        #TODO - paused 2/13/2025
-        pass
+        return [np.argmin(np.fabs(timeref - t)) for t in pts]
     
     def savevar(self,file):
         '''
@@ -1701,7 +1701,88 @@ class MainWindow(QMainWindow):
         if (XData2.size < 2) or (XData2[-1] > self.aitime[-1]):
             XData2 = self.aitime
             self.slider1.setValue(0)
-        #TODO - paused 2/13/2025 - work on indexLoc
+
+        lim0,lim1,index0,index1 = self.indexLoc(self.aitime,[lim0,lim1,XData2[0],XData2[-1]])
+        if (lim1 == 0) or (lim1 > L):
+            lim1 = L
+        D = self.fwindow
+        XData01 = self.aitime[lim0:lim1+1]
+        XData2 = self.aitime[index0:index1+1]
+        if self.applyKseal:
+            pass
+            #TODO - translate below
+            # YTarget = handles.aidata2; %Kseal adjusted data
+            # assignin('base','Cm_new',handles.aidata2(:,1));
+            # assignin('base','Gm_new',handles.aidata2(:,2));
+            # assignin('base','Kseal',str2double(get(handles.edit_Kseal,'String'))); %TW141101
+        else:
+            YTarget = self.aidata #original data
+
+        for n in range(3):
+            if self.menuindex[n+1] == 's': #SQA 
+               exec(f'YData{n} = self.PSDofSQA[lim0:lim1+1,self.disp.dispindex[{n}]]')
+            else:
+               exec(f'YData{n} = self.YTarget[lim0:lim1+1,self.disp.dispindex[{n}]]')
+
+        #TODO - paused 2/14/2025 - translate below
+        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,1))
+        #     YData1 = Dfilter2(handles.fswitch,YData1,handles.fwindow);
+        # end
+        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,2))
+        #     YData2 = Dfilter2(handles.fswitch,YData2,handles.fwindow);
+        # end
+        # if Cap7_state.disp.invertindex(1) %invert the signal; TW141108
+        #     YData1 = -YData1;
+        # end
+        # if Cap7_state.disp.invertindex(2) %invert the signal; TW141108
+        #     YData2 = -YData2;
+        # end
+        # if Cap7_state.disp.invertindex(3) %invert the signal; TW141108
+        #     YData3 = -YData3;
+        # end
+        # set(handles.plot1,'XData',XData12,'YData',YData1);
+        # set(handles.plot2,'XData',XData12,'YData',YData2);
+        # set(handles.plot3,'XData',XData3,'YData',YData3);
+        # xlim(handles.axes1,[XData12(1) XData12(end)]); %TW160215
+        # xlim(handles.axes2,xlim(handles.axes1)); %occationally the xlim is not syncronized
+        # if get(handles.Lock,'Value') %Lock is pressed
+        #     limy = ylim(handles.axes1);
+        #     D = (limy(1,2)-limy(1,1))/2;
+        #     M = (max(YData2)+min(YData2))/2;
+        #     ylim(handles.axes2,[(M-D),(M+D)]);
+        # end
+
+        # %update slider1
+        # XL = (lim(1,2)-lim(1,1)+1);
+        # if L ~= XL
+        #     set(handles.slider1,'Value',((lim(1,1)-1)/(L-XL)));
+        # else
+        #     set(handles.slider1,'Value',0);
+        #     set(handles.text_slider1,'String','0');
+        # end
+
+        # %update labels
+        # if ~isempty(handles.labelindex)
+        #     delete(findobj('parent',handles.axes1,'Type','text'));
+        #     delete(findobj('parent',handles.axes2,'Type','text'));
+        #     L2 = length(handles.labelindex(:,1));
+        #     %assignin('base','L2',L2);
+        #     %assignin('base','XL',XL);
+        #     %assignin('base','XData12',XData12);
+        #     for n = (1:L2)
+        #         axes(handles.axes1);
+        #         if handles.labelindex{n,1} == Cap7_state.disp.dispindex(1,1)
+        #             text(handles.labelindex{n,2},handles.labelindex{n,3}(1,Cap7_state.disp.dispindex(1,1)),...
+        #                 ['\langle',handles.labelindex{n,4}]);
+        #         end
+        #         axes(handles.axes2);
+        #         if handles.labelindex{n,1} == Cap7_state.disp.dispindex(1,2)
+        #             text(handles.labelindex{n,2},handles.labelindex{n,3}(1,Cap7_state.disp.dispindex(1,2)),...
+        #                 ['\langle',handles.labelindex{n,4}]);
+        #         end
+
+        #     end
+        # end
     
     def closeEvent(self, a0):
         #print('closeEvent called')
