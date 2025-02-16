@@ -269,6 +269,8 @@ class MainWindow(QMainWindow):
 
         self.slider0.valueChanged.connect(self.slider_Callback)
         self.slider1.valueChanged.connect(self.slider_Callback)
+        self.xlim0.returnPressed.connect(self.Show_update_Callback)
+        self.xlim1.returnPressed.connect(self.Show_update_Callback)
         self.Show.clicked.connect(self.Show_Callback)
 
         self.Set_PSD.clicked.connect(self.Set_PSD_Callback)
@@ -467,7 +469,16 @@ class MainWindow(QMainWindow):
                     YData2 = self.PSDofSQA[self.disp.dispindex[2]]+0
                 else:
                     YData2 = self.aidata[self.disp.dispindex[2]]+0
+        # XData = list(range(1000))
+        # YData1 = self.pseudoDataGenerator(len(XData))
+        # YData2 = self.pseudoDataGenerator(len(XData))
 
+        self.refresh_plot(XData01,YData0,YData1,XData2,YData2)
+
+    def refresh_plot(self,XData01,YData0,YData1,XData2,YData2):
+        '''
+        Refresh data displayed on the plots. Called by self.update_plot and self.Show_update_Callback
+        '''
         # void Dfilter2(int fswitch, double *data, int W, int wswitch, int M, double *output)
         # fswitch 0:bypass,1:mean,2:median
         # wswitch -1:left,0:center,1:right (window position relative to the time point)
@@ -477,7 +488,7 @@ class MainWindow(QMainWindow):
                                 self.fwindow,0,ydata.size,
                                 ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in place
             if self.disp.invertindex[idx]:
-                ydata = -ydata
+                ydata[:] *= -1 #this is in-place modificaton using [:] assignment
 
         # XData = list(range(1000))
         # YData1 = self.pseudoDataGenerator(len(XData))
@@ -1682,7 +1693,7 @@ class MainWindow(QMainWindow):
     
     def Show_update_Callback(self):
         '''
-        returnPresed Fcn of xlim0, xlim1 QLineEdit boxes
+        returnPressed Fcn of xlim0, xlim1 QLineEdit boxes
         '''
         L = self.aitime.size
         if L == 0:
@@ -1718,43 +1729,18 @@ class MainWindow(QMainWindow):
         else:
             YTarget = self.aidata #original data
 
-        for n in range(3):
-            if self.menuindex[n+1] == 's': #SQA 
+        for n in range(3): #assign YData0-3
+            if (self.disp.dispindex[n] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[n+1] == 'p'): #Ch0/1 PSDofSQA
                exec(f'YData{n} = self.PSDofSQA[lim0:lim1+1,self.disp.dispindex[{n}]]')
             else:
                exec(f'YData{n} = self.YTarget[lim0:lim1+1,self.disp.dispindex[{n}]]')
+        
+        self.refresh_plot(XData01,YData0,YData1,XData2,YData2)
 
-        #TODO - paused 2/14/2025 - translate below
-        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,1))
-        #     YData1 = Dfilter2(handles.fswitch,YData1,handles.fwindow);
-        # end
-        # if handles.fcheck(1,Cap7_state.disp.dispindex(1,2))
-        #     YData2 = Dfilter2(handles.fswitch,YData2,handles.fwindow);
-        # end
-        # if Cap7_state.disp.invertindex(1) %invert the signal; TW141108
-        #     YData1 = -YData1;
-        # end
-        # if Cap7_state.disp.invertindex(2) %invert the signal; TW141108
-        #     YData2 = -YData2;
-        # end
-        # if Cap7_state.disp.invertindex(3) %invert the signal; TW141108
-        #     YData3 = -YData3;
-        # end
-        # set(handles.plot1,'XData',XData12,'YData',YData1);
-        # set(handles.plot2,'XData',XData12,'YData',YData2);
-        # set(handles.plot3,'XData',XData3,'YData',YData3);
-        # xlim(handles.axes1,[XData12(1) XData12(end)]); %TW160215
-        # xlim(handles.axes2,xlim(handles.axes1)); %occationally the xlim is not syncronized
-        # if get(handles.Lock,'Value') %Lock is pressed
-        #     limy = ylim(handles.axes1);
-        #     D = (limy(1,2)-limy(1,1))/2;
-        #     M = (max(YData2)+min(YData2))/2;
-        #     ylim(handles.axes2,[(M-D),(M+D)]);
-        # end
-
-        # %update slider1
-        # XL = (lim(1,2)-lim(1,1)+1);
-        # if L ~= XL
+        #update slider1
+        XL = lim1-lim0+1
+        #TODO - paused - translate
+        # if L != XL:
         #     set(handles.slider1,'Value',((lim(1,1)-1)/(L-XL)));
         # else
         #     set(handles.slider1,'Value',0);
