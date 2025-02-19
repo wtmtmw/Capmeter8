@@ -478,33 +478,40 @@ class MainWindow(QMainWindow):
     def refresh_plot(self,XData01,YData0,YData1,XData2,YData2):
         '''
         Refresh data displayed on the plots. Called by self.update_plot and self.Show_update_Callback
+        Note: YData of len() == 0 (e.g. []) will be skipped
+        Note: YData0 and YData1 must be updated together
+        Note: this function does not handle labels
         '''
         # void Dfilter2(int fswitch, double *data, int W, int wswitch, int M, double *output)
         # fswitch 0:bypass,1:mean,2:median
         # wswitch -1:left,0:center,1:right (window position relative to the time point)
         for idx,ydata in enumerate([YData0,YData1,YData2]): # modify in-place
-            if self.fcheck[f'mf{self.disp.dispindex[idx]}']:
-                self.lib.Dfilter2(self.fswitch,ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                                self.fwindow,0,ydata.size,
-                                ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in place
-            if self.disp.invertindex[idx]:
-                ydata[:] *= -1 #this is in-place modificaton using [:] assignment
+            if len(ydata) > 0: # have something to update
+                if self.fcheck[f'mf{self.disp.dispindex[idx]}']:
+                    self.lib.Dfilter2(self.fswitch,ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                                    self.fwindow,0,ydata.size,
+                                    ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in place
+                if self.disp.invertindex[idx]:
+                    ydata[:] *= -1 #this is in-place modificaton using [:] assignment
 
         # XData = list(range(1000))
         # YData1 = self.pseudoDataGenerator(len(XData))
         # YData2 = self.pseudoDataGenerator(len(XData))
-        self.plot0.setData(XData01,YData0)
-        self.plot1.setData(XData01,YData1)
-        self.plot2.setData(XData2,YData2)
-        self.xlim(self.axes0,(XData01[0],XData01[-1]))
-        self.xlim(self.axes1,(XData01[0],XData01[-1]))
-        self.xlim(self.axes2,(XData2[0],XData2[-1]))
-        if self.Lock.isChecked():
-            lim1 = self.ylim(self.axes0,'range')
-            D = (lim1[1]-lim1[0])/2
-            M = (max(YData1)+min(YData1))/2
-            self.ylim(self.axes1,((M-D),(M+D)))
+        if len(XData01) > 0: # set axes0 and 1
+            self.plot0.setData(XData01,YData0)
+            self.plot1.setData(XData01,YData1)
+            self.xlim(self.axes0,(XData01[0],XData01[-1]))
+            self.xlim(self.axes1,(XData01[0],XData01[-1]))
+            if self.Lock.isChecked():
+                lim1 = self.ylim(self.axes0,'range')
+                D = (lim1[1]-lim1[0])/2
+                M = (max(YData1)+min(YData1))/2
+                self.ylim(self.axes1,((M-D),(M+D)))
 
+        if len(XData2) > 0:
+            self.plot2.setData(XData2,YData2)
+            self.xlim(self.axes2,(XData2[0],XData2[-1]))
+        
     def create_toolbar(self):
         '''
         Ref: https://www.pythonguis.com/tutorials/pyqt-actions-toolbars-menus/
@@ -1399,43 +1406,61 @@ class MainWindow(QMainWindow):
                 #YTarget = self.aidata2 #Kseal adjusted data
             else:
                 YTarget = self.aidata; #original data
-            def processYdata(ydata,fcheck):
-                '''
-                this nested function slices and filters data
-                '''
-                ydata = ydata[V:V+I]
-                if fcheck:
-                    ydata += 0 # +0 forces Python to make a hard copy of the data
-                    self.lib.Dfilter2(self.fswitch,ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                                    self.fwindow,0,ydata.size,
-                                    ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in place
-                return ydata
+            
+            # def processYdata(ydata,fcheck):
+            #     '''
+            #     this nested function slices and filters data
+            #     '''
+            #     ydata = ydata[V:V+I]
+            #     if fcheck:
+            #         ydata += 0 # +0 forces Python to make a hard copy of the data
+            #         self.lib.Dfilter2(self.fswitch,ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            #                         self.fwindow,0,ydata.size,
+            #                         ydata.ctypes.data_as(ctypes.POINTER(ctypes.c_double))) #modify in place
+            #     return ydata
+
+            # if not slideridx: #slider0
+            #     if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'):
+            #         YData0 = processYdata(self.PSDofSQA[self.disp.dispindex[0]],self.fcheck[f'mf{self.disp.dispindex[0]}'])
+            #     else:
+            #         YData0 = processYdata(YTarget[self.disp.dispindex[0]],self.fcheck[f'mf{self.disp.dispindex[0]}'])
+            #     if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'):
+            #         YData1 = processYdata(self.PSDofSQA[self.disp.dispindex[1]],self.fcheck[f'mf{self.disp.dispindex[1]}'])
+            #     else:
+            #         YData1 = processYdata(YTarget[self.disp.dispindex[1]],self.fcheck[f'mf{self.disp.dispindex[1]}'])
+            #     self.plot0.setData(XData,YData0)
+            #     self.plot1.setData(XData,YData1)
+            #     self.xlim(self.axes0,(XData[0],XData[-1]))
+            #     self.xlim(self.axes1,(XData[0],XData[-1]))
+            #     if self.Lock.isChecked():
+            #         lim1 = self.ylim(self.axes0,'range')
+            #         D = (lim1[1]-lim1[0])/2
+            #         M = (max(YData1)+min(YData1))/2
+            #         self.ylim(self.axes1,((M-D),(M+D)))
+            # else: #slider1
+            #     if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'):
+            #         YData2 = processYdata(self.PSDofSQA[self.disp.dispindex[2]],self.fcheck[f'mf{self.disp.dispindex[2]}'])
+            #     else:
+            #         YData2 = processYdata(YTarget[self.disp.dispindex[2]],self.fcheck[f'mf{self.disp.dispindex[2]}'])
+            #     self.plot2.setData(XData,YData2)
+            #     self.xlim(self.axes2,(XData[0],XData[-1]))
 
             if not slideridx: #slider0
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'):
-                    YData0 = processYdata(self.PSDofSQA[self.disp.dispindex[0]],self.fcheck[f'mf{self.disp.dispindex[0]}'])
+                    YData0 = self.PSDofSQA[self.disp.dispindex[0]]+0 # +0 forces Python to make a hard copy of the data
                 else:
-                    YData0 = processYdata(YTarget[self.disp.dispindex[0]],self.fcheck[f'mf{self.disp.dispindex[0]}'])
+                    YData0 = YTarget[self.disp.dispindex[0]]+0
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'):
-                    YData1 = processYdata(self.PSDofSQA[self.disp.dispindex[1]],self.fcheck[f'mf{self.disp.dispindex[1]}'])
+                    YData1 = self.PSDofSQA[self.disp.dispindex[1]]+0
                 else:
-                    YData1 = processYdata(YTarget[self.disp.dispindex[1]],self.fcheck[f'mf{self.disp.dispindex[1]}'])
-                self.plot0.setData(XData,YData0)
-                self.plot1.setData(XData,YData1)
-                self.xlim(self.axes0,(XData[0],XData[-1]))
-                self.xlim(self.axes1,(XData[0],XData[-1]))
-                if self.Lock.isChecked():
-                    lim1 = self.ylim(self.axes0,'range')
-                    D = (lim1[1]-lim1[0])/2
-                    M = (max(YData1)+min(YData1))/2
-                    self.ylim(self.axes1,((M-D),(M+D)))
+                    YData1 = YTarget[self.disp.dispindex[1]]+0
+                self.refresh_plot(XData,YData0,YData1,[],[])
             else: #slider1
                 if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'):
-                    YData2 = processYdata(self.PSDofSQA[self.disp.dispindex[2]],self.fcheck[f'mf{self.disp.dispindex[2]}'])
+                    YData2 = self.PSDofSQA[self.disp.dispindex[2]]+0
                 else:
-                    YData2 = processYdata(YTarget[self.disp.dispindex[2]],self.fcheck[f'mf{self.disp.dispindex[2]}'])
-                self.plot2.setData(XData,YData2)
-                self.xlim(self.axes2,(XData[0],XData[-1]))
+                    YData2 = YTarget[self.disp.dispindex[2]]+0
+                self.refresh_plot([],[],[],XData,YData2)
 
     def LabelButton_Callback(self):
         if self.Start_Stop.isChecked():
@@ -1694,6 +1719,8 @@ class MainWindow(QMainWindow):
     def Show_update_Callback(self):
         '''
         returnPressed Fcn of xlim0, xlim1 QLineEdit boxes
+        Also called by various callbacks (e.g. context_axes_Callback etc) to update
+         all three plots.
         '''
         L = self.aitime.size
         if L == 0:
@@ -1729,7 +1756,7 @@ class MainWindow(QMainWindow):
         else:
             YTarget = self.aidata #original data
 
-        for n in range(3): #assign YData0-3
+        for n in range(3): #assign YData0-2
             if (self.disp.dispindex[n] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[n+1] == 'p'): #Ch0/1 PSDofSQA
                exec(f'YData{n} = self.PSDofSQA[lim0:lim1+1,self.disp.dispindex[{n}]]')
             else:
@@ -1739,7 +1766,7 @@ class MainWindow(QMainWindow):
 
         #update slider1
         XL = lim1-lim0+1
-        #TODO - paused - translate
+        #TODO - paused 2/18/2025 - translate
         # if L != XL:
         #     set(handles.slider1,'Value',((lim(1,1)-1)/(L-XL)));
         # else
