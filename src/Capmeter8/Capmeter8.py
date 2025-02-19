@@ -1447,19 +1447,19 @@ class MainWindow(QMainWindow):
 
             if not slideridx: #slider0
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'):
-                    YData0 = self.PSDofSQA[self.disp.dispindex[0]]+0 # +0 forces Python to make a hard copy of the data
+                    YData0 = self.PSDofSQA[self.disp.dispindex[0]][V:V+I]
                 else:
-                    YData0 = YTarget[self.disp.dispindex[0]]+0
+                    YData0 = YTarget[self.disp.dispindex[0]][V:V+I]
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'):
-                    YData1 = self.PSDofSQA[self.disp.dispindex[1]]+0
+                    YData1 = self.PSDofSQA[self.disp.dispindex[1]][V:V+I]
                 else:
-                    YData1 = YTarget[self.disp.dispindex[1]]+0
+                    YData1 = YTarget[self.disp.dispindex[1]][V:V+I]
                 self.refresh_plot(XData,YData0,YData1,[],[])
             else: #slider1
                 if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'):
-                    YData2 = self.PSDofSQA[self.disp.dispindex[2]]+0
+                    YData2 = self.PSDofSQA[self.disp.dispindex[2]][V:V+I]
                 else:
-                    YData2 = YTarget[self.disp.dispindex[2]]+0
+                    YData2 = YTarget[self.disp.dispindex[2]][V:V+I]
                 self.refresh_plot([],[],[],XData,YData2)
 
     def LabelButton_Callback(self):
@@ -1764,7 +1764,7 @@ class MainWindow(QMainWindow):
         
         self.refresh_plot(XData01,YData0,YData1,XData2,YData2)
 
-        #update slider1
+        #update slider0
         XL = lim1-lim0+1
         #TODO - paused 2/18/2025 - translate
         # if L != XL:
