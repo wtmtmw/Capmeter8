@@ -497,20 +497,27 @@ class MainWindow(QMainWindow):
         # XData = list(range(1000))
         # YData1 = self.pseudoDataGenerator(len(XData))
         # YData2 = self.pseudoDataGenerator(len(XData))
-        if len(XData01) > 0: # set axes0 and 1
-            self.plot0.setData(XData01,YData0)
-            self.plot1.setData(XData01,YData1)
-            self.xlim(self.axes0,(XData01[0],XData01[-1]))
-            self.xlim(self.axes1,(XData01[0],XData01[-1]))
-            if self.Lock.isChecked():
-                lim1 = self.ylim(self.axes0,'range')
-                D = (lim1[1]-lim1[0])/2
-                M = (max(YData1)+min(YData1))/2
-                self.ylim(self.axes1,((M-D),(M+D)))
+        try:
+            if len(XData01) > 0: # set axes0 and 1
+                self.plot0.setData(XData01,YData0)
+                self.plot1.setData(XData01,YData1)
+                self.xlim(self.axes0,(XData01[0],XData01[-1]))
+                self.xlim(self.axes1,(XData01[0],XData01[-1]))
+                if self.Lock.isChecked():
+                    lim1 = self.ylim(self.axes0,'range')
+                    D = (lim1[1]-lim1[0])/2
+                    M = (max(YData1)+min(YData1))/2
+                    self.ylim(self.axes1,((M-D),(M+D)))
 
-        if len(XData2) > 0:
-            self.plot2.setData(XData2,YData2)
-            self.xlim(self.axes2,(XData2[0],XData2[-1]))
+            if len(XData2) > 0:
+                self.plot2.setData(XData2,YData2)
+                self.xlim(self.axes2,(XData2[0],XData2[-1]))
+        except:
+            print(XData01.shape)
+            print(YData0.shape)
+            print(YData1.shape)
+            print(XData2.shape)
+            print(YData2.shape)
         
     def create_toolbar(self):
         '''
@@ -1086,7 +1093,18 @@ class MainWindow(QMainWindow):
         else: #cancel or no selection
             #print('cancel or no selection')
             return False
-        
+
+    def addLabel(self,ax,X,Y,S):
+        '''
+        e.g. self.addLabel(0,x,y,'text') add label 'text' to self.axes0 at (x,y)
+        '''
+        text = pg.TextItem(S,color = 'k')
+        text.setFont(QFont('Arial',14))
+        ax.addItem(text)
+        text.setPos(X,Y[self.disp.dispindex[int(ax.objectName()[-1])]])
+        # exec(f'self.axes{axid}.addItem(text)')
+        # exec(f'text.setPos(X,Y[self.disp.dispindex[{axid}]])')
+
     def deleteLabel(self):
         for ax in [self.axes0, self.axes1]:
             for item in ax.items():
@@ -1168,8 +1186,7 @@ class MainWindow(QMainWindow):
             # set(handles.xlim2,'String','0');
             self.setWindowTitle(self.shell)
             # set(Cap7_gh.NotePad.figure1,'Name',handles.version.Shell);
-            # delete(findobj('parent',handles.axes0,'Type','text'));
-            # delete(findobj('parent',handles.axes1,'Type','text'));
+            self.deleteLabel()
             # set(handles.group_stop(1,:),'Enable','off');
             # set(handles.group_start(1,:),'Enable','on');
             self.Start_Stop.setText('Waiting')
@@ -1469,21 +1486,20 @@ class MainWindow(QMainWindow):
             Y = self.aidata[:,-1]
             S = eval(f'self.label_{idx}.text()')
             #text = pg.TextItem(f'\u2191\n{S}',color = 'k') #with upward arrow
-            text = pg.TextItem(S,color = 'k')
-            text.setFont(QFont('Arial',14))
-            def dojob(axid,X,Y,S,text):
+            def dojob(ax,X,Y,S):
                 #Note - exec is executing in a separate scope and does not have access to vars outside of this nested function (chatGPT)
-                exec(f'self.axes{axid}.addItem(text)')
-                exec(f'text.setPos(X,Y[self.disp.dispindex[{axid}]])')
-                if not self.labelindex:
-                    exec(f'self.labelindex.append([self.disp.dispindex[{axid}],X,Y,S])')
+                self.addLabel(ax,X,Y,S)
+                if len(self.labelindex) != 0:
+                    self.labelindex.append([self.disp.dispindex[int(ax.objectName()[-1])],X,Y,S])
+                    #exec(f'self.labelindex.append([self.disp.dispindex[{axid}],X,Y,S])')
                 else:
-                    exec(f'self.labelindex = [[self.disp.dispindex[{axid}],X,Y,S]]')
+                    self.labelindex = [[self.disp.dispindex[int(ax.objectName()[-1])],X,Y,S]]
+                    #exec(f'self.labelindex = [[self.disp.dispindex[{axid}],X,Y,S]]')
 
             if (1<=idx<=5): #left-hand set of buttons
-                dojob(0,X,Y,S,text) #tag upper panel
+                dojob(self.axes0,X,Y,S) #tag upper panel
             else: #right-hand set of buttons
-                dojob(1,X,Y,S,text) #tag middle panel
+                dojob(self.axes1,X,Y,S) #tag middle panel
 
     def Show_Callback(self):
         raise NotImplementedError
@@ -1671,9 +1687,9 @@ class MainWindow(QMainWindow):
             return
         
         self.deleteLabel()
-        data = np.load(file,allow_pickle=True)
+        data = np.load(file,allow_pickle=True).item()
         self.current_folder = file.parent
-        for key,value in data.item().items(): #assign variables
+        for key,value in data.items(): #assign variables
             if key not in ['DAQinfo','shell']: #shell shouldn't be overwritten
                 setattr(self,key,value)
 
@@ -1691,20 +1707,21 @@ class MainWindow(QMainWindow):
         if self.menuindex[0] != (0 if (len(self.PSDofSQA) == 0) else 1): #use appropriate context menu
             self.MenuSwitcher(1-self.menuindex[0]) # 0->1, 1->0
 
-        #TODO - translate below
         self.setWindowTitle(f'{self.shell} {file.name}')
+        #TODO - translate below
         # set(handles.DeDrift,'Enable','on');
-        # %Show all the points in top and middle panels upon loading
-        # set(handles.xlim1,'String','0');
-        # set(handles.xlim2,'String','0');
-        # %Show all the points in bottom panel upon loading
+
+        # Show all points in top and middle panels upon loading
+        self.xlim0.setText('0')
+        self.xlim1.setText('0')
+
+        # Show all points in the bottom panel upon loading
         self.slider1.setValue(0)
-        # set(handles.slider2,'Value',0);
-        # set(handles.text_slider2,'String','0');
-        # set(handles.plot3,'XData',0,'YData',0);
+        #TODO - translate below
         # edit_Kseal_Callback(handles.edit_Kseal, eventdata, handles); %TW141015, will update the plot
-        # Cap7_state.changed = false;
-        # ChangedOrSaved(handles.figure1);
+        self.Show_update_Callback() #remove this call when edit_Kseal_Callback is implememted
+        self.changed = False
+        self.ChangedOrSaved()
 
         #TODO - paused - 2/12/2025 - Finish show_update_callback before continue on this part
     
@@ -1741,8 +1758,8 @@ class MainWindow(QMainWindow):
             self.slider1.setValue(0)
 
         lim0,lim1,index0,index1 = self.indexLoc(self.aitime,[lim0,lim1,XData2[0],XData2[-1]])
-        if (lim1 == 0) or (lim1 > L):
-            lim1 = L
+        if (lim1 == lim0): #show all data if lim0 == lim1
+            lim1 = L-1 #keep in mind that lim is zero-based
         D = self.fwindow
         XData01 = self.aitime[lim0:lim1+1]
         XData2 = self.aitime[index0:index1+1]
@@ -1756,46 +1773,39 @@ class MainWindow(QMainWindow):
         else:
             YTarget = self.aidata #original data
 
+        YData = [None]*3
         for n in range(3): #assign YData0-2
             if (self.disp.dispindex[n] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[n+1] == 'p'): #Ch0/1 PSDofSQA
-               exec(f'YData{n} = self.PSDofSQA[lim0:lim1+1,self.disp.dispindex[{n}]]')
+                if n == 2:
+                    YData[2] = self.PSDofSQA[self.disp.dispindex[n],index0:index1+1]
+                else:
+                    YData[n] = self.PSDofSQA[self.disp.dispindex[n],lim0:lim1+1]
             else:
-               exec(f'YData{n} = self.YTarget[lim0:lim1+1,self.disp.dispindex[{n}]]')
+                if n == 2:
+                    YData[2] = YTarget[self.disp.dispindex[n],index0:index1+1]
+                else:
+                    YData[n] = YTarget[self.disp.dispindex[n],lim0:lim1+1]
         
-        self.refresh_plot(XData01,YData0,YData1,XData2,YData2)
+        self.refresh_plot(XData01,YData[0],YData[1],XData2,YData[2])
 
         #update slider0
-        XL = lim1-lim0+1
-        #TODO - paused 2/18/2025 - translate
-        # if L != XL:
-        #     set(handles.slider1,'Value',((lim(1,1)-1)/(L-XL)));
-        # else
-        #     set(handles.slider1,'Value',0);
-        #     set(handles.text_slider1,'String','0');
-        # end
+        I = lim1-lim0+1
+        self.slider0.blockSignals(True) #prevent slider valueChanged callback from calling self.refresh_plot again
+        self.slider0.setMaximum(self.aitime.size - I)
+        self.slider0.setValue(lim0)
+        self.slider0.setSingleStep(ceil(0.1*I))
+        self.slider0.setPageStep(ceil(0.8*I))
+        self.slider0.blockSignals(False)
 
-        # %update labels
-        # if ~isempty(handles.labelindex)
-        #     delete(findobj('parent',handles.axes1,'Type','text'));
-        #     delete(findobj('parent',handles.axes2,'Type','text'));
-        #     L2 = length(handles.labelindex(:,1));
-        #     %assignin('base','L2',L2);
-        #     %assignin('base','XL',XL);
-        #     %assignin('base','XData12',XData12);
-        #     for n = (1:L2)
-        #         axes(handles.axes1);
-        #         if handles.labelindex{n,1} == Cap7_state.disp.dispindex(1,1)
-        #             text(handles.labelindex{n,2},handles.labelindex{n,3}(1,Cap7_state.disp.dispindex(1,1)),...
-        #                 ['\langle',handles.labelindex{n,4}]);
-        #         end
-        #         axes(handles.axes2);
-        #         if handles.labelindex{n,1} == Cap7_state.disp.dispindex(1,2)
-        #             text(handles.labelindex{n,2},handles.labelindex{n,3}(1,Cap7_state.disp.dispindex(1,2)),...
-        #                 ['\langle',handles.labelindex{n,4}]);
-        #         end
-
-        #     end
-        # end
+        # update labels - in case called from context_axes... when changing the display channel
+        if len(self.labelindex) != 0:
+            self.deleteLabel()
+            for label in self.labelindex:
+                if label[0] in self.disp.dispindex[0:2]:
+                    ax = eval(f'self.axes{label[0]}')
+                    self.addLabel(ax,*label[1:]) # '*' unpacks the labelindex to indivirual arg
+                    
+        #TODO paused - 2/19/2025 fix slider1 loading issue and test labelbuttons etc
     
     def closeEvent(self, a0):
         #print('closeEvent called')
