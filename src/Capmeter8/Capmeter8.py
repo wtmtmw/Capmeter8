@@ -1467,7 +1467,7 @@ class MainWindow(QMainWindow):
                     YData0 = self.PSDofSQA[self.disp.dispindex[0]][V:V+I]
                 else:
                     YData0 = YTarget[self.disp.dispindex[0]][V:V+I]
-                if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'):
+                if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'):
                     YData1 = self.PSDofSQA[self.disp.dispindex[1]][V:V+I]
                 else:
                     YData1 = YTarget[self.disp.dispindex[1]][V:V+I]
