@@ -427,14 +427,14 @@ class MainWindow(QMainWindow):
             if L >= self.slider0v2p:
                 XData01 = self.aitime[L-self.slider0v2p:]
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'): #Ch0/1 PSDofSQA, top axis
-                    YData0 = self.PSDofSQA[self.disp.dispindex[0]][L-self.slider0v2p:]+0
+                    YData0 = self.PSDofSQA[self.disp.dispindex[0],L-self.slider0v2p:]+0
                 else:
-                    YData0 = self.aidata[self.disp.dispindex[0]][L-self.slider0v2p:]+0
+                    YData0 = self.aidata[self.disp.dispindex[0],L-self.slider0v2p:]+0
 
                 if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'): #Ch0/1 PSDofSQA, middle axis
-                    YData1 = self.PSDofSQA[self.disp.dispindex[1]][L-self.slider0v2p:]+0
+                    YData1 = self.PSDofSQA[self.disp.dispindex[1],L-self.slider0v2p:]+0
                 else:
-                    YData1 = self.aidata[self.disp.dispindex[1]][L-self.slider0v2p:]+0
+                    YData1 = self.aidata[self.disp.dispindex[1],L-self.slider0v2p:]+0
             else:
                 XData01 = self.aitime
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'): #Ch0/1 PSDofSQA, top axis
@@ -459,9 +459,9 @@ class MainWindow(QMainWindow):
             if L >= self.slider1v2p:
                 XData2 = self.aitime[L-self.slider1v2p:]
                 if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'): #Ch0/1 PSDofSQA
-                    YData2 = self.PSDofSQA[self.disp.dispindex[2]][L-self.slider1v2p:]+0
+                    YData2 = self.PSDofSQA[self.disp.dispindex[2],L-self.slider1v2p:]+0
                 else:
-                    YData2 = self.aidata[self.disp.dispindex[2]][L-self.slider1v2p:]+0
+                    YData2 = self.aidata[self.disp.dispindex[2],L-self.slider1v2p:]+0
 
             else:
                 XData2 = self.aitime
@@ -1098,10 +1098,14 @@ class MainWindow(QMainWindow):
         '''
         e.g. self.addLabel(0,x,y,'text') add label 'text' to self.axes0 at (x,y)
         '''
+        axid = int(ax.objectName()[-1])
         text = pg.TextItem(S,color = 'k')
         text.setFont(QFont('Arial',14))
         ax.addItem(text)
-        text.setPos(X,Y[self.disp.dispindex[int(ax.objectName()[-1])]])
+        Y = Y[self.disp.dispindex[axid]]
+        if np.isnan(Y):
+            Y = np.mean(self.ylim(ax,'range'))/2
+        text.setPos(X,Y)
         # exec(f'self.axes{axid}.addItem(text)')
         # exec(f'text.setPos(X,Y[self.disp.dispindex[{axid}]])')
 
@@ -1226,19 +1230,32 @@ class MainWindow(QMainWindow):
                 self.AutoPhase.setChecked(False)
             self.daq.ao.putvalue([0,0])
 
-            I,_ = self.plot0.getOriginalDataset()
-            I = I.size
-            self.slider0.setMaximum(self.aitime.size - I)
-            self.slider0.setValue(self.aitime.size - I)
-            self.slider0.setSingleStep(ceil(0.1*I))
-            self.slider0.setPageStep(ceil(0.8*I))
+            if self.slider0.value() == 0:
+                self.xlim0.setText('0')
+                self.xlim1.setText('0')
+                self.Show_update_Callback() #force update because extra data may have been acquired after the last plot update
+                self.slider0.blockSignals(True)
+                self.slider0.setMaximum(0) #this makes the slider unmovable
+                self.slider0.setValue(0)
+                self.slider0.blockSignals(False)
+            else:
+                I,_ = self.plot0.getOriginalDataset()
+                I = I.size
+                self.slider0.setMaximum(self.aitime.size - I)
+                self.slider0.setValue(self.aitime.size - I)
+                self.slider0.setSingleStep(ceil(0.1*I))
+                self.slider0.setPageStep(ceil(0.8*I))
 
-            I,_ = self.plot2.getOriginalDataset()
-            I = I.size
-            self.slider1.setMaximum(self.aitime.size - I)
-            self.slider1.setValue(self.aitime.size - I)
-            self.slider1.setSingleStep(ceil(0.1*I))
-            self.slider1.setPageStep(ceil(0.8*I))
+            if self.slider1.value() == 0:
+                #unlike slider0, extra data points are ignored as they are available from the upper panels already 
+                self.slider1.setMaximum(0) #this makes the slider unmovable
+            else:
+                I,_ = self.plot2.getOriginalDataset()
+                I = I.size
+                self.slider1.setMaximum(self.aitime.size - I)
+                self.slider1.setValue(self.aitime.size - I)
+                self.slider1.setSingleStep(ceil(0.1*I))
+                self.slider1.setPageStep(ceil(0.8*I))
 
             #TODO - translate below
             # if ~isempty(handles.rxr) %TW150503: added back
@@ -1288,10 +1305,8 @@ class MainWindow(QMainWindow):
         
         #update plot color
         plotx.setPen(pg.mkPen(width=2, color=self.disp.chcolor[channel]))
-        #TODO - translate the following
-        # if strcmpi(handles.ai.running,'off') && (~isempty(handles.aitime))
-        #     Show_update_Callback(hObject, eventdata, handles);
-        # end
+        if (not self.Start_Stop.isChecked()) and (len(self.aitime) != 0):
+            self.Show_update_Callback()
 
     def context_axes_b_Callback(self,axes,channel,algo):
         '''
@@ -1309,10 +1324,8 @@ class MainWindow(QMainWindow):
         invert the polarity of the signal of a given axis or not
         '''
         self.disp.invertindex[int(axes.objectName()[-1])] = checked #[top, middle, bottom]
-        #TODO - translate the following
-        # if strcmpi(handles.ai.running,'off') && (~isempty(handles.aitime))
-        #     Show_update_Callback(hObject, eventdata, handles);
-        # end
+        if (not self.Start_Stop.isChecked()) and (len(self.aitime) != 0):
+            self.Show_update_Callback()
 
     def AxesSwitch_Callback(self):
         self.limsetindex[0] = self.AxesSwitch.currentIndex()
@@ -1464,19 +1477,19 @@ class MainWindow(QMainWindow):
 
             if not slideridx: #slider0
                 if (self.disp.dispindex[0] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[1] == 'p'):
-                    YData0 = self.PSDofSQA[self.disp.dispindex[0]][V:V+I]
+                    YData0 = self.PSDofSQA[self.disp.dispindex[0],V:V+I]
                 else:
-                    YData0 = YTarget[self.disp.dispindex[0]][V:V+I]
+                    YData0 = YTarget[self.disp.dispindex[0],V:V+I]
                 if (self.disp.dispindex[1] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[2] == 'p'):
-                    YData1 = self.PSDofSQA[self.disp.dispindex[1]][V:V+I]
+                    YData1 = self.PSDofSQA[self.disp.dispindex[1],V:V+I]
                 else:
-                    YData1 = YTarget[self.disp.dispindex[1]][V:V+I]
+                    YData1 = YTarget[self.disp.dispindex[1],V:V+I]
                 self.refresh_plot(XData,YData0,YData1,[],[])
             else: #slider1
                 if (self.disp.dispindex[2] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[3] == 'p'):
-                    YData2 = self.PSDofSQA[self.disp.dispindex[2]][V:V+I]
+                    YData2 = self.PSDofSQA[self.disp.dispindex[2],V:V+I]
                 else:
-                    YData2 = YTarget[self.disp.dispindex[2]][V:V+I]
+                    YData2 = YTarget[self.disp.dispindex[2],V:V+I]
                 self.refresh_plot([],[],[],XData,YData2)
 
     def LabelButton_Callback(self):
@@ -1716,14 +1729,16 @@ class MainWindow(QMainWindow):
         self.xlim1.setText('0')
 
         # Show all points in the bottom panel upon loading
+        self.plot2.setData(self.aitime,self.aidata[0]) #YData doesn't matter as it will be updated again in Show_update_Callback
+        #self.slider1.blockSignals(True) #did not block signal so the slider text can be udpated
+        self.slider1.setMaximum(0) #this makes the slider unmovable
         self.slider1.setValue(0)
+        #self.slider1.blockSignals(False)
         #TODO - translate below
         # edit_Kseal_Callback(handles.edit_Kseal, eventdata, handles); %TW141015, will update the plot
         self.Show_update_Callback() #remove this call when edit_Kseal_Callback is implememted
         self.changed = False
         self.ChangedOrSaved()
-
-        #TODO - paused - 2/12/2025 - Finish show_update_callback before continue on this part
     
     def Notepad_Callback(self):
         print('notepad not implemented')
@@ -1777,12 +1792,12 @@ class MainWindow(QMainWindow):
         for n in range(3): #assign YData0-2
             if (self.disp.dispindex[n] <= 1) and (self.menuindex[0] == 1) and (self.menuindex[n+1] == 'p'): #Ch0/1 PSDofSQA
                 if n == 2:
-                    YData[2] = self.PSDofSQA[self.disp.dispindex[n],index0:index1+1]
+                    YData[2] = self.PSDofSQA[self.disp.dispindex[2],index0:index1+1]
                 else:
                     YData[n] = self.PSDofSQA[self.disp.dispindex[n],lim0:lim1+1]
             else:
                 if n == 2:
-                    YData[2] = YTarget[self.disp.dispindex[n],index0:index1+1]
+                    YData[2] = YTarget[self.disp.dispindex[2],index0:index1+1]
                 else:
                     YData[n] = YTarget[self.disp.dispindex[n],lim0:lim1+1]
         
@@ -1804,8 +1819,8 @@ class MainWindow(QMainWindow):
                 if label[0] in self.disp.dispindex[0:2]:
                     ax = eval(f'self.axes{label[0]}')
                     self.addLabel(ax,*label[1:]) # '*' unpacks the labelindex to indivirual arg
-                    
-        #TODO paused - 2/19/2025 fix slider1 loading issue and test labelbuttons etc
+
+        #TODO - paused 2/20/2025 - make fig
     
     def closeEvent(self, a0):
         #print('closeEvent called')
