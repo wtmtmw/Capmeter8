@@ -143,7 +143,7 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>140</x>
       <y>610</y>
       <width>441</width>
       <height>34</height>
@@ -456,7 +456,7 @@
       <x>380</x>
       <y>790</y>
       <width>171</width>
-      <height>121</height>
+      <height>111</height>
      </rect>
     </property>
     <property name="toolTip">
@@ -471,7 +471,7 @@
        <x>12</x>
        <y>15</y>
        <width>151</width>
-       <height>101</height>
+       <height>91</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout">
@@ -961,7 +961,7 @@
      </rect>
     </property>
     <property name="title">
-     <string>X-axis range</string>
+     <string>Show data</string>
     </property>
     <widget class="QPushButton" name="Show">
      <property name="geometry">
@@ -985,6 +985,9 @@
        <height>22</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>Press enter to set X-axis range</string>
+     </property>
      <property name="text">
       <string>0</string>
      </property>
@@ -1000,6 +1003,9 @@
        <width>51</width>
        <height>22</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Press enter to set X-axis range</string>
      </property>
      <property name="text">
       <string>0</string>
@@ -1497,6 +1503,19 @@
       </layout>
      </item>
     </layout>
+   </widget>
+   <widget class="QGroupBox" name="panel_Kseal">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>810</y>
+      <width>61</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string/>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
