@@ -2,11 +2,12 @@ from PyQt6 import uic
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QMenu, QToolBar, QStyle, QSizePolicy
 from PyQt6.QtCore import QTimer, QPoint, QSize
 from PyQt6.QtGui import QAction, QFont
-import qtawesome as qta #for FontAwesome icon
+import qtawesome as qta # for FontAwesome icon
 from tkinter import filedialog, Tk, messagebox
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
 import sys, traceback, ctypes, time
-import pyqtgraph as pg
+import pyqtgraph as pg # for real-time plotting
+import matplotlib.pyplot as plt # for generating figures
 from pathlib import Path
 import numpy as np
 from math import ceil
@@ -34,7 +35,7 @@ class MainWindow(QMainWindow):
                                   )
 
         self.disp = self.kwarg2var(dispindex = [0,1,2], # 0-based
-                                   chcolor = ['r','b',(204,0,204),(64,153,166),'k'], #display color of the channel
+                                   chcolor = [(255,0,0),(0,0,255),(204,0,204),(64,153,166),(0,0,0)], #display color of the channel
                                    slider0range = 120, # in sec
                                    slider1range = 50, # in sec
                                    invertindex = [False,False,False], #[axes0,axes1,axes2]
@@ -271,7 +272,7 @@ class MainWindow(QMainWindow):
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.xlim0.returnPressed.connect(self.Show_update_Callback)
         self.xlim1.returnPressed.connect(self.Show_update_Callback)
-        self.Show.clicked.connect(self.Show_Callback)
+        self.Show.clicked.connect(self.Makefig_Callback)
 
         self.Set_PSD.clicked.connect(self.Set_PSD_Callback)
         self.PhaseShift.clicked.connect(self.PhaseShift_Callback)
@@ -1514,8 +1515,19 @@ class MainWindow(QMainWindow):
             else: #right-hand set of buttons
                 dojob(self.axes1,X,Y,S) #tag middle panel
 
-    def Show_Callback(self):
-        raise NotImplementedError
+    def Makefig_Callback(self):
+        '''
+        Correspond to the Show_Callback in Capmeter7 (MATLAB)
+        '''
+        Xdata, Ydata0 = self.plot0.getOriginalDataset()
+        _,Ydata1 = self.plot1.getOriginalDataset()
+
+        plt.figure()
+        plt.plot(Xdata,Ydata1,color=tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[1]]]))
+        plt.plot(Xdata,Ydata0,color=tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[0]]]))
+        plt.show() # without it, no fig will be shown
+
+        #TODO - paused 2/21/2025 - add label
     
     def Set_PSD_Callback(self,algoChange = False):
         if not self.Start_Stop.isChecked():
@@ -1819,8 +1831,6 @@ class MainWindow(QMainWindow):
                 if label[0] in self.disp.dispindex[0:2]:
                     ax = eval(f'self.axes{label[0]}')
                     self.addLabel(ax,*label[1:]) # '*' unpacks the labelindex to indivirual arg
-
-        #TODO - paused 2/20/2025 - make fig
     
     def closeEvent(self, a0):
         #print('closeEvent called')
