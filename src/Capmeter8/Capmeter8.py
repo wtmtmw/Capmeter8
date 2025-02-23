@@ -1521,13 +1521,38 @@ class MainWindow(QMainWindow):
         '''
         Xdata, Ydata0 = self.plot0.getOriginalDataset()
         _,Ydata1 = self.plot1.getOriginalDataset()
+        color0 = tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[0]]]) 
+        color1 = tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[1]]])
 
-        plt.figure()
-        plt.plot(Xdata,Ydata1,color=tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[1]]]))
-        plt.plot(Xdata,Ydata0,color=tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[0]]]))
+        _, ax1 = plt.subplots() #returns fig and axis
+
+        ax0 = ax1.twinx()  # Create a second y-axis sharing the same x-axis
+        ax1.plot(Xdata,Ydata0,color=color1) #plot ax1 behind ax0
+        ax0.plot(Xdata,Ydata1,color=color0)
+        #move upper panel axis to the left and lower to the right
+        ax0.yaxis.tick_left()
+        ax0.yaxis.set_label_position('left')
+        ax1.yaxis.tick_right()
+        ax1.yaxis.set_label_position('right')
+        ax1.set_xlabel("Time (s)")
+        ax0.set_ylabel(f'Channel {self.disp.dispindex[0]}', color=color0)
+        ax1.set_ylabel(f'Channel {self.disp.dispindex[1]}', color=color1)
+
         plt.show() # without it, no fig will be shown
 
-        #TODO - paused 2/21/2025 - add label
+        #TODO - paused 2/22/2025 - add label
+        # # Retrieve all text labels
+        # text_labels = [item for item in self.axes0.items if isinstance(item, pg.TextItem)]
+
+        # # Print their text and positions
+        # for text in text_labels:
+        #     print(f"Text: {text.toPlainText()}, Position: {text.pos()}")
+        
+        # # Annotate a point on ax1 (Sin curve)
+        # x_point = np.pi  # Example point (π)
+        # y1_point = np.sin(x_point)
+        # ax1.annotate(f'Sin({x_point:.2f})', xy=(x_point, y1_point), xytext=(x_point, y1_point + 0.2),
+        #             arrowprops=dict(arrowstyle="->", color='g'), color='g')
     
     def Set_PSD_Callback(self,algoChange = False):
         if not self.Start_Stop.isChecked():
