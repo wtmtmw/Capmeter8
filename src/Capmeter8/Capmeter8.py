@@ -388,8 +388,15 @@ class MainWindow(QMainWindow):
         return h
     
     def xlim(self,axes,lim):
-        # lim: tuple
-        axes.setRange(xRange=lim,padding=0)
+        # lim: tuple or mode listed below
+        if lim == 'auto':
+            axes.getViewBox().enableAutoRange(axis='x')
+        elif lim == 'manual':
+            axes.getViewBox().disableAutoRange(axis='x')
+        elif lim == 'range': #get current range
+            return axes.getViewBox().viewRange()[0] # [[x0,x1],[y0,y1]]
+        else:
+            axes.setRange(xRange=lim,padding=0)
 
     def ylim(self,axes,lim):
         # lim: tuple or mode listed below
@@ -1520,6 +1527,7 @@ class MainWindow(QMainWindow):
         Correspond to the Show_Callback in Capmeter7 (MATLAB)
         '''
         Xdata, Ydata0 = self.plot0.getOriginalDataset()
+        print(Xdata)
         _,Ydata1 = self.plot1.getOriginalDataset()
         color0 = tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[0]]]) 
         color1 = tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[1]]])
@@ -1527,8 +1535,8 @@ class MainWindow(QMainWindow):
         _, ax1 = plt.subplots() #returns fig and axis
 
         ax0 = ax1.twinx()  # Create a second y-axis sharing the same x-axis
-        ax1.plot(Xdata,Ydata0,color=color1) #plot ax1 behind ax0
-        ax0.plot(Xdata,Ydata1,color=color0)
+        ax1.plot(Xdata,Ydata1,color=color1) #plot ax1 behind ax0
+        ax0.plot(Xdata,Ydata0,color=color0)
         #move upper panel axis to the left and lower to the right
         ax0.yaxis.tick_left()
         ax0.yaxis.set_label_position('left')
@@ -1538,21 +1546,23 @@ class MainWindow(QMainWindow):
         ax0.set_ylabel(f'Channel {self.disp.dispindex[0]}', color=color0)
         ax1.set_ylabel(f'Channel {self.disp.dispindex[1]}', color=color1)
 
+        for capax, ax in zip([self.axes0, self.axes1],[ax0,ax1]):
+            for item in capax.items():
+                # Retrieve all text labels (pyqtgraph)
+                if isinstance(item, pg.TextItem):
+                    text = item.toPlainText()
+                    pos = item.pos()
+                    #print(f'{text}, x={pos.x()}, y={pos.y()}')
+                    # Add labels to the figure
+                    ax.annotate(text, pos,fontsize=12)
+            
+            xlim = self.xlim(capax,'range')
+            ax.set_xlim(*xlim) #set_xlim(left, right)
+            ylim = self.ylim(capax,'range')
+            ax.set_ylim(*ylim) #set_ylim(bottom, top)
+
         plt.show() # without it, no fig will be shown
-
-        #TODO - paused 2/22/2025 - add label
-        # # Retrieve all text labels
-        # text_labels = [item for item in self.axes0.items if isinstance(item, pg.TextItem)]
-
-        # # Print their text and positions
-        # for text in text_labels:
-        #     print(f"Text: {text.toPlainText()}, Position: {text.pos()}")
-        
-        # # Annotate a point on ax1 (Sin curve)
-        # x_point = np.pi  # Example point (π)
-        # y1_point = np.sin(x_point)
-        # ax1.annotate(f'Sin({x_point:.2f})', xy=(x_point, y1_point), xytext=(x_point, y1_point + 0.2),
-        #             arrowprops=dict(arrowstyle="->", color='g'), color='g')
+        #TODO - paused - 2/23/2025 - also output data?
     
     def Set_PSD_Callback(self,algoChange = False):
         if not self.Start_Stop.isChecked():
