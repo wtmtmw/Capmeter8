@@ -272,7 +272,7 @@ class MainWindow(QMainWindow):
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.xlim0.returnPressed.connect(self.Show_update_Callback)
         self.xlim1.returnPressed.connect(self.Show_update_Callback)
-        self.Show.clicked.connect(self.Makefig_Callback)
+        self.Show.clicked.connect(self.makeFig_Callback)
 
         self.Set_PSD.clicked.connect(self.Set_PSD_Callback)
         self.PhaseShift.clicked.connect(self.PhaseShift_Callback)
@@ -1522,12 +1522,11 @@ class MainWindow(QMainWindow):
             else: #right-hand set of buttons
                 dojob(self.axes1,X,Y,S) #tag middle panel
 
-    def Makefig_Callback(self):
+    def makeFig_Callback(self):
         '''
         Correspond to the Show_Callback in Capmeter7 (MATLAB)
         '''
         Xdata, Ydata0 = self.plot0.getOriginalDataset()
-        print(Xdata)
         _,Ydata1 = self.plot1.getOriginalDataset()
         color0 = tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[0]]]) 
         color1 = tuple([n/255 for n in self.disp.chcolor[self.disp.dispindex[1]]])
