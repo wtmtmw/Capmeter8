@@ -1,0 +1,6 @@
+pyqt6
+qtawesome
+pyqtgraph
+matplotlib
+numpy
+daqx>=0.0.3

@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+src/Capmeter8/Capmeter8.py
+src/Capmeter8/__init__.py
+src/capmeter8.egg-info/PKG-INFO
+src/capmeter8.egg-info/SOURCES.txt
+src/capmeter8.egg-info/dependency_links.txt
+src/capmeter8.egg-info/entry_points.txt
+src/capmeter8.egg-info/requires.txt
+src/capmeter8.egg-info/top_level.txt
