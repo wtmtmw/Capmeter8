@@ -567,6 +567,10 @@ class MainWindow(QMainWindow):
         noteact.triggered.connect(self.Notepad_Callback)
         setact.triggered.connect(self.Setting_Callback)
 
+        # Disable buttons that have not been implemented yet
+        noteact.setEnabled(False)
+        setact.setEnabled(False)
+
         # Add Action to Toolbar
         for act in [saveact,loadact,sep,noteact,spacer,setact]:
             if act:
