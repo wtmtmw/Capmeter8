@@ -700,7 +700,7 @@ class MainWindow(QMainWindow):
             else: #PSD
                 ax.customContextMenuRequested.connect(lambda pos,axis=ax: self.create_context_axes(axis,pos)) #connect to custom context menu
 
-            self.context_axes_Callback(ax,self.disp.dispindex[axidx]) #this will update displayed channels regardless of PSD or SQA
+            #self.context_axes_Callback(ax,self.disp.dispindex[axidx]) #this will update displayed channels regardless of PSD or SQA
 
         if type == 1: #SQA
             self.menuindex[1:] = 's'*3 #[1,'s','s','s']
@@ -1215,9 +1215,9 @@ class MainWindow(QMainWindow):
             
             self.daq.ao.stop() #might be started again @resume
             time.sleep(0.003)
-            if (self.algorithm >= 2) and (self.menuindex == 0): #SQA but PSD context menu
+            if (self.algorithm >= 2) and (self.menuindex[0] == 0): #SQA but PSD context menu
                 self.MenuSwitcher(1) #SQA context menu
-            elif (self.algorithm == 1) and (self.menuindex == 1): #PSD but SQA context menu
+            elif (self.algorithm == 1) and (self.menuindex[0] == 1): #PSD but SQA context menu
                 self.MenuSwitcher(0) #PSD context menu
             #TODO - translate below
             # if strcmpi(get(handles.context_TTL,'Checked'),'off')
@@ -1667,10 +1667,10 @@ class MainWindow(QMainWindow):
                 self.Cm.setCurrentIndex(self.algorithm)
                 return
 
-            if index == 1: #PSD
-                self.MenuSwitcher(0)
-            elif index >= 2: #SQA
-                self.MenuSwitcher(1)
+            # if index == 1: #PSD
+            #     self.MenuSwitcher(0)
+            # elif index >= 2: #SQA
+            #     self.MenuSwitcher(1)
 
             self.algorithm = index
             self.Set_PSD_Callback(algoChange = True)
