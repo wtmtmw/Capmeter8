@@ -33,13 +33,15 @@
             "command": "pyinstaller",
             "args": [
                 "--onefile",
+				"--paths", "C:\\Users\\wangt43\\Desktop\\exe\\Lib\\site-packages",
                 "--add-data", "${fileDirname}\\caplib.dll:.",
                 "--add-data", "${fileDirname}\\ui_Cap8MainWindow.ui:.",
                 "${fileDirname}\\Capmeter8.py"
             ],
 			"options": {
                 "env": {
-                    "PATH": "C:\\Users\\wangt43\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\wangt43\\AppData\\Local\\Programs\\Python\\Python313\\Scripts;${env:PATH}"
+                    //"PATH": "C:\\Users\\wangt43\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\wangt43\\AppData\\Local\\Programs\\Python\\Python313\\Scripts;${env:PATH}"
+					"PATH": "C:\\Users\\wangt43\\Desktop\\exe;C:\\Users\\wangt43\\Desktop\\exe\\Scripts;${env:PATH}"
                 }
             },
             "group": {
