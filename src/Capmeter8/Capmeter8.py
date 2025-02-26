@@ -1,7 +1,7 @@
 from PyQt6 import uic
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QMenu, QToolBar, QStyle, QSizePolicy
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QMenu, QToolBar, QStyle, QSizePolicy, QVBoxLayout, QTableWidget, QTableWidgetItem
 from PyQt6.QtCore import QTimer, QPoint, QSize
-from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtGui import QAction, QFont, QKeySequence
 import qtawesome as qta # for FontAwesome icon
 from tkinter import filedialog, Tk, messagebox
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
@@ -41,7 +41,8 @@ class MainWindow(QMainWindow):
                                    invertindex = [False,False,False], #[axes0,axes1,axes2]
                                    )
         
-        self.gh = self.kwarg2var(notePad = None) #TODO - Cap7_gh has not been implemented
+        self.gh = self.kwarg2var(notePad = None,
+                                 dataTable = None) #TODO - Cap7_gh has not been implemented
 
         self.current_folder = Path.cwd()
         self.changed = False #if the note etc. have been changed;
@@ -1565,6 +1566,8 @@ class MainWindow(QMainWindow):
             ax.set_ylim(*ylim) #set_ylim(bottom, top)
 
         plt.show() # without it, no fig will be shown
+
+        self.showDataTable(np.vstack((Xdata,Ydata0,Ydata1)))
         #TODO - paused - 2/23/2025 - also output data?
     
     def Set_PSD_Callback(self,algoChange = False):
@@ -1870,6 +1873,67 @@ class MainWindow(QMainWindow):
                     ax = eval(f'self.axes{label[0]}')
                     self.addLabel(ax,*label[1:]) # '*' unpacks the labelindex to indivirual arg
     
+    def showDataTable(self,data,title='Figdata'):
+        '''
+        show data in QTableWidget
+        '''
+        # Create the main window
+        self.gh.dataTable = QWidget()
+        self.gh.dataTable.setWindowTitle(title)
+        layout = QVBoxLayout()
+
+        # Create a QTableWidget
+        table_widget = QTableWidget()
+        table_widget.setRowCount(data.shape[0])
+        table_widget.setColumnCount(data.shape[1])
+        #table_widget.setVerticalHeaderLabels(row_headers)
+
+        # Populate the table with data
+        for row in range(data.shape[0]):
+            for col in range(data.shape[1]):
+                item = QTableWidgetItem(str(data[row, col]))
+                table_widget.setItem(row, col, item)
+
+        # Set selection mode and behavior
+        table_widget.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
+        table_widget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectItems)
+
+        # Allow copying with default shortcuts like Ctrl+C
+        table_widget.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+
+        # Enable copying
+        copy_action = QAction("Copy", table_widget)
+        copy_action.setShortcut(QKeySequence.StandardKey.Copy)
+        copy_action.triggered.connect(lambda: copySelectedCells(table_widget))
+        table_widget.addAction(copy_action)
+
+        def copySelectedCells(table_widget):
+            # Get the selected ranges
+            selection = table_widget.selectedRanges()
+            if selection:
+                range_ = selection[0]
+                rows = range(range_.topRow(), range_.bottomRow() + 1)
+                cols = range(range_.leftColumn(), range_.rightColumn() + 1)
+
+                # Construct the data to be copied
+                data = "\n".join(
+                    "\t".join(table_widget.item(row, col).text() if table_widget.item(row, col) else ""
+                            for col in cols)
+                    for row in rows
+                )
+
+                # Copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(data)
+
+        # Add the table to the layout
+        layout.addWidget(table_widget)
+        self.gh.dataTable.setLayout(layout)
+
+        # Show the window
+        self.gh.dataTable.show()
+        #TODO - paused - 2/25/2025 - closeRequestFcn?
+
     def closeEvent(self, a0):
         #print('closeEvent called')
         if self.Start_Stop.isChecked():
