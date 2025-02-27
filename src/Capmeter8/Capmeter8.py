@@ -1,7 +1,7 @@
 from PyQt6 import uic
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QMenu, QToolBar, QStyle, QSizePolicy, QVBoxLayout, QTableWidget, QTableWidgetItem
-from PyQt6.QtCore import QTimer, QPoint, QSize
-from PyQt6.QtGui import QAction, QFont, QKeySequence
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QMenu, QToolBar, QStyle, QSizePolicy #, QVBoxLayout, QTableWidget, QTableWidgetItem
+from PyQt6.QtCore import QTimer, QPoint, QSize, QEventLoop
+from PyQt6.QtGui import QAction, QFont #, QKeySequence
 import qtawesome as qta # for FontAwesome icon
 from tkinter import filedialog, Tk, messagebox
 # from pyqtgraph import PlotWidget, plot #for packaging only if loading .ui directly? need to test...
@@ -10,6 +10,7 @@ import pyqtgraph as pg # for real-time plotting
 import matplotlib.pyplot as plt # for generating figures
 from pathlib import Path
 import numpy as np
+import pandas as pd
 from math import ceil
 from random import randint
 from daqx.util import createDevice
@@ -42,7 +43,8 @@ class MainWindow(QMainWindow):
                                    )
         
         self.gh = self.kwarg2var(notePad = None,
-                                 dataTable = None) #TODO - Cap7_gh has not been implemented
+                                 dataTable = None,
+                                 crosshair = None) #TODO - Cap7_gh has not been implemented
 
         self.current_folder = Path.cwd()
         self.changed = False #if the note etc. have been changed;
@@ -273,7 +275,11 @@ class MainWindow(QMainWindow):
         self.slider1.valueChanged.connect(self.slider_Callback)
         self.xlim0.returnPressed.connect(self.Show_update_Callback)
         self.xlim1.returnPressed.connect(self.Show_update_Callback)
-        self.Show.clicked.connect(self.makeFig_Callback)
+        self.Show_to.clicked.connect(self.Show_to_Callback)
+        self.makeFig.clicked.connect(self.makeFig_Callback)
+        self.toClipboard.clicked.connect(self.toClipboard_Callback)
+        self.Std_get.clicked.connect(self.Std_get_Callback)
+        self.Std_scale.clicked.connect(self.Std_scale_Callback)
 
         self.Set_PSD.clicked.connect(self.Set_PSD_Callback)
         self.PhaseShift.clicked.connect(self.PhaseShift_Callback)
@@ -332,6 +338,26 @@ class MainWindow(QMainWindow):
             #print(type(kwargs)) #dict
             for key, value in kwargs.items():
                 setattr(self, key, value)
+
+    class crosshair:
+        def __init__(self, ax):
+            self.ax = ax
+            self.v_line = pg.InfiniteLine(angle=90, movable=False)
+            self.h_line = pg.InfiniteLine(angle=0, movable=False)
+            self.ax.addItem(self.v_line, ignoreBounds=True)
+            self.ax.addItem(self.h_line, ignoreBounds=True)
+            self.proxy = pg.SignalProxy(self.ax.scene().sigMouseMoved, rateLimit=180, slot=self.mouse_moved)
+
+        def __del__(self):
+            self.ax.removeItem(self.v_line)
+            self.ax.removeItem(self.h_line)
+
+        def mouse_moved(self, evt):
+            pos = evt[0]  # Get the mouse position
+            if self.ax.sceneBoundingRect().contains(pos):
+                mouse_point = self.ax.plotItem.vb.mapSceneToView(pos)
+                self.v_line.setPos(mouse_point.x())
+                self.h_line.setPos(mouse_point.y())
 
     def uigetfile(self,**kargs):
         '''
@@ -1128,6 +1154,33 @@ class MainWindow(QMainWindow):
                 if isinstance(item,pg.TextItem):
                     ax.removeItem(item)
 
+    def ginput(self,ax,npt=1):
+        crosshair = self.crosshair(ax)
+        ax.scene().sigMouseClicked.connect(lambda event: self.mouseInput(ax,event))
+        wait = QEventLoop()
+        wait.exec()
+        #TODO - paused - not finished - 2/26/2025
+        #print(f"Clicked at: x={x:.2f}, y={y:.2f}")
+
+    def mouseInput(self,ax,event):
+        # Check if the left mouse button was clicked
+        if event.button() == pg.QtCore.Qt.MouseButton.LeftButton:
+            # Get the position of the click
+            pos = event.scenePos()
+
+            # Check if the click is within the plot area
+            if ax.sceneBoundingRect().contains(pos):
+                # Map the click position to the view coordinates (data coordinates)
+                mouse_point = ax.plotItem.vb.mapSceneToView(pos) #vb means ViewBox
+                x = mouse_point.x()
+                y = mouse_point.y()
+
+                # Print or display the coordinates
+                #print(f"Clicked at: x={x:.2f}, y={y:.2f}")
+                return x,y #TODO - paused - may not work - 2/26/2025
+        else:
+            return ()
+
 
     #%% Callbacks -------------------------------------------------------
     def Start_Stop_Callback(self):
@@ -1527,6 +1580,13 @@ class MainWindow(QMainWindow):
             else: #right-hand set of buttons
                 dojob(self.axes1,X,Y,S) #tag middle panel
 
+    def Show_to_Callback(self):
+        self.gh.crosshair = self.crosshair(self.axes0)
+    
+        #TODO - paused - 2/26/2025
+        
+        self.axes0.scene().sigMouseClicked.connect(lambda event: self.mouseInput(self.axes0,event))
+
     def makeFig_Callback(self):
         '''
         Correspond to the Show_Callback in Capmeter7 (MATLAB)
@@ -1566,9 +1626,23 @@ class MainWindow(QMainWindow):
             ax.set_ylim(*ylim) #set_ylim(bottom, top)
 
         plt.show() # without it, no fig will be shown
+        #self.showDataTable(np.vstack((Xdata,Ydata0,Ydata1)))
 
-        self.showDataTable(np.vstack((Xdata,Ydata0,Ydata1)))
-        #TODO - paused - 2/23/2025 - also output data?
+
+    def toClipboard_Callback(self):
+        Xdata, Ydata0 = self.plot0.getOriginalDataset()
+        _,Ydata1 = self.plot1.getOriginalDataset()
+        df = pd.DataFrame(np.vstack((Xdata,Ydata0,Ydata1)))
+        df = df.T # same as df.transpose(); make it time-by-channel
+        df_str = df.to_csv(sep='\t', index=False, header=False)
+        clipboard = QApplication.clipboard()
+        clipboard.setText(df_str)
+
+    def Std_get_Callback(self):
+        raise NotImplementedError
+    
+    def Std_scale_Callback(self):
+        raise NotImplementedError
     
     def Set_PSD_Callback(self,algoChange = False):
         if not self.Start_Stop.isChecked():
@@ -1876,63 +1950,65 @@ class MainWindow(QMainWindow):
     def showDataTable(self,data,title='Figdata'):
         '''
         show data in QTableWidget
+        2/26/2025: Not in use for now
         '''
-        # Create the main window
-        self.gh.dataTable = QWidget()
-        self.gh.dataTable.setWindowTitle(title)
-        layout = QVBoxLayout()
+        pass
+        # # Create the main window
+        # self.gh.dataTable = QWidget()
+        # self.gh.dataTable.setWindowTitle(title)
+        # layout = QVBoxLayout()
 
-        # Create a QTableWidget
-        table_widget = QTableWidget()
-        table_widget.setRowCount(data.shape[0])
-        table_widget.setColumnCount(data.shape[1])
-        #table_widget.setVerticalHeaderLabels(row_headers)
+        # # Create a QTableWidget
+        # table_widget = QTableWidget()
+        # table_widget.setRowCount(data.shape[0])
+        # table_widget.setColumnCount(data.shape[1])
+        # #table_widget.setVerticalHeaderLabels(row_headers)
 
-        # Populate the table with data
-        for row in range(data.shape[0]):
-            for col in range(data.shape[1]):
-                item = QTableWidgetItem(str(data[row, col]))
-                table_widget.setItem(row, col, item)
+        # # Populate the table with data
+        # for row in range(data.shape[0]):
+        #     for col in range(data.shape[1]):
+        #         item = QTableWidgetItem(str(data[row, col]))
+        #         table_widget.setItem(row, col, item)
 
-        # Set selection mode and behavior
-        table_widget.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
-        table_widget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectItems)
+        # # Set selection mode and behavior
+        # table_widget.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
+        # table_widget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectItems)
 
-        # Allow copying with default shortcuts like Ctrl+C
-        table_widget.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        # # Allow copying with default shortcuts like Ctrl+C
+        # table_widget.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
-        # Enable copying
-        copy_action = QAction("Copy", table_widget)
-        copy_action.setShortcut(QKeySequence.StandardKey.Copy)
-        copy_action.triggered.connect(lambda: copySelectedCells(table_widget))
-        table_widget.addAction(copy_action)
+        # # Enable copying
+        # copy_action = QAction("Copy", table_widget)
+        # copy_action.setShortcut(QKeySequence.StandardKey.Copy)
+        # copy_action.triggered.connect(lambda: copySelectedCells(table_widget))
+        # table_widget.addAction(copy_action)
 
-        def copySelectedCells(table_widget):
-            # Get the selected ranges
-            selection = table_widget.selectedRanges()
-            if selection:
-                range_ = selection[0]
-                rows = range(range_.topRow(), range_.bottomRow() + 1)
-                cols = range(range_.leftColumn(), range_.rightColumn() + 1)
+        # def copySelectedCells(table_widget):
+        #     # Get the selected ranges
+        #     selection = table_widget.selectedRanges()
+        #     if selection:
+        #         range_ = selection[0]
+        #         rows = range(range_.topRow(), range_.bottomRow() + 1)
+        #         cols = range(range_.leftColumn(), range_.rightColumn() + 1)
 
-                # Construct the data to be copied
-                data = "\n".join(
-                    "\t".join(table_widget.item(row, col).text() if table_widget.item(row, col) else ""
-                            for col in cols)
-                    for row in rows
-                )
+        #         # Construct the data to be copied
+        #         data = "\n".join(
+        #             "\t".join(table_widget.item(row, col).text() if table_widget.item(row, col) else ""
+        #                     for col in cols)
+        #             for row in rows
+        #         )
 
-                # Copy to clipboard
-                clipboard = QApplication.clipboard()
-                clipboard.setText(data)
+        #         # Copy to clipboard
+        #         clipboard = QApplication.clipboard()
+        #         clipboard.setText(data)
 
-        # Add the table to the layout
-        layout.addWidget(table_widget)
-        self.gh.dataTable.setLayout(layout)
+        # # Add the table to the layout
+        # layout.addWidget(table_widget)
+        # self.gh.dataTable.setLayout(layout)
 
-        # Show the window
-        self.gh.dataTable.show()
-        #TODO - paused - 2/25/2025 - closeRequestFcn?
+        # # Show the window
+        # self.gh.dataTable.show()
+        # #add closeRequestFcn?
 
     def closeEvent(self, a0):
         #print('closeEvent called')
