@@ -43,10 +43,10 @@ class MainWindow(QMainWindow):
                                    )
         
         self.gh = self.kwarg2var(notePad = None,
-                                 dataTable = None,
-                                 crosshair = None) #TODO - Cap7_gh has not been implemented
+                                 dataTable = None) #TODO - Cap7_gh has not been implemented
 
         self.current_folder = Path.cwd()
+        self.mouseCrosshair = None # used by self.ginput
         self.changed = False #if the note etc. have been changed;
         self.applyKseal = False #show Kseal adjusted data or not
         self.reader = False
@@ -340,15 +340,21 @@ class MainWindow(QMainWindow):
                 setattr(self, key, value)
 
     class crosshair:
-        def __init__(self, ax):
-            self.ax = ax
+        def __init__(self,mw,ax,npt):
+            self.mw = mw #MainWindow
+            self.ax = ax #axis
+            self.npt = npt #number of points to be acquired
             self.v_line = pg.InfiniteLine(angle=90, movable=False)
             self.h_line = pg.InfiniteLine(angle=0, movable=False)
             self.ax.addItem(self.v_line, ignoreBounds=True)
             self.ax.addItem(self.h_line, ignoreBounds=True)
-            self.proxy = pg.SignalProxy(self.ax.scene().sigMouseMoved, rateLimit=180, slot=self.mouse_moved)
+            self.proxy = pg.SignalProxy(self.ax.scene().sigMouseMoved, rateLimit=60, slot=self.mouse_moved)
+            self.ax.scene().sigMouseClicked.connect(self.mouse_clicked)
+            self.pts = [] # collected points
 
         def __del__(self):
+            self.proxy.disconnect()
+            self.ax.scene().sigMouseClicked.disconnect(self.mouse_clicked)
             self.ax.removeItem(self.v_line)
             self.ax.removeItem(self.h_line)
 
@@ -358,6 +364,20 @@ class MainWindow(QMainWindow):
                 mouse_point = self.ax.plotItem.vb.mapSceneToView(pos)
                 self.v_line.setPos(mouse_point.x())
                 self.h_line.setPos(mouse_point.y())
+        
+        def mouse_clicked(self,event):
+            if event.button() == pg.QtCore.Qt.MouseButton.LeftButton:
+                # Get the position of the click
+                pos = event.scenePos()
+
+                # Check if the click is within the plot area
+                if self.ax.sceneBoundingRect().contains(pos):
+                    # Map the click position to the view coordinates (data coordinates)
+                    self.pts.append(self.ax.plotItem.vb.mapSceneToView(pos)) #vb means ViewBox
+                    if len(self.pts) == self.npt:
+                        self.mw.ginput(self.ax,init=False) # round up the action
+            else: # right or middle button
+                self.mw.ginput(self.ax,init=False) # round up the action
 
     def uigetfile(self,**kargs):
         '''
@@ -1154,32 +1174,14 @@ class MainWindow(QMainWindow):
                 if isinstance(item,pg.TextItem):
                     ax.removeItem(item)
 
-    def ginput(self,ax,npt=1):
-        crosshair = self.crosshair(ax)
-        ax.scene().sigMouseClicked.connect(lambda event: self.mouseInput(ax,event))
-        wait = QEventLoop()
-        wait.exec()
-        #TODO - paused - not finished - 2/26/2025
+    def ginput(self,ax,npt=1,init=True):
+        if init: # initial call
+            self.mouseCrosshair = self.crosshair(self,ax,npt)
+        else: # Called from self.mouseCrosshair after all the points (len==npt) are collected or when right/middle click happens
+            print(self.mouseCrosshair.pts) #TODO - paused - not finished - 2/26/2025
+            self.mouseCrosshair = None #this is sufficient to delete the crosshair
+        
         #print(f"Clicked at: x={x:.2f}, y={y:.2f}")
-
-    def mouseInput(self,ax,event):
-        # Check if the left mouse button was clicked
-        if event.button() == pg.QtCore.Qt.MouseButton.LeftButton:
-            # Get the position of the click
-            pos = event.scenePos()
-
-            # Check if the click is within the plot area
-            if ax.sceneBoundingRect().contains(pos):
-                # Map the click position to the view coordinates (data coordinates)
-                mouse_point = ax.plotItem.vb.mapSceneToView(pos) #vb means ViewBox
-                x = mouse_point.x()
-                y = mouse_point.y()
-
-                # Print or display the coordinates
-                #print(f"Clicked at: x={x:.2f}, y={y:.2f}")
-                return x,y #TODO - paused - may not work - 2/26/2025
-        else:
-            return ()
 
 
     #%% Callbacks -------------------------------------------------------
@@ -1581,11 +1583,9 @@ class MainWindow(QMainWindow):
                 dojob(self.axes1,X,Y,S) #tag middle panel
 
     def Show_to_Callback(self):
-        self.gh.crosshair = self.crosshair(self.axes0)
+        self.ginput(self.axes0,2)
     
         #TODO - paused - 2/26/2025
-        
-        self.axes0.scene().sigMouseClicked.connect(lambda event: self.mouseInput(self.axes0,event))
 
     def makeFig_Callback(self):
         '''
@@ -1625,7 +1625,7 @@ class MainWindow(QMainWindow):
             ylim = self.ylim(capax,'range')
             ax.set_ylim(*ylim) #set_ylim(bottom, top)
 
-        plt.show() # without it, no fig will be shown
+        plt.show(block=False) # without it, no fig will be shown; if block=True, there will be warning message: QCoreApplication::exec: The event loop is already running
         #self.showDataTable(np.vstack((Xdata,Ydata0,Ydata1)))
 
 
