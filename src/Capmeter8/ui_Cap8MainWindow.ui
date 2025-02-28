@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1318</width>
-    <height>987</height>
+    <height>1001</height>
    </rect>
   </property>
   <property name="contextMenuPolicy">
@@ -1011,11 +1011,14 @@
          <property name="toolTip">
           <string>select display range from the top panel</string>
          </property>
+         <property name="statusTip">
+          <string>Select two points or right-click to cancel</string>
+         </property>
          <property name="text">
           <string>to</string>
          </property>
          <property name="checkable">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
