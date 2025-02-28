@@ -50,13 +50,6 @@ class MainWindow(QMainWindow):
         self.applyKseal = False #show Kseal adjusted data or not
         self.reader = False
 
-        #TODO - Button groups
-        #TODO - Filter group
-        #TODO - Pulse group
-        #TODO - KeyPress group
-        #TODO - Reader group
-        #TODO - set button availability
-
         '''
         Load and setup the UI Page
         '''
@@ -81,7 +74,19 @@ class MainWindow(QMainWindow):
         self.shiftswitch = -1 #0:Csqa, 1:Gs qa, -1:G and C for cross correlation
         self.Stdfactor = [] #convert volt to fF
 
-        #TODO - other display-related settings
+        # Buttons etc enabled upon stop, disabled upon start
+        self.group_stop = ([self.RecordSampleRate,
+            self.Show_to,self.xlim0,self.xlim1,self.makeFig,self.toClipboard,
+            #self.Std_get,self.Std_value,self.Std_scale,self.DeDrift,
+            #self.Phase_Shift,self.PhaseShift,self.Module,self.edit_Kseal,self.toggle_Kseal,self.toolbar.setact,
+            self.toolbar.loadact,self.toolbar.saveact])
+
+        #TODO - Filter group?
+        #TODO - Pulse group
+        #TODO - Reader group
+        for item in self.group_stop:
+            item.setEnabled(True)
+        #TODO - set(handles.DeDrift,'Enable','off');
 
         '''
         List of DAQ-related variables
@@ -1263,14 +1268,13 @@ class MainWindow(QMainWindow):
 
             self.slider0v2p = self.slider0.value() #for @update_plot, @slider0_Callback
             self.slider1v2p = self.slider1.value() #for @update_plot, @slider1_Callback
-            #TODO - translate below
-            # set(handles.xlim1,'String','0');
-            # set(handles.xlim2,'String','0');
+            self.xlim0.setText('0')
+            self.xlim1.setText('0')
             self.setWindowTitle(self.shell)
-            # set(Cap7_gh.NotePad.figure1,'Name',handles.version.Shell);
+            # TODO - set(Cap7_gh.NotePad.figure1,'Name',handles.version.Shell);
             self.deleteLabel()
-            # set(handles.group_stop(1,:),'Enable','off');
-            # set(handles.group_start(1,:),'Enable','on');
+            for item in self.group_stop:
+                item.setEnabled(False)
             self.Start_Stop.setText('Waiting')
             self.Start_Stop.setStyleSheet('color:rgb(225,135,0)')
 
@@ -1346,7 +1350,8 @@ class MainWindow(QMainWindow):
             # assignin('base','Pulselog',handles.Pulselog); %TW150503: added back
             # set(handles.group_filter(1,:),'Enable','off');
             # set(handles.group_filter(1,:),'Enable','on');
-            # set(handles.group_stop(1,:),'Enable','on');
+            for item in self.group_stop:
+                item.setEnabled(True)
             # set(handles.group_start(1,:),'Enable','off');
             # set(handles.Start_Stop,'HitTest','on');
             self.aodata = [0,0]
@@ -1598,19 +1603,22 @@ class MainWindow(QMainWindow):
         '''
         if len(self.aitime) == 0: #no data to show
             return
+        for item in self.group_stop:
+            item.setEnabled(False)
         pts = self.ginput(self.axes0,2)
-        x0 = pts[0].x()
-        x1 = pts[1].x()
-        if x1 > x0:
-            self.xlim0.setText(f'{x0:.2f}')
-            self.xlim1.setText(f'{x1:.2f}')
-        else:
-            self.xlim0.setText(f'{x1:.2f}')
-            self.xlim1.setText(f'{x0:.2f}')
+        if len(pts) == 2:
+            x0 = pts[0].x()
+            x1 = pts[1].x()
+            if x1 > x0:
+                self.xlim0.setText(f'{x0:.2f}')
+                self.xlim1.setText(f'{x1:.2f}')
+            else:
+                self.xlim0.setText(f'{x1:.2f}')
+                self.xlim1.setText(f'{x0:.2f}')
+            self.Show_update_Callback()
 
-        self.Show_update_Callback()
-    
-        #TODO - paused - 2/27/2025 - package
+        for item in self.group_stop:
+            item.setEnabled(True)
 
     def makeFig_Callback(self):
         '''
@@ -1652,7 +1660,6 @@ class MainWindow(QMainWindow):
 
         plt.show(block=False) # without it, no fig will be shown; if block=True, there will be warning message: QCoreApplication::exec: The event loop is already running
         #self.showDataTable(np.vstack((Xdata,Ydata0,Ydata1)))
-
 
     def toClipboard_Callback(self):
         Xdata, Ydata0 = self.plot0.getOriginalDataset()
@@ -1738,7 +1745,8 @@ class MainWindow(QMainWindow):
             self.PhaseShift_Callback()
 
     def AutoPhase_Callback(self):
-        raise NotImplementedError
+        if self.Start_Stop.isChecked():
+            raise NotImplementedError
 
     def PSD_slider_Callback(self):
         '''
@@ -1814,20 +1822,17 @@ class MainWindow(QMainWindow):
         if self.fwindow == 0:
             self.fwindow = 1
             self.filterset2.setText('1')
-        #TODO - translate the following
-        # if strcmpi(handles.ai.running,'off')
-        #     Show_update_Callback(hObject, eventdata, handles);
-        # end
+
+        if not self.Start_Stop.isChecked():
+            self.Show_update_Callback()
     
     def FilterSwitch_Callback(self,index):
         '''
         0:Bypass; 1:Mean; 2:Median
         '''
         self.fswitch = index
-        #TODO - translate the following
-        # if strcmpi(handles.ai.running,'off')
-        #     Show_update_Callback(hObject, eventdata, handles);
-        # end
+        if not self.Start_Stop.isChecked():
+            self.Show_update_Callback()
 
     def Save_Callback(self):
         file = self.uisavefile(initialdir=self.current_folder, initialfile='*.npy',filetypes=[('Python','*.npy'),('All','*.*')])
@@ -1893,12 +1898,10 @@ class MainWindow(QMainWindow):
         self.ChangedOrSaved()
     
     def Notepad_Callback(self):
-        print('notepad not implemented')
-        raise NotImplementedError
+        raise NotImplementedError('notepad has not been implemented')
     
     def Setting_Callback(self):
-        print('setting not implemented')
-        raise NotImplementedError
+        raise NotImplementedError('setting has not been implemented')
     
     def Show_update_Callback(self):
         '''
