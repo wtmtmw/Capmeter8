@@ -1014,6 +1014,9 @@
          <property name="text">
           <string>to</string>
          </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -1071,6 +1074,9 @@
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_19">
+       <property name="spacing">
+        <number>0</number>
+       </property>
        <item>
         <widget class="QLineEdit" name="Std_value">
          <property name="enabled">
@@ -1081,6 +1087,9 @@
          </property>
          <property name="text">
           <string>100</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
