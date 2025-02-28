@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         Set up variables
         '''
         self.appdir = Path(__file__).parent
-        self.shell = 'Capmeter8 v0.0.0'
+        self.shell = 'Capmeter8 v0.0.1'
         
         self.pulse = self.kwarg2var(JustDone = 0,  #blank C,G,Ra and assign data used in @process_data and @resume
                                    pulsing = False,
@@ -46,7 +46,6 @@ class MainWindow(QMainWindow):
                                  dataTable = None) #TODO - Cap7_gh has not been implemented
 
         self.current_folder = Path.cwd()
-        self.mouseCrosshair = None # used by self.ginput
         self.changed = False #if the note etc. have been changed;
         self.applyKseal = False #show Kseal adjusted data or not
         self.reader = False
@@ -67,6 +66,7 @@ class MainWindow(QMainWindow):
         self.toolbar = self.create_toolbar()
         self.menuindex = [0,'p','p','p'] # [context menu ID, axes0 PSD or SQA, axes1 PSD or SQA, axes2 PSD or SQA], modified in @MenuSwitcher
         # context menu ID: 0-normal, 1-PSDofSQA; displayed data 'p'-PSD, 's'-SQA
+        self.contextMenuEnabled = True # will be False temporarily in Show_to_Callback
         self.limsetindex = [self.AxesSwitch.currentIndex(),True,True,True]; #[axis #,Auto,Auto,Auto], axes is 0-based
         self.Auto_axes.setChecked(self.limsetindex[self.limsetindex[0]+1])
 
@@ -340,17 +340,16 @@ class MainWindow(QMainWindow):
                 setattr(self, key, value)
 
     class crosshair:
-        def __init__(self,mw,ax,npt):
-            self.mw = mw #MainWindow
+        def __init__(self,ax):
             self.ax = ax #axis
-            self.npt = npt #number of points to be acquired
             self.v_line = pg.InfiniteLine(angle=90, movable=False)
             self.h_line = pg.InfiniteLine(angle=0, movable=False)
             self.ax.addItem(self.v_line, ignoreBounds=True)
             self.ax.addItem(self.h_line, ignoreBounds=True)
             self.proxy = pg.SignalProxy(self.ax.scene().sigMouseMoved, rateLimit=60, slot=self.mouse_moved)
             self.ax.scene().sigMouseClicked.connect(self.mouse_clicked)
-            self.pts = [] # collected points
+            self.pts = [] #collected points
+            self.terminate = False #right- or middle-click
 
         def __del__(self):
             self.proxy.disconnect()
@@ -374,10 +373,8 @@ class MainWindow(QMainWindow):
                 if self.ax.sceneBoundingRect().contains(pos):
                     # Map the click position to the view coordinates (data coordinates)
                     self.pts.append(self.ax.plotItem.vb.mapSceneToView(pos)) #vb means ViewBox
-                    if len(self.pts) == self.npt:
-                        self.mw.ginput(self.ax,init=False) # round up the action
             else: # right or middle button
-                self.mw.ginput(self.ax,caller='corrhair') # round up the action
+                self.terminate = True
 
     def uigetfile(self,**kargs):
         '''
@@ -632,6 +629,9 @@ class MainWindow(QMainWindow):
 
     def create_context_axes(self,axes,pos:QPoint):
         #axidx: index to the axes, 0-based
+        if not self.contextMenuEnabled:
+            return
+        
         context_menu = QMenu(self) # create a QMenu
 
         # create and add items
@@ -667,6 +667,9 @@ class MainWindow(QMainWindow):
 
     def create_context_axes_b(self,axes,pos:QPoint):
         #axidx: index to the axes, 0-based
+        if not self.contextMenuEnabled:
+            return
+        
         context_menu = QMenu(self) # create a QMenu
 
         # create and add items
@@ -1174,22 +1177,21 @@ class MainWindow(QMainWindow):
                 if isinstance(item,pg.TextItem):
                     ax.removeItem(item)
 
-    def ginput(self,ax,npt=1,caller=None):
+    def ginput(self,ax,npt=-1,caller=None):
         '''
         mimics the functionality of MATLAB ginput()
+        ginput(ax): get unlimited number of points from ax until mouse right-click
+        ginput(ax,npt): get npt points from ax
         '''
-        if not hasattr(self.ginput, 'parentCaller'):
-            self.ginput.parentCaller = caller #TODO not right
-
-        if not caller: # initial call
-            self.mouseCrosshair = self.crosshair(self,ax,npt)
-        else: # Called from self.mouseCrosshair after all the points (len==npt) are collected or when right/middle click happens
-            # self.Show_to.setChecked(False)
-            # self.Show_to_Callback(self.mouseCrosshair.pts) #pass QPointF back
-            print(self.mouseCrosshair.pts) #TODO - paused - not finished - 2/26/2025
-            self.mouseCrosshair = None #this is sufficient to delete the crosshair
+        self.contextMenuEnabled = False
+        mouseCursor = self.crosshair(ax)
+        while (len(mouseCursor.pts) != npt):
+            if mouseCursor.terminate:
+                break
+            QApplication.processEvents() # so the GUI is still responsive
         
-        #print(f"Clicked at: x={x:.2f}, y={y:.2f}")
+        self.contextMenuEnabled = True
+        return mouseCursor.pts #[QPointF(x,y),]
 
 
     #%% Callbacks -------------------------------------------------------
@@ -1594,12 +1596,21 @@ class MainWindow(QMainWindow):
         '''
         ginput will call Show_to_Callback and pass over the pts (points)
         '''
-        if self.Show_to.isChecked():
-            self.ginput(self.axes0,2)
+        if len(self.aitime) == 0: #no data to show
+            return
+        pts = self.ginput(self.axes0,2)
+        x0 = pts[0].x()
+        x1 = pts[1].x()
+        if x1 > x0:
+            self.xlim0.setText(f'{x0:.2f}')
+            self.xlim1.setText(f'{x1:.2f}')
         else:
-            pass
+            self.xlim0.setText(f'{x1:.2f}')
+            self.xlim1.setText(f'{x0:.2f}')
+
+        self.Show_update_Callback()
     
-        #TODO - paused - 2/26/2025
+        #TODO - paused - 2/27/2025 - package
 
     def makeFig_Callback(self):
         '''
