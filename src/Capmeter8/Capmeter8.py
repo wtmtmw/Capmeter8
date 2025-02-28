@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
         self.PSD90 = []
         # Note - revamp fcheck structure
         self.fcheck = {'rf0':True, 'rf1':True, 'rf2':True,
-                       'mf0':False,'mf1':False,'mf2':False,'mf3':False,'mf4':False}
+                       'mf0':True,'mf1':True,'mf2':True,'mf3':True,'mf4':True}
         for key,value in self.fcheck.items():
             exec(f'self.{key}.setChecked({value})')
         self.fwindow = abs(int(self.filterset2.text())) #samples for the moving filter
@@ -377,7 +377,7 @@ class MainWindow(QMainWindow):
                     if len(self.pts) == self.npt:
                         self.mw.ginput(self.ax,init=False) # round up the action
             else: # right or middle button
-                self.mw.ginput(self.ax,init=False) # round up the action
+                self.mw.ginput(self.ax,caller='corrhair') # round up the action
 
     def uigetfile(self,**kargs):
         '''
@@ -1174,10 +1174,18 @@ class MainWindow(QMainWindow):
                 if isinstance(item,pg.TextItem):
                     ax.removeItem(item)
 
-    def ginput(self,ax,npt=1,init=True):
-        if init: # initial call
+    def ginput(self,ax,npt=1,caller=None):
+        '''
+        mimics the functionality of MATLAB ginput()
+        '''
+        if not hasattr(self.ginput, 'parentCaller'):
+            self.ginput.parentCaller = caller #TODO not right
+
+        if not caller: # initial call
             self.mouseCrosshair = self.crosshair(self,ax,npt)
         else: # Called from self.mouseCrosshair after all the points (len==npt) are collected or when right/middle click happens
+            # self.Show_to.setChecked(False)
+            # self.Show_to_Callback(self.mouseCrosshair.pts) #pass QPointF back
             print(self.mouseCrosshair.pts) #TODO - paused - not finished - 2/26/2025
             self.mouseCrosshair = None #this is sufficient to delete the crosshair
         
@@ -1582,8 +1590,14 @@ class MainWindow(QMainWindow):
             else: #right-hand set of buttons
                 dojob(self.axes1,X,Y,S) #tag middle panel
 
-    def Show_to_Callback(self):
-        self.ginput(self.axes0,2)
+    def Show_to_Callback(self,pts=[]):
+        '''
+        ginput will call Show_to_Callback and pass over the pts (points)
+        '''
+        if self.Show_to.isChecked():
+            self.ginput(self.axes0,2)
+        else:
+            pass
     
         #TODO - paused - 2/26/2025
 
