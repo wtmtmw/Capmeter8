@@ -8,9 +8,10 @@
 ## Installation
 :warning: Please install the hardware driver before proceeding.
 
-If you have python installed, you may install Capmeter8 using the ``pip`` command.
-Executable version ``.exe`` can also be downloaded from the ``dist`` folder and run under a Windows console ``cmd``.
-``` python
+You may download the executable version ``Capmeter8_x.x.x.exe`` from the ``dist`` folder and run the program directly under a Windows console (``cmd``).
+
+If Python is installed, you can install Capmeter8 using ``pip`` and run it with the ``capmeter8`` command in a Windows console with the ``PYTHONPATH`` environment variable set correctly (e.g. using Anaconda Prompt).
+``` shell
 # install from the main branch
 pip install git+https://github.com/wtmtmw/Capmeter8.git 
 ```
@@ -18,7 +19,7 @@ pip install git+https://github.com/wtmtmw/Capmeter8.git
 Hardware support is provided by package [daqx](https://github.com/wtmtmw/daqx), which only supports boards from Measurement Computing for now. Support for National Instruments boards will be added in the future.
 
 Capmeter8 is developed using a [USB-1608GX-2AO](https://digilent.com/shop/mcc-usb-1608g-series-high-speed-multifunction-usb-daq-devices/) board from Measurement Computing.
-### Wiring
+### Connection
 AO0 → AI0 and Trig<br>
 AO1 → External command of the patch clamp
 
