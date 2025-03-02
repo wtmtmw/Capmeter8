@@ -1,2 +1,2 @@
 [console_scripts]
-cap8 = Capmeter8.Capmeter8:main
+capmeter8 = Capmeter8.Capmeter8:main

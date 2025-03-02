@@ -13,9 +13,6 @@ Executable version ``.exe`` can also be downloaded from the ``dist`` folder and 
 ``` python
 # install from the main branch
 pip install git+https://github.com/wtmtmw/Capmeter8.git 
-
-# install from the development branch
-pip install git+https://github.com/wtmtmw/Capmeter8.git@dev
 ```
 ## Hardware Configuration
 Hardware support is provided by package [daqx](https://github.com/wtmtmw/daqx), which only supports boards from Measurement Computing for now. Support for National Instruments boards will be added in the future.

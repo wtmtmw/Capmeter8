@@ -3,4 +3,5 @@ qtawesome
 pyqtgraph
 matplotlib
 numpy
+pandas
 daqx>=0.0.3

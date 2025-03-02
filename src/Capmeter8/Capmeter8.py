@@ -24,26 +24,28 @@ class MainWindow(QMainWindow):
         self.appdir = Path(__file__).parent
         self.shell = 'Capmeter8 v0.0.1'
         
-        self.pulse = self.kwarg2var(JustDone = 0,  #blank C,G,Ra and assign data used in @process_data and @resume
-                                   pulsing = False,
-                                   notPartOfPulseTriggers = 0,  #TW161218, number of triggers in the DAQ engine which are not part of the pulse. Calculated in Pulse_Callback
-                                   data = None)
+        self.pulse = self.container()
+        self.pulse.JustDone = 0  #blank C,G,Ra and assign data used in @process_data and @resume
+        self.pulse.pulsing = False
+        self.pulse.notPartOfPulseTriggers = 0  #TW161218, number of triggers in the DAQ engine which are not part of the pulse. Calculated in Pulse_Callback
+        self.pulse.data = None
         
-        self.daqdefault = self.kwarg2var(daqid = 0,
-                                  aiSR = 100000, #in Hz
-                                  aoSR = 100000, #in Hz
-                                  aoExtConvert = 20, #in mV/V. For ao_1, not ao_0
-                                  )
+        self.daqdefault = self.container()
+        self.daqdefault.daqid = 0
+        self.daqdefault.aiSR = 100000 #in Hz
+        self.daqdefault.aoSR = 100000 #in Hz
+        self.daqdefault.aoExtConvert = 20 #in mV/V. For ao_1, not ao_0
 
-        self.disp = self.kwarg2var(dispindex = [0,1,2], # 0-based
-                                   chcolor = [(255,0,0),(0,0,255),(204,0,204),(64,153,166),(0,0,0)], #display color of the channel
-                                   slider0range = 120, # in sec
-                                   slider1range = 50, # in sec
-                                   invertindex = [False,False,False], #[axes0,axes1,axes2]
-                                   )
+        self.disp = self.container()
+        self.disp.dispindex = [0,1,2] # 0-based
+        self.disp.chcolor = [(255,0,0),(0,0,255),(204,0,204),(64,153,166),(0,0,0)] #display color of the channel
+        self.disp.slider0range = 120 # in sec
+        self.disp.slider1range = 50 # in sec
+        self.disp.invertindex = [False,False,False] #[axes0,axes1,axes2]
         
-        self.gh = self.kwarg2var(notePad = None,
-                                 dataTable = None) #TODO - Cap7_gh has not been implemented
+        self.gh = self.container()
+        self.gh.notePad = None
+        self.gh.dataTable = None #TODO - Cap7_gh has not been implemented
 
         self.current_folder = Path.cwd()
         self.changed = False #if the note etc. have been changed;
@@ -337,7 +339,7 @@ class MainWindow(QMainWindow):
     Function and class definition
     '''
     #%% Utility -------------------------------------------------------
-    class kwarg2var:
+    class container:
         #container class; used for mimicing the struct data type
         def __init__(self, **kwargs):
             #print(type(kwargs)) #dict

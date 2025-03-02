@@ -1,31 +1,31 @@
 {
 	"version": "2.0.0",
 	"tasks": [
-		{
-			"type": "cppbuild",
-			"label": "C/C++: gcc.exe build DLL from active file",
-			"command": "C:\\Users\\wangt43\\mingw64\\bin\\gcc.exe",
-			"args": [
-				"-fdiagnostics-color=always",
-				"-g",
-				"-shared",
-				"-fPIC",
-				"${file}",
-				"-o",
-				"${fileDirname}\\${fileBasenameNoExtension}.dll"
-			],
-			"options": {
-				"cwd": "${fileDirname}"
-			},
-			"problemMatcher": [
-				"$gcc"
-			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"detail": "compiler: C:\\Users\\wangt43\\mingw64\\bin\\gcc.exe"
-		},
+		// {
+		// 	"type": "cppbuild",
+		// 	"label": "C/C++: gcc.exe build DLL from active file",
+		// 	"command": "C:\\Users\\wangt43\\mingw64\\bin\\gcc.exe",
+		// 	"args": [
+		// 		"-fdiagnostics-color=always",
+		// 		"-g",
+		// 		"-shared",
+		// 		"-fPIC",
+		// 		"${file}",
+		// 		"-o",
+		// 		"${fileDirname}\\${fileBasenameNoExtension}.dll"
+		// 	],
+		// 	"options": {
+		// 		"cwd": "${fileDirname}"
+		// 	},
+		// 	"problemMatcher": [
+		// 		"$gcc"
+		// 	],
+		// 	"group": {
+		// 		"kind": "build",
+		// 		"isDefault": true
+		// 	},
+		// 	"detail": "compiler: C:\\Users\\wangt43\\mingw64\\bin\\gcc.exe"
+		// },
 
 		{
 			"label": "Build Capmeter8",
@@ -33,17 +33,17 @@
             "command": "pyinstaller",
             "args": [
                 "--onefile",
-				"--paths", "C:\\Users\\wangt43\\Desktop\\exe\\Lib\\site-packages",
+				//"--paths", "C:\\Users\\wangt43\\Desktop\\exe\\Lib\\site-packages",
                 "--add-data", "${fileDirname}\\caplib.dll:.",
                 "--add-data", "${fileDirname}\\ui_Cap8MainWindow.ui:.",
                 "${fileDirname}\\Capmeter8.py"
             ],
-			"options": {
-                "env": {
-                    //"PATH": "C:\\Users\\wangt43\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\wangt43\\AppData\\Local\\Programs\\Python\\Python313\\Scripts;${env:PATH}"
-					"PATH": "C:\\Users\\wangt43\\Desktop\\exe;C:\\Users\\wangt43\\Desktop\\exe\\Scripts;${env:PATH}"
-                }
-            },
+			// "options": {
+            //     "env": {
+            //         //"PATH": "C:\\Users\\wangt43\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\wangt43\\AppData\\Local\\Programs\\Python\\Python313\\Scripts;${env:PATH}"
+			// 		"PATH": "C:\\Users\\wangt43\\Desktop\\exe;C:\\Users\\wangt43\\Desktop\\exe\\Scripts;${env:PATH}"
+            //     }
+            // },
             "group": {
                 "kind": "build",
                 "isDefault": false

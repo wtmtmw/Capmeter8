@@ -13,4 +13,5 @@ Requires-Dist: qtawesome
 Requires-Dist: pyqtgraph
 Requires-Dist: matplotlib
 Requires-Dist: numpy
+Requires-Dist: pandas
 Requires-Dist: daqx>=0.0.3

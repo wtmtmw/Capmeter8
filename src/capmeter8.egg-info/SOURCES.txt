@@ -5,13 +5,13 @@ README.md
 pyproject.toml
 test._sqa.npy
 test.npy
+test_ground.ipynb
+.vscode/tasks.json
 dist/capmeter8-0.0.1-py3-none-any.whl
 dist/capmeter8-0.0.1.tar.gz
-src/C code/caplib.c
 src/Capmeter8/Capmeter8.py
 src/Capmeter8/__init__.py
 src/Capmeter8/caplib.dll
-src/Capmeter8/test_ground.ipynb
 src/Capmeter8/ui_Cap8MainWindow.ui
 src/capmeter8.egg-info/PKG-INFO
 src/capmeter8.egg-info/SOURCES.txt
