@@ -21,10 +21,10 @@ pip install git+https://github.com/wtmtmw/Capmeter8.git@dev
 ## Hardware Configuration
 Hardware support is provided by package [daqx](https://github.com/wtmtmw/daqx), which only supports boards from Measurement Computing for now. Support for National Instruments boards will be added in the future.
 
-Capmeter8 is developed using a [USB-1608GX-2AO](https://digilent.com/shop/mcc-usb-1608g-series-high-speed-multifunction-usb-daq-devices/) board from Measurement Computing.
+Capmeter8 is developed using a [USB-1608GX-2AO](https://digilent.com/shop/mcc-usb-1608g-series-high-speed-multifunction-usb-daq-devices/) board (default device ID #0) from Measurement Computing.
 ### Connection
 AO0 → AI0 and Trig<br>
-AO1 → External command of the patch clamp (20mV/V)
+AO1 → External command of the patch clamp (default command sensitivity: 20mV/V)
 
 AI0 → AO0<br>
 AI1 → Current signal from the patch clamp<br>
