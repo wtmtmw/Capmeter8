@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         Set up variables
         '''
         self.appdir = Path(__file__).parent
-        self.shell = 'Capmeter8 v0.0.1'
+        self.shell = 'Capmeter8 v0.0.2'
         
         self.pulse = self.container()
         self.pulse.JustDone = 0  #blank C,G,Ra and assign data used in @process_data and @resume
@@ -91,10 +91,16 @@ class MainWindow(QMainWindow):
         #TODO - set(handles.DeDrift,'Enable','off');
 
         '''
-        List of DAQ-related variables
+        QTimer etc.
         '''
         self.disptimer = QTimer() #connected to update_plot()
         self.disptimer.setInterval(1000) #in ms
+        self.savetimer = QTimer() #connected to savevar
+        self.savetimer.setInterval(60*1000) #in ms
+        self.autosave = True
+        '''
+        List of DAQ-related variables
+        '''
         self.rSR = abs(float(self.RecordSampleRate.text()))
         self.samplesPerTp = None # samples per timepoint = round(self.daq.ai.sampleRate/self.rSR) # new for Cap8. For generating data points in CapEngine etc.
         self.aidata = np.array([]) # np.ndarray; M-by-Timepoint matrix, where M is the number of parameters/channels
@@ -263,6 +269,7 @@ class MainWindow(QMainWindow):
         Connect signals and slots
         '''
         self.disptimer.timeout.connect(self.update_plot)
+        self.savetimer.timeout.connect(lambda : self.savevar(Path(self.appdir,'autosave.npy'),isautosave=True))
         self.Start_Stop.clicked.connect(self.Start_Stop_Callback)
 
         self.AxesSwitch.currentIndexChanged.connect(self.AxesSwitch_Callback)
@@ -1109,7 +1116,7 @@ class MainWindow(QMainWindow):
         '''
         return [np.argmin(np.fabs(timeref - t)) for t in pts]
     
-    def savevar(self,file):
+    def savevar(self,file,isautosave=False):
         '''
         Prepare and save variables. It will be used by manual and auto save functions
         file: pathlib.Path of the target file
@@ -1122,6 +1129,8 @@ class MainWindow(QMainWindow):
         data['DAQinfo']['aoExtConvert'] = self.daqdefault.aoExtConvert
         data['DAQinfo']['startTime'] = time.ctime(self.starttime)
         data['pulseData'] = self.pulse.data
+        if isautosave:
+            pass #TODO - paused - 3/3/2025
 
         #note = deblank(cellstr(get(Cap7_gh.NotePad.edit_note,'String')));
         for var in ['aidata','aitime','labelindex','PSDlog','Pulselog','shell','PSDofSQA']: #collect the rest of variables to be saved
@@ -1303,10 +1312,14 @@ class MainWindow(QMainWindow):
             self.Set_PSD_Callback() #this will start both AI and AO
 
             self.disptimer.start()
+            if self.autosave:
+                self.savetimer.start()
         else: #stop
             self.daq.ai.stop()
             self.daq.ao.stop()
             self.disptimer.stop()
+            if self.autosave:
+                self.savetimer.stop()
             self.Start_Stop.setText('Stopped')
             self.Start_Stop.setStyleSheet('color:red')
             if self.AutoPhase.isChecked():
