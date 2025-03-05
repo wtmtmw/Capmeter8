@@ -1,6 +1,6 @@
 from PyQt6 import uic
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QMenu, QToolBar, QStyle, QSizePolicy #, QVBoxLayout, QTableWidget, QTableWidgetItem
-from PyQt6.QtCore import QTimer, QPoint, QSize, QEventLoop
+from PyQt6.QtCore import QTimer, QPoint, QSize
 from PyQt6.QtGui import QAction, QFont #, QKeySequence
 import qtawesome as qta # for FontAwesome icon
 from tkinter import filedialog, Tk, messagebox
@@ -23,6 +23,8 @@ class MainWindow(QMainWindow):
         '''
         self.appdir = Path(__file__).parent
         self.shell = 'Capmeter8 v0.0.2'
+        self.autosave = True
+        self.autosavename = Path(self.appdir,'autosave.npy')
         
         self.pulse = self.container()
         self.pulse.JustDone = 0  #blank C,G,Ra and assign data used in @process_data and @resume
@@ -97,7 +99,7 @@ class MainWindow(QMainWindow):
         self.disptimer.setInterval(1000) #in ms
         self.savetimer = QTimer() #connected to savevar
         self.savetimer.setInterval(60*1000) #in ms
-        self.autosave = True
+    
         '''
         List of DAQ-related variables
         '''
@@ -269,7 +271,7 @@ class MainWindow(QMainWindow):
         Connect signals and slots
         '''
         self.disptimer.timeout.connect(self.update_plot)
-        self.savetimer.timeout.connect(lambda : self.savevar(Path(self.appdir,'autosave.npy'),isautosave=True))
+        self.savetimer.timeout.connect(lambda : self.savevar(self.autosavename))
         self.Start_Stop.clicked.connect(self.Start_Stop_Callback)
 
         self.AxesSwitch.currentIndexChanged.connect(self.AxesSwitch_Callback)
@@ -338,6 +340,9 @@ class MainWindow(QMainWindow):
             self.MenuSwitcher(1) #SQA
         else:
             self.MenuSwitcher(0) #PSD
+
+        if self.autosavename.exists():
+            pass #TODO - paused - 3/4/2025 - prompt autosaved file etc.
 
         #TODO - other GUI components
     
@@ -1116,7 +1121,7 @@ class MainWindow(QMainWindow):
         '''
         return [np.argmin(np.fabs(timeref - t)) for t in pts]
     
-    def savevar(self,file,isautosave=False):
+    def savevar(self,file):
         '''
         Prepare and save variables. It will be used by manual and auto save functions
         file: pathlib.Path of the target file
@@ -1129,8 +1134,6 @@ class MainWindow(QMainWindow):
         data['DAQinfo']['aoExtConvert'] = self.daqdefault.aoExtConvert
         data['DAQinfo']['startTime'] = time.ctime(self.starttime)
         data['pulseData'] = self.pulse.data
-        if isautosave:
-            pass #TODO - paused - 3/3/2025
 
         #note = deblank(cellstr(get(Cap7_gh.NotePad.edit_note,'String')));
         for var in ['aidata','aitime','labelindex','PSDlog','Pulselog','shell','PSDofSQA']: #collect the rest of variables to be saved
