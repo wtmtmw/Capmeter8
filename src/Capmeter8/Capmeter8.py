@@ -1221,6 +1221,7 @@ class MainWindow(QMainWindow):
                 if not self.dlg_SaveData(): #canceled or no selection
                     self.Start_Stop.setChecked(False)
                     return
+            self.changed = True # will be used to identify if the program is closed normally in closeEvent
             self.rSR = abs(float(self.RecordSampleRate.text()))
             if self.rSR > 100:
                 self.rSR = 100
@@ -1375,7 +1376,8 @@ class MainWindow(QMainWindow):
             self.aodata = [0,0]
             # handles.aidata2 = handles.aidata; %for Kseal adjusted data; %TW141013
             # guidata(handles.figure1,handles);
-            self.changed = True
+
+            #self.changed = True # moved to the 'Start' section
             self.ChangedOrSaved()
             # %assignin('base','aodata',handles.aodata);
             if self.aidata.size == 0:
@@ -2071,6 +2073,7 @@ class MainWindow(QMainWindow):
         
         if self.changed:
             self.dlg_SaveData()
+            #TODO - paused - 3/5/2025 - delete autosave.npy
         #TODO - translate
         # delete(Cap7_gh.LoadedGUI);
         return super().closeEvent(a0)
