@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=64","setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "capmeter8"
+version = "0.0.1"
+description = "Software capacitance meter"
+#keywords = ["acquisition","mcc"]
+#readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyqt6",
+    "qtawesome",
+    "pyqtgraph",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "daqx>=0.0.3"
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: Microsoft :: Windows",
+]
+
+[project.scripts]
+capmeter8 = "Capmeter8.Capmeter8:main"
+
+[project.urls]
+Homepage = "https://github.com/wtmtmw/Capmeter8"

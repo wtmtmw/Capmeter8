@@ -1,0 +1,17 @@
+Metadata-Version: 2.2
+Name: capmeter8
+Version: 0.0.1
+Summary: Software capacitance meter
+Project-URL: Homepage, https://github.com/wtmtmw/Capmeter8
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Operating System :: Microsoft :: Windows
+Requires-Python: >=3.10
+License-File: LICENSE
+Requires-Dist: pyqt6
+Requires-Dist: qtawesome
+Requires-Dist: pyqtgraph
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: daqx>=0.0.3
