@@ -8,7 +8,7 @@
 ## Installation
 :warning: Please install the hardware driver before proceeding.
 
-You may download the executable version ``Capmeter8_x.x.x.exe`` from the ``dist`` folder and run the program directly under a Windows console (``cmd``).
+You may download the executable version ``Capmeter8_x.x.x.exe`` from the ``dist`` folder (click the file name and click *Download raw file*) and run the downloaded program (~80Mb) directly.
 
 If Python is installed, you can install Capmeter8 using ``pip`` and run it with the ``capmeter8`` command in a Windows console with the ``PYTHONPATH`` environment variable set correctly (e.g. using Anaconda Prompt).
 ``` shell
